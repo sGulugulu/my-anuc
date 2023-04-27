@@ -1,0 +1,141 @@
+phi节点
+重点为llvm源码阅读
+支配树计算方式采用fast算法
+
+这里有几个比较高级的设计可以学一下
+新版use-def链、RAUW和对value的持续更新
+还有make_early_inc_range是个啥东西
+（好像能在遍历链表时，链表结构出现改变不会影响迭代，方法是在迭代器被解引用后立马递增）
+算了，后面再研究，看下用这个东西的时候对链表有没有影响
+记得看下c++迭代器怎么写
+
+要把所有allocate全部写在entry里
+
+维护一个use-def数据结构
+use:
+    value
+    user
+
+value：
+    List<use> uses: 被谁用
+
+user:
+    vecotr<use> oprands: 用了谁 数量确定，和操作符一元还是二元有关
+
+inst: user
+
+User与Value是指令间用与被用的关系
+use和def是寄存器变量和指令间用与被用的关系
+
+allocate只有def集合
+
+
+allocate只被store和load使用
+store不会被使用
+load只会使用allocate
+
+对于一个allocate创建的变量
+load代表着use该变量
+store代表着def该变量
+
+
+整体思路
+用phi替换load/store/allocate
+提升为寄存器变量
+
+数组情况下的allocate不能提升
+将可提升的allocainst推入vector进行run
+
+对于vector中每个all：
+    0.all uses链为空，直接删除(这里llvm用了一个小技巧，
+                            把vector尾部的元素复制到当前index下，
+                            执行pop，能有效减小vector删除的开销）
+
+    进行allocate信息分析: 使用(use)allocate的只有两种情况，load和store
+    同时通过维护一个数据结构LargeBlockInfo，映射指令与下标
+    最后得到一个分析结果
+    info:
+        defblock集合，存储store
+        usingblock集合，存储load
+        是否只在一个BB内store和load(onlyBLock)
+        onlyStore（最后一个单独的store）
+
+    1.只在一个BB内的store，把本节点和支配点中的load替换
+        此过程会维护更新info，首先清空usingblock
+        遍历all的load:
+            如果load和store在一个BB内，若store在load后，不可替换（通过维护一个数据结构LargeBlockInfo，映射指令与下标）
+            如果load不在store的支配树内，不可替换
+            把不可替换的都加到usingBlock里
+            替换操作为：替换load的use链上所有的值，删除该load
+
+    2.store和load在一个BB内，可以直接替换
+    为了解决遇到很大的大块时的问题，llvm在此处通过维护LargeBlockInfo，进行了一个优化算法
+    具体操作为取出该allocate的所有store，并记录下标，塞到一个数组里进行排序
+    对allocate的所有load，查找最近的store(用lower bound函数二分查找):
+        判断load前是否有store，为未定义或错误代码
+        取出sotre值，对load的use链进行替换操作，删除load
+    删除allocate和其uses链中的所有store
+
+    3.在支配边界插入phi
+
+    存储了一个allocate到num的映射 num为当前遍历的下标
+
+    整了一个defblock的set （用set方便快速查找）
+    一个liveinblock的set
+    开始分析活跃信息，存储在上面那个set里（livein)
+    拷贝一个usingblock到LiveInBlockWorklist
+    LiveInBlock里的每一个block，变量在进入这个block前保持活跃（livein）
+
+    这是个剪枝的过程
+    （开始分析def和use是否在一个Block内，若在，则分析sotre是否在load前 若store在load前，说明该变量在BB上不活跃）
+    （livein变量才需要phi）
+    （或者说，活跃期跨越基本块才需要phi)
+    对LiveInBlockWorklist迭代，其中每一个BB:  （就是处理load和store在一个block内的情况）
+        如果没有对应的defblock，continue，不管（说明load和store不在一个block内）
+        遍历BB内的指令：
+            该指令是sotre：
+                如果没有使用all，跳过不管
+                如果是，说明在load前，把该BB从LiveInBlockWorklist中删除并跳出循环
+            该指令是load：
+                说明该变量在这个块前活跃，跳出循环
+    现在我们计算LiveInBlockWorklist里每个BB的前驱节点是否为liveinBlock
+    当LiveInBlockWorklist非空时: （这里当成栈用）
+        弹出尾部BB
+        将BB插入liveinblock的set（如果插入失败，说明已经是前驱，跳过）
+        对于该BB所有前驱:
+            查看是否在defblock里(有store的话）
+            不在的话推入back（这不是个dfs吗）
+-------------------------------------------------------------------
+IDF计算器
+用优先队列实现了piggy_bag
+得到需要插入phi的基本块
+------------------------------------------------------------------
+到此，对allocate的遍历结束，进入下一阶段
+这里用queuephinode为需要插入phi的基本块头部插入空的phi
+phiallocatemap 存储phinode和相应allocate对应关系
+用incoming数组存储变量
+递归执行renamepass
+Renamepass:
+    传入参数package，包含目前的基本块，上一个基本块，incomingval数组
+-----------
+目前用到的东西:
+每一个allocate都有一个编号
+phitoallocamap: phi - unsigned 把phi指令映射到allocate的下标
+IncomingVals: unsigned - values，通过下标找到被allocate创建的value(初始化为undef，type为allocate的type)
+-----------
+    对于当前基本块内每一个phi：
+        插入前驱和操作数，value的值从incoming里找(其实就是当前phi节点对应的value)(暂不确定）
+        把incomingvalue更新为phi的值
+    标记为visited，如果标记成功（没有被访问过），继续下面的内容
+    遍历BB内所有指令
+        如果为load
+            通过load的use链找到对应的allocate
+            把所有load的use替换为incoming里找到的值（也就是上面phi存储的值）
+            删除load
+        如果为store
+            通过store的use链找到对应的allocate
+            把对应incoming的值换位store存储的值
+            删除store
+
+
+

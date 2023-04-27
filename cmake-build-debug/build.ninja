@@ -1,0 +1,349 @@
+## This file contains all the build statements describing the
+# compilation DAG.
+
+# =============================================================================
+# Write statements declared in CMakeLists.txt:
+# 
+# Which is the root file.
+# =============================================================================
+
+# =============================================================================
+# Project: anuc
+# Configurations: Debug
+# =============================================================================
+
+#############################################
+# Minimal version of Ninja required by this file
+
+ninja_required_version = 1.5
+
+
+#############################################
+# Set configuration variable for custom commands.
+
+CONFIGURATION = Debug
+# =============================================================================
+# Include auxiliary files.
+
+
+#############################################
+# Include rules file.
+
+include CMakeFiles/rules.ninja
+
+# =============================================================================
+
+#############################################
+# Logical path to working directory; prefix for absolute paths.
+
+cmake_ninja_workdir = /Users/gyuuekihaku/Desktop/anuc/cmake-build-debug/
+# =============================================================================
+# Object build statements for EXECUTABLE target a
+
+
+#############################################
+# Order-only phony target for a
+
+build cmake_object_order_depends_target_a: phony || CMakeFiles/a.dir
+
+build CMakeFiles/a.dir/main.cpp.o: CXX_COMPILER__a_Debug /Users/gyuuekihaku/Desktop/anuc/main.cpp || cmake_object_order_depends_target_a
+  DEP_FILE = CMakeFiles/a.dir/main.cpp.o.d
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -fcolor-diagnostics -std=gnu++17
+  INCLUDES = -I/Users/gyuuekihaku/Desktop/anuc/lib/IR -I/Users/gyuuekihaku/Desktop/anuc/lib/ADT -I/Users/gyuuekihaku/Desktop/anuc/lib/Analysis -I/Users/gyuuekihaku/Desktop/anuc/third_party/antlr4-runtime
+  OBJECT_DIR = CMakeFiles/a.dir
+  OBJECT_FILE_DIR = CMakeFiles/a.dir
+
+build CMakeFiles/a.dir/lib/ADT/alist.cpp.o: CXX_COMPILER__a_Debug /Users/gyuuekihaku/Desktop/anuc/lib/ADT/alist.cpp || cmake_object_order_depends_target_a
+  DEP_FILE = CMakeFiles/a.dir/lib/ADT/alist.cpp.o.d
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -fcolor-diagnostics -std=gnu++17
+  INCLUDES = -I/Users/gyuuekihaku/Desktop/anuc/lib/IR -I/Users/gyuuekihaku/Desktop/anuc/lib/ADT -I/Users/gyuuekihaku/Desktop/anuc/lib/Analysis -I/Users/gyuuekihaku/Desktop/anuc/third_party/antlr4-runtime
+  OBJECT_DIR = CMakeFiles/a.dir
+  OBJECT_FILE_DIR = CMakeFiles/a.dir/lib/ADT
+
+build CMakeFiles/a.dir/lib/ADT/blockDomTree.cpp.o: CXX_COMPILER__a_Debug /Users/gyuuekihaku/Desktop/anuc/lib/ADT/blockDomTree.cpp || cmake_object_order_depends_target_a
+  DEP_FILE = CMakeFiles/a.dir/lib/ADT/blockDomTree.cpp.o.d
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -fcolor-diagnostics -std=gnu++17
+  INCLUDES = -I/Users/gyuuekihaku/Desktop/anuc/lib/IR -I/Users/gyuuekihaku/Desktop/anuc/lib/ADT -I/Users/gyuuekihaku/Desktop/anuc/lib/Analysis -I/Users/gyuuekihaku/Desktop/anuc/third_party/antlr4-runtime
+  OBJECT_DIR = CMakeFiles/a.dir
+  OBJECT_FILE_DIR = CMakeFiles/a.dir/lib/ADT
+
+build CMakeFiles/a.dir/lib/ADT/rtti.cpp.o: CXX_COMPILER__a_Debug /Users/gyuuekihaku/Desktop/anuc/lib/ADT/rtti.cpp || cmake_object_order_depends_target_a
+  DEP_FILE = CMakeFiles/a.dir/lib/ADT/rtti.cpp.o.d
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -fcolor-diagnostics -std=gnu++17
+  INCLUDES = -I/Users/gyuuekihaku/Desktop/anuc/lib/IR -I/Users/gyuuekihaku/Desktop/anuc/lib/ADT -I/Users/gyuuekihaku/Desktop/anuc/lib/Analysis -I/Users/gyuuekihaku/Desktop/anuc/third_party/antlr4-runtime
+  OBJECT_DIR = CMakeFiles/a.dir
+  OBJECT_FILE_DIR = CMakeFiles/a.dir/lib/ADT
+
+build CMakeFiles/a.dir/lib/Analysis/blockDFSCalculator.cpp.o: CXX_COMPILER__a_Debug /Users/gyuuekihaku/Desktop/anuc/lib/Analysis/blockDFSCalculator.cpp || cmake_object_order_depends_target_a
+  DEP_FILE = CMakeFiles/a.dir/lib/Analysis/blockDFSCalculator.cpp.o.d
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -fcolor-diagnostics -std=gnu++17
+  INCLUDES = -I/Users/gyuuekihaku/Desktop/anuc/lib/IR -I/Users/gyuuekihaku/Desktop/anuc/lib/ADT -I/Users/gyuuekihaku/Desktop/anuc/lib/Analysis -I/Users/gyuuekihaku/Desktop/anuc/third_party/antlr4-runtime
+  OBJECT_DIR = CMakeFiles/a.dir
+  OBJECT_FILE_DIR = CMakeFiles/a.dir/lib/Analysis
+
+build CMakeFiles/a.dir/lib/IR/core.cpp.o: CXX_COMPILER__a_Debug /Users/gyuuekihaku/Desktop/anuc/lib/IR/core.cpp || cmake_object_order_depends_target_a
+  DEP_FILE = CMakeFiles/a.dir/lib/IR/core.cpp.o.d
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -fcolor-diagnostics -std=gnu++17
+  INCLUDES = -I/Users/gyuuekihaku/Desktop/anuc/lib/IR -I/Users/gyuuekihaku/Desktop/anuc/lib/ADT -I/Users/gyuuekihaku/Desktop/anuc/lib/Analysis -I/Users/gyuuekihaku/Desktop/anuc/third_party/antlr4-runtime
+  OBJECT_DIR = CMakeFiles/a.dir
+  OBJECT_FILE_DIR = CMakeFiles/a.dir/lib/IR
+
+build CMakeFiles/a.dir/lib/IR/irBuilder.cpp.o: CXX_COMPILER__a_Debug /Users/gyuuekihaku/Desktop/anuc/lib/IR/irBuilder.cpp || cmake_object_order_depends_target_a
+  DEP_FILE = CMakeFiles/a.dir/lib/IR/irBuilder.cpp.o.d
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -fcolor-diagnostics -std=gnu++17
+  INCLUDES = -I/Users/gyuuekihaku/Desktop/anuc/lib/IR -I/Users/gyuuekihaku/Desktop/anuc/lib/ADT -I/Users/gyuuekihaku/Desktop/anuc/lib/Analysis -I/Users/gyuuekihaku/Desktop/anuc/third_party/antlr4-runtime
+  OBJECT_DIR = CMakeFiles/a.dir
+  OBJECT_FILE_DIR = CMakeFiles/a.dir/lib/IR
+
+build CMakeFiles/a.dir/lib/IR/type.cpp.o: CXX_COMPILER__a_Debug /Users/gyuuekihaku/Desktop/anuc/lib/IR/type.cpp || cmake_object_order_depends_target_a
+  DEP_FILE = CMakeFiles/a.dir/lib/IR/type.cpp.o.d
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -fcolor-diagnostics -std=gnu++17
+  INCLUDES = -I/Users/gyuuekihaku/Desktop/anuc/lib/IR -I/Users/gyuuekihaku/Desktop/anuc/lib/ADT -I/Users/gyuuekihaku/Desktop/anuc/lib/Analysis -I/Users/gyuuekihaku/Desktop/anuc/third_party/antlr4-runtime
+  OBJECT_DIR = CMakeFiles/a.dir
+  OBJECT_FILE_DIR = CMakeFiles/a.dir/lib/IR
+
+build CMakeFiles/a.dir/lib/IR/value.cpp.o: CXX_COMPILER__a_Debug /Users/gyuuekihaku/Desktop/anuc/lib/IR/value.cpp || cmake_object_order_depends_target_a
+  DEP_FILE = CMakeFiles/a.dir/lib/IR/value.cpp.o.d
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -fcolor-diagnostics -std=gnu++17
+  INCLUDES = -I/Users/gyuuekihaku/Desktop/anuc/lib/IR -I/Users/gyuuekihaku/Desktop/anuc/lib/ADT -I/Users/gyuuekihaku/Desktop/anuc/lib/Analysis -I/Users/gyuuekihaku/Desktop/anuc/third_party/antlr4-runtime
+  OBJECT_DIR = CMakeFiles/a.dir
+  OBJECT_FILE_DIR = CMakeFiles/a.dir/lib/IR
+
+build CMakeFiles/a.dir/lib/TransFormer/ssa.cpp.o: CXX_COMPILER__a_Debug /Users/gyuuekihaku/Desktop/anuc/lib/TransFormer/ssa.cpp || cmake_object_order_depends_target_a
+  DEP_FILE = CMakeFiles/a.dir/lib/TransFormer/ssa.cpp.o.d
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -fcolor-diagnostics -std=gnu++17
+  INCLUDES = -I/Users/gyuuekihaku/Desktop/anuc/lib/IR -I/Users/gyuuekihaku/Desktop/anuc/lib/ADT -I/Users/gyuuekihaku/Desktop/anuc/lib/Analysis -I/Users/gyuuekihaku/Desktop/anuc/third_party/antlr4-runtime
+  OBJECT_DIR = CMakeFiles/a.dir
+  OBJECT_FILE_DIR = CMakeFiles/a.dir/lib/TransFormer
+
+build CMakeFiles/a.dir/generated/Lex.cpp.o: CXX_COMPILER__a_Debug /Users/gyuuekihaku/Desktop/anuc/generated/Lex.cpp || cmake_object_order_depends_target_a
+  DEP_FILE = CMakeFiles/a.dir/generated/Lex.cpp.o.d
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -fcolor-diagnostics -std=gnu++17
+  INCLUDES = -I/Users/gyuuekihaku/Desktop/anuc/lib/IR -I/Users/gyuuekihaku/Desktop/anuc/lib/ADT -I/Users/gyuuekihaku/Desktop/anuc/lib/Analysis -I/Users/gyuuekihaku/Desktop/anuc/third_party/antlr4-runtime
+  OBJECT_DIR = CMakeFiles/a.dir
+  OBJECT_FILE_DIR = CMakeFiles/a.dir/generated
+
+build CMakeFiles/a.dir/generated/SysyBaseVisitor.cpp.o: CXX_COMPILER__a_Debug /Users/gyuuekihaku/Desktop/anuc/generated/SysyBaseVisitor.cpp || cmake_object_order_depends_target_a
+  DEP_FILE = CMakeFiles/a.dir/generated/SysyBaseVisitor.cpp.o.d
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -fcolor-diagnostics -std=gnu++17
+  INCLUDES = -I/Users/gyuuekihaku/Desktop/anuc/lib/IR -I/Users/gyuuekihaku/Desktop/anuc/lib/ADT -I/Users/gyuuekihaku/Desktop/anuc/lib/Analysis -I/Users/gyuuekihaku/Desktop/anuc/third_party/antlr4-runtime
+  OBJECT_DIR = CMakeFiles/a.dir
+  OBJECT_FILE_DIR = CMakeFiles/a.dir/generated
+
+build CMakeFiles/a.dir/generated/SysyLexer.cpp.o: CXX_COMPILER__a_Debug /Users/gyuuekihaku/Desktop/anuc/generated/SysyLexer.cpp || cmake_object_order_depends_target_a
+  DEP_FILE = CMakeFiles/a.dir/generated/SysyLexer.cpp.o.d
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -fcolor-diagnostics -std=gnu++17
+  INCLUDES = -I/Users/gyuuekihaku/Desktop/anuc/lib/IR -I/Users/gyuuekihaku/Desktop/anuc/lib/ADT -I/Users/gyuuekihaku/Desktop/anuc/lib/Analysis -I/Users/gyuuekihaku/Desktop/anuc/third_party/antlr4-runtime
+  OBJECT_DIR = CMakeFiles/a.dir
+  OBJECT_FILE_DIR = CMakeFiles/a.dir/generated
+
+build CMakeFiles/a.dir/generated/SysyParser.cpp.o: CXX_COMPILER__a_Debug /Users/gyuuekihaku/Desktop/anuc/generated/SysyParser.cpp || cmake_object_order_depends_target_a
+  DEP_FILE = CMakeFiles/a.dir/generated/SysyParser.cpp.o.d
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -fcolor-diagnostics -std=gnu++17
+  INCLUDES = -I/Users/gyuuekihaku/Desktop/anuc/lib/IR -I/Users/gyuuekihaku/Desktop/anuc/lib/ADT -I/Users/gyuuekihaku/Desktop/anuc/lib/Analysis -I/Users/gyuuekihaku/Desktop/anuc/third_party/antlr4-runtime
+  OBJECT_DIR = CMakeFiles/a.dir
+  OBJECT_FILE_DIR = CMakeFiles/a.dir/generated
+
+build CMakeFiles/a.dir/generated/SysyVisitor.cpp.o: CXX_COMPILER__a_Debug /Users/gyuuekihaku/Desktop/anuc/generated/SysyVisitor.cpp || cmake_object_order_depends_target_a
+  DEP_FILE = CMakeFiles/a.dir/generated/SysyVisitor.cpp.o.d
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -fcolor-diagnostics -std=gnu++17
+  INCLUDES = -I/Users/gyuuekihaku/Desktop/anuc/lib/IR -I/Users/gyuuekihaku/Desktop/anuc/lib/ADT -I/Users/gyuuekihaku/Desktop/anuc/lib/Analysis -I/Users/gyuuekihaku/Desktop/anuc/third_party/antlr4-runtime
+  OBJECT_DIR = CMakeFiles/a.dir
+  OBJECT_FILE_DIR = CMakeFiles/a.dir/generated
+
+
+# =============================================================================
+# Link build statements for EXECUTABLE target a
+
+
+#############################################
+# Link the executable a
+
+build a: CXX_EXECUTABLE_LINKER__a_Debug CMakeFiles/a.dir/main.cpp.o CMakeFiles/a.dir/lib/ADT/alist.cpp.o CMakeFiles/a.dir/lib/ADT/blockDomTree.cpp.o CMakeFiles/a.dir/lib/ADT/rtti.cpp.o CMakeFiles/a.dir/lib/Analysis/blockDFSCalculator.cpp.o CMakeFiles/a.dir/lib/IR/core.cpp.o CMakeFiles/a.dir/lib/IR/irBuilder.cpp.o CMakeFiles/a.dir/lib/IR/type.cpp.o CMakeFiles/a.dir/lib/IR/value.cpp.o CMakeFiles/a.dir/lib/TransFormer/ssa.cpp.o CMakeFiles/a.dir/generated/Lex.cpp.o CMakeFiles/a.dir/generated/SysyBaseVisitor.cpp.o CMakeFiles/a.dir/generated/SysyLexer.cpp.o CMakeFiles/a.dir/generated/SysyParser.cpp.o CMakeFiles/a.dir/generated/SysyVisitor.cpp.o
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5
+  LINK_LIBRARIES = -Wl,-rpath,/Users/gyuuekihaku/Desktop/anuc/third_party/lib  -lantlr4-runtime
+  LINK_PATH = -L/Users/gyuuekihaku/Desktop/anuc/third_party/lib
+  OBJECT_DIR = CMakeFiles/a.dir
+  POST_BUILD = :
+  PRE_LINK = :
+  TARGET_FILE = a
+  TARGET_PDB = a.dbg
+
+# =============================================================================
+# Object build statements for EXECUTABLE target irtest
+
+
+#############################################
+# Order-only phony target for irtest
+
+build cmake_object_order_depends_target_irtest: phony || CMakeFiles/irtest.dir
+
+build CMakeFiles/irtest.dir/_unittest/IR/test.cc.o: CXX_COMPILER__irtest_Debug /Users/gyuuekihaku/Desktop/anuc/_unittest/IR/test.cc || cmake_object_order_depends_target_irtest
+  DEP_FILE = CMakeFiles/irtest.dir/_unittest/IR/test.cc.o.d
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -fcolor-diagnostics -std=gnu++17
+  INCLUDES = -I/Users/gyuuekihaku/Desktop/anuc/lib/IR -I/Users/gyuuekihaku/Desktop/anuc/lib/ADT -I/Users/gyuuekihaku/Desktop/anuc/lib/Analysis -I/Users/gyuuekihaku/Desktop/anuc/third_party/antlr4-runtime -isystem /usr/local/include
+  OBJECT_DIR = CMakeFiles/irtest.dir
+  OBJECT_FILE_DIR = CMakeFiles/irtest.dir/_unittest/IR
+
+build CMakeFiles/irtest.dir/lib/ADT/alist.cpp.o: CXX_COMPILER__irtest_Debug /Users/gyuuekihaku/Desktop/anuc/lib/ADT/alist.cpp || cmake_object_order_depends_target_irtest
+  DEP_FILE = CMakeFiles/irtest.dir/lib/ADT/alist.cpp.o.d
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -fcolor-diagnostics -std=gnu++17
+  INCLUDES = -I/Users/gyuuekihaku/Desktop/anuc/lib/IR -I/Users/gyuuekihaku/Desktop/anuc/lib/ADT -I/Users/gyuuekihaku/Desktop/anuc/lib/Analysis -I/Users/gyuuekihaku/Desktop/anuc/third_party/antlr4-runtime -isystem /usr/local/include
+  OBJECT_DIR = CMakeFiles/irtest.dir
+  OBJECT_FILE_DIR = CMakeFiles/irtest.dir/lib/ADT
+
+build CMakeFiles/irtest.dir/lib/ADT/blockDomTree.cpp.o: CXX_COMPILER__irtest_Debug /Users/gyuuekihaku/Desktop/anuc/lib/ADT/blockDomTree.cpp || cmake_object_order_depends_target_irtest
+  DEP_FILE = CMakeFiles/irtest.dir/lib/ADT/blockDomTree.cpp.o.d
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -fcolor-diagnostics -std=gnu++17
+  INCLUDES = -I/Users/gyuuekihaku/Desktop/anuc/lib/IR -I/Users/gyuuekihaku/Desktop/anuc/lib/ADT -I/Users/gyuuekihaku/Desktop/anuc/lib/Analysis -I/Users/gyuuekihaku/Desktop/anuc/third_party/antlr4-runtime -isystem /usr/local/include
+  OBJECT_DIR = CMakeFiles/irtest.dir
+  OBJECT_FILE_DIR = CMakeFiles/irtest.dir/lib/ADT
+
+build CMakeFiles/irtest.dir/lib/ADT/rtti.cpp.o: CXX_COMPILER__irtest_Debug /Users/gyuuekihaku/Desktop/anuc/lib/ADT/rtti.cpp || cmake_object_order_depends_target_irtest
+  DEP_FILE = CMakeFiles/irtest.dir/lib/ADT/rtti.cpp.o.d
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -fcolor-diagnostics -std=gnu++17
+  INCLUDES = -I/Users/gyuuekihaku/Desktop/anuc/lib/IR -I/Users/gyuuekihaku/Desktop/anuc/lib/ADT -I/Users/gyuuekihaku/Desktop/anuc/lib/Analysis -I/Users/gyuuekihaku/Desktop/anuc/third_party/antlr4-runtime -isystem /usr/local/include
+  OBJECT_DIR = CMakeFiles/irtest.dir
+  OBJECT_FILE_DIR = CMakeFiles/irtest.dir/lib/ADT
+
+build CMakeFiles/irtest.dir/lib/Analysis/blockDFSCalculator.cpp.o: CXX_COMPILER__irtest_Debug /Users/gyuuekihaku/Desktop/anuc/lib/Analysis/blockDFSCalculator.cpp || cmake_object_order_depends_target_irtest
+  DEP_FILE = CMakeFiles/irtest.dir/lib/Analysis/blockDFSCalculator.cpp.o.d
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -fcolor-diagnostics -std=gnu++17
+  INCLUDES = -I/Users/gyuuekihaku/Desktop/anuc/lib/IR -I/Users/gyuuekihaku/Desktop/anuc/lib/ADT -I/Users/gyuuekihaku/Desktop/anuc/lib/Analysis -I/Users/gyuuekihaku/Desktop/anuc/third_party/antlr4-runtime -isystem /usr/local/include
+  OBJECT_DIR = CMakeFiles/irtest.dir
+  OBJECT_FILE_DIR = CMakeFiles/irtest.dir/lib/Analysis
+
+build CMakeFiles/irtest.dir/lib/IR/core.cpp.o: CXX_COMPILER__irtest_Debug /Users/gyuuekihaku/Desktop/anuc/lib/IR/core.cpp || cmake_object_order_depends_target_irtest
+  DEP_FILE = CMakeFiles/irtest.dir/lib/IR/core.cpp.o.d
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -fcolor-diagnostics -std=gnu++17
+  INCLUDES = -I/Users/gyuuekihaku/Desktop/anuc/lib/IR -I/Users/gyuuekihaku/Desktop/anuc/lib/ADT -I/Users/gyuuekihaku/Desktop/anuc/lib/Analysis -I/Users/gyuuekihaku/Desktop/anuc/third_party/antlr4-runtime -isystem /usr/local/include
+  OBJECT_DIR = CMakeFiles/irtest.dir
+  OBJECT_FILE_DIR = CMakeFiles/irtest.dir/lib/IR
+
+build CMakeFiles/irtest.dir/lib/IR/irBuilder.cpp.o: CXX_COMPILER__irtest_Debug /Users/gyuuekihaku/Desktop/anuc/lib/IR/irBuilder.cpp || cmake_object_order_depends_target_irtest
+  DEP_FILE = CMakeFiles/irtest.dir/lib/IR/irBuilder.cpp.o.d
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -fcolor-diagnostics -std=gnu++17
+  INCLUDES = -I/Users/gyuuekihaku/Desktop/anuc/lib/IR -I/Users/gyuuekihaku/Desktop/anuc/lib/ADT -I/Users/gyuuekihaku/Desktop/anuc/lib/Analysis -I/Users/gyuuekihaku/Desktop/anuc/third_party/antlr4-runtime -isystem /usr/local/include
+  OBJECT_DIR = CMakeFiles/irtest.dir
+  OBJECT_FILE_DIR = CMakeFiles/irtest.dir/lib/IR
+
+build CMakeFiles/irtest.dir/lib/IR/type.cpp.o: CXX_COMPILER__irtest_Debug /Users/gyuuekihaku/Desktop/anuc/lib/IR/type.cpp || cmake_object_order_depends_target_irtest
+  DEP_FILE = CMakeFiles/irtest.dir/lib/IR/type.cpp.o.d
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -fcolor-diagnostics -std=gnu++17
+  INCLUDES = -I/Users/gyuuekihaku/Desktop/anuc/lib/IR -I/Users/gyuuekihaku/Desktop/anuc/lib/ADT -I/Users/gyuuekihaku/Desktop/anuc/lib/Analysis -I/Users/gyuuekihaku/Desktop/anuc/third_party/antlr4-runtime -isystem /usr/local/include
+  OBJECT_DIR = CMakeFiles/irtest.dir
+  OBJECT_FILE_DIR = CMakeFiles/irtest.dir/lib/IR
+
+build CMakeFiles/irtest.dir/lib/IR/value.cpp.o: CXX_COMPILER__irtest_Debug /Users/gyuuekihaku/Desktop/anuc/lib/IR/value.cpp || cmake_object_order_depends_target_irtest
+  DEP_FILE = CMakeFiles/irtest.dir/lib/IR/value.cpp.o.d
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -fcolor-diagnostics -std=gnu++17
+  INCLUDES = -I/Users/gyuuekihaku/Desktop/anuc/lib/IR -I/Users/gyuuekihaku/Desktop/anuc/lib/ADT -I/Users/gyuuekihaku/Desktop/anuc/lib/Analysis -I/Users/gyuuekihaku/Desktop/anuc/third_party/antlr4-runtime -isystem /usr/local/include
+  OBJECT_DIR = CMakeFiles/irtest.dir
+  OBJECT_FILE_DIR = CMakeFiles/irtest.dir/lib/IR
+
+build CMakeFiles/irtest.dir/lib/TransFormer/ssa.cpp.o: CXX_COMPILER__irtest_Debug /Users/gyuuekihaku/Desktop/anuc/lib/TransFormer/ssa.cpp || cmake_object_order_depends_target_irtest
+  DEP_FILE = CMakeFiles/irtest.dir/lib/TransFormer/ssa.cpp.o.d
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5 -fcolor-diagnostics -std=gnu++17
+  INCLUDES = -I/Users/gyuuekihaku/Desktop/anuc/lib/IR -I/Users/gyuuekihaku/Desktop/anuc/lib/ADT -I/Users/gyuuekihaku/Desktop/anuc/lib/Analysis -I/Users/gyuuekihaku/Desktop/anuc/third_party/antlr4-runtime -isystem /usr/local/include
+  OBJECT_DIR = CMakeFiles/irtest.dir
+  OBJECT_FILE_DIR = CMakeFiles/irtest.dir/lib/TransFormer
+
+
+# =============================================================================
+# Link build statements for EXECUTABLE target irtest
+
+
+#############################################
+# Link the executable irtest
+
+build irtest: CXX_EXECUTABLE_LINKER__irtest_Debug CMakeFiles/irtest.dir/_unittest/IR/test.cc.o CMakeFiles/irtest.dir/lib/ADT/alist.cpp.o CMakeFiles/irtest.dir/lib/ADT/blockDomTree.cpp.o CMakeFiles/irtest.dir/lib/ADT/rtti.cpp.o CMakeFiles/irtest.dir/lib/Analysis/blockDFSCalculator.cpp.o CMakeFiles/irtest.dir/lib/IR/core.cpp.o CMakeFiles/irtest.dir/lib/IR/irBuilder.cpp.o CMakeFiles/irtest.dir/lib/IR/type.cpp.o CMakeFiles/irtest.dir/lib/IR/value.cpp.o CMakeFiles/irtest.dir/lib/TransFormer/ssa.cpp.o | /usr/local/lib/libgtest.a /usr/local/lib/libgtest_main.a /usr/local/lib/libgtest.a
+  FLAGS = -g -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.5
+  LINK_LIBRARIES = -Wl,-rpath,/Users/gyuuekihaku/Desktop/anuc/third_party/lib  /usr/local/lib/libgtest.a  /usr/local/lib/libgtest_main.a  /usr/local/lib/libgtest.a
+  LINK_PATH = -L/Users/gyuuekihaku/Desktop/anuc/third_party/lib
+  OBJECT_DIR = CMakeFiles/irtest.dir
+  POST_BUILD = :
+  PRE_LINK = :
+  TARGET_FILE = irtest
+  TARGET_PDB = irtest.dbg
+
+
+#############################################
+# Utility command for test
+
+build CMakeFiles/test.util: CUSTOM_COMMAND
+  COMMAND = cd /Users/gyuuekihaku/Desktop/anuc/cmake-build-debug && /Applications/CLion.app/Contents/bin/cmake/mac/bin/ctest --force-new-ctest-process
+  DESC = Running tests...
+  pool = console
+  restat = 1
+
+build test: phony CMakeFiles/test.util
+
+
+#############################################
+# Utility command for edit_cache
+
+build CMakeFiles/edit_cache.util: CUSTOM_COMMAND
+  COMMAND = cd /Users/gyuuekihaku/Desktop/anuc/cmake-build-debug && /Applications/CLion.app/Contents/bin/cmake/mac/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
+  DESC = No interactive CMake dialog available...
+  restat = 1
+
+build edit_cache: phony CMakeFiles/edit_cache.util
+
+
+#############################################
+# Utility command for rebuild_cache
+
+build CMakeFiles/rebuild_cache.util: CUSTOM_COMMAND
+  COMMAND = cd /Users/gyuuekihaku/Desktop/anuc/cmake-build-debug && /Applications/CLion.app/Contents/bin/cmake/mac/bin/cmake --regenerate-during-build -S/Users/gyuuekihaku/Desktop/anuc -B/Users/gyuuekihaku/Desktop/anuc/cmake-build-debug
+  DESC = Running CMake to regenerate build system...
+  pool = console
+  restat = 1
+
+build rebuild_cache: phony CMakeFiles/rebuild_cache.util
+
+# =============================================================================
+# Target aliases.
+
+# =============================================================================
+# Folder targets.
+
+# =============================================================================
+
+#############################################
+# Folder: /Users/gyuuekihaku/Desktop/anuc/cmake-build-debug
+
+build all: phony a irtest
+
+# =============================================================================
+# Built-in targets
+
+
+#############################################
+# Re-run CMake if any of its inputs changed.
+
+build build.ninja: RERUN_CMAKE | /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/CMakeCInformation.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/CMakeCXXInformation.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/CMakeCommonLanguageInclude.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/CMakeFindDependencyMacro.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/CMakeGenericSystem.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/CMakeInitializeConfigs.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/CMakeLanguageInformation.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/CMakeSystemSpecificInformation.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/CMakeSystemSpecificInitialize.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/CheckCSourceCompiles.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/CheckIncludeFile.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/CheckLibraryExists.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Compiler/AppleClang-C.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Compiler/AppleClang-CXX.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Compiler/CMakeCommonCompilerMacros.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Compiler/Clang.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Compiler/GNU.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/FindGTest.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/FindPackageHandleStandardArgs.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/FindPackageMessage.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/FindThreads.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/GoogleTest.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Internal/CheckSourceCompiles.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Platform/Apple-AppleClang-C.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Platform/Apple-AppleClang-CXX.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Platform/Apple-Clang-C.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Platform/Apple-Clang-CXX.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Platform/Apple-Clang.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Platform/Darwin-Initialize.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Platform/Darwin.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Platform/UnixPaths.cmake /Users/gyuuekihaku/Desktop/anuc/CMakeLists.txt /usr/local/lib/cmake/GTest/GTestConfig.cmake /usr/local/lib/cmake/GTest/GTestConfigVersion.cmake /usr/local/lib/cmake/GTest/GTestTargets-noconfig.cmake /usr/local/lib/cmake/GTest/GTestTargets.cmake CMakeCache.txt CMakeFiles/3.24.2/CMakeCCompiler.cmake CMakeFiles/3.24.2/CMakeCXXCompiler.cmake CMakeFiles/3.24.2/CMakeSystem.cmake
+  pool = console
+
+
+#############################################
+# A missing CMake input file is not an error.
+
+build /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/CMakeCInformation.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/CMakeCXXInformation.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/CMakeCommonLanguageInclude.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/CMakeFindDependencyMacro.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/CMakeGenericSystem.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/CMakeInitializeConfigs.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/CMakeLanguageInformation.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/CMakeSystemSpecificInformation.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/CMakeSystemSpecificInitialize.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/CheckCSourceCompiles.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/CheckIncludeFile.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/CheckLibraryExists.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Compiler/AppleClang-C.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Compiler/AppleClang-CXX.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Compiler/CMakeCommonCompilerMacros.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Compiler/Clang.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Compiler/GNU.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/FindGTest.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/FindPackageHandleStandardArgs.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/FindPackageMessage.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/FindThreads.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/GoogleTest.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Internal/CheckSourceCompiles.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Platform/Apple-AppleClang-C.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Platform/Apple-AppleClang-CXX.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Platform/Apple-Clang-C.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Platform/Apple-Clang-CXX.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Platform/Apple-Clang.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Platform/Darwin-Initialize.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Platform/Darwin.cmake /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.24/Modules/Platform/UnixPaths.cmake /Users/gyuuekihaku/Desktop/anuc/CMakeLists.txt /usr/local/lib/cmake/GTest/GTestConfig.cmake /usr/local/lib/cmake/GTest/GTestConfigVersion.cmake /usr/local/lib/cmake/GTest/GTestTargets-noconfig.cmake /usr/local/lib/cmake/GTest/GTestTargets.cmake CMakeCache.txt CMakeFiles/3.24.2/CMakeCCompiler.cmake CMakeFiles/3.24.2/CMakeCXXCompiler.cmake CMakeFiles/3.24.2/CMakeSystem.cmake: phony
+
+
+#############################################
+# Clean all the built files.
+
+build clean: CLEAN
+
+
+#############################################
+# Print all primary targets available.
+
+build help: HELP
+
+
+#############################################
+# Make the all target the default.
+
+default all
