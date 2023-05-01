@@ -15,6 +15,5 @@ int main() {
     SysyLexer lexer(&input);
     CommonTokenStream tokens(&lexer);
     tokens.fill();
-
     return 0;
 }
