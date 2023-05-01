@@ -13,6 +13,7 @@
 using namespace std;
 namespace anuc {
 
+    //支配树
     class BlockDomTree {
     private:
         map<BasicBlock* ,unsigned > bbToId;
@@ -91,6 +92,7 @@ namespace anuc {
          }
     };
 
+    //支配边界
     class BlockDomFrontier {
         struct cmp {
             bool operator () (pair<int, BasicBlock*> a, pair<int, BasicBlock*> b) {

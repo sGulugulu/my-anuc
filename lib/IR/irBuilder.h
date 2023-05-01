@@ -10,7 +10,7 @@
 #include "../ADT/rtti.h"
 #include <map>
 #include <set>
-
+#include <assert.h>
 
 using namespace std;
 namespace anuc {

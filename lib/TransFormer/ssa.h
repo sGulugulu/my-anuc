@@ -15,6 +15,7 @@
 #include "../Analysis/blockDFSCalculator.h"
 using namespace std;
 namespace anuc{
+    //记录alloca指令相关信息
     struct AllocaInfo {
         vector<BasicBlock *> loadBlocks;
         vector<BasicBlock *> storeBlocks;
@@ -176,9 +177,6 @@ namespace anuc{
                     removeFromAllocate(idx);
                     continue;
                 }
-
-                //建立一个从id到alloc的映射
-
 
                 //开始剪枝，只有跨块活跃的变量需要phi
                 idxToAlloca.insert({idx, ai});
