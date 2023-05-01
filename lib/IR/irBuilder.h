@@ -11,6 +11,7 @@
 #include <map>
 #include <set>
 #include <assert.h>
+#include <memory>
 
 using namespace std;
 namespace anuc {
@@ -49,6 +50,7 @@ namespace anuc {
                 Type *ty = new Int32Type();
                 typeLookUp.insert(pair<Type::TypeKind, Type *>
                                           (Type::TK_Int32, ty));
+                modu.insertIntoPool(ty);
                 return ty;
             }
             return i->second;
@@ -60,6 +62,7 @@ namespace anuc {
                 Type *ty = new Int1Type();
                 typeLookUp.insert(pair<Type::TypeKind, Type *>
                                           (Type::TK_Int1, ty));
+                modu.insertIntoPool(ty);
                 return ty;
             }
             return i->second;
@@ -71,6 +74,7 @@ namespace anuc {
                 Type *ty = new Int32Type();
                 typeLookUp.insert(pair<Type::TypeKind, Type *>
                                           (Type::TK_Float, ty));
+                modu.insertIntoPool(ty);
                 return ty;
             }
             return i->second;
@@ -82,6 +86,7 @@ namespace anuc {
                 Type *arrayTy = new ArrayType(ty, size);
                 arrayTypeLookUp.insert(pair<pair<Type *, unsigned>, Type *>(
                         pair<Type *, unsigned>(ty, size), arrayTy));
+                modu.insertIntoPool(arrayTy);
                 return arrayTy;
             }
             return i->second;
@@ -89,6 +94,7 @@ namespace anuc {
 
         FunctionType *GetFunctionType(Type *resultType, std::vector<Type *> &params) {
             FunctionType *ty = new FunctionType(resultType, params);
+            modu.insertIntoPool(ty);
             return ty;
         }
 
@@ -99,6 +105,7 @@ namespace anuc {
                 ConstantInt *ci = new ConstantInt(ty, value);
                 constantIntLookUp.insert(pair<pair<Type *, int>, ConstantInt *>(
                         pair<Type *, int>(ty, value), ci));
+                modu.insertIntoPool(ci);
                 return ci;
             }
             return i->second;
@@ -111,6 +118,7 @@ namespace anuc {
                 ConstantFloat *cf = new ConstantFloat(ty, value);
                 constantFloatLookUp.insert(pair<pair<Type *, float>, ConstantFloat *>(
                         pair<Type *, float>(ty, value), cf));
+                modu.insertIntoPool(cf);
                 return cf;
             }
             return i->second;
@@ -128,20 +136,22 @@ namespace anuc {
 
         //获取BasicBlock
         BasicBlock *GetBasicBlock(string name) {
-            if(! bbName.insert({{currentFunc, name}, 0}).second) {
-                name = name + to_string(++bbName[{currentFunc, name}]);
-            }
             BasicBlock *bb = new BasicBlock(name);
+            modu.insertIntoPool(bb);
             return bb;
         }
 
         void SetBlockInsert(BasicBlock *bb) {
+            if(! bbName.insert({{currentFunc, bb->getName()}, 0}).second) {
+                bb->getName() = bb->getName() + to_string(++bbName[{currentFunc, bb->getName()}]);
+            }
             if (!currentFunc) {
                 cerr << "must have create func";
                 exit(1);
             }
             currentFunc->insertBackToChild(bb);
             currentBlock = bb;
+            bb->setParent(currentFunc);
             return;
         }
 
@@ -152,12 +162,14 @@ namespace anuc {
             auto pv = new PointerVar(ty, name);
             auto ai = new AllocateInst(currentBlock, ty, pv);
             currentBlock->insertBackToChild(ai);
+            modu.insertIntoPool(pv, ai);
             return pv;
         }
 
         void CreateStore(Value *v, PointerVar *ptr) {
             StoreInst *si = new StoreInst(currentBlock, v, ptr);
             currentBlock->insertBackToChild(si);
+            modu.insertIntoPool(si);
         }
 
         RegisterVar *CreateLoad(Type *ty, PointerVar *ptr) {
@@ -166,6 +178,7 @@ namespace anuc {
             LoadInst *li = new LoadInst(currentBlock, ty, ptr, rv);
             rv->setInst(li);
             currentBlock->insertBackToChild(li);
+            modu.insertIntoPool(rv, li);
             return rv;
         }
 
@@ -183,6 +196,7 @@ namespace anuc {
             AddInst * ai = new AddInst(currentBlock, L, R, rv);
             rv->setInst(ai);
             currentBlock->insertBackToChild(ai);
+            modu.insertIntoPool(rv, ai);
             return rv;
         }
 
@@ -191,7 +205,7 @@ namespace anuc {
             dest->pushBackToSucc(currentBlock);
             BranchInst *bi = new BranchInst(currentBlock, dest);
             currentBlock->insertBackToChild(bi);
-
+            modu.insertIntoPool(bi);
             return dest;
         }
 
