@@ -54,7 +54,7 @@ namespace anuc {
         alist<Use>::iterator getUsesEnd() {return uses.end();}
         virtual Type* getType() {return nullptr;}
         virtual string toString() {return "undef";}
-
+        virtual void print() {}
     };
 
     struct Use : public alist_node<Use> {

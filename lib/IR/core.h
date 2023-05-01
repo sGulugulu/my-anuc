@@ -8,6 +8,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <set>
 #include "../ADT/alist.h"
 #include "type.h"
 
@@ -21,15 +22,31 @@ namespace anuc {
 
     class Module {
         alist<Function> childlist;
+        //存储所有函数并查找
         map<string, Function *> funcLookUp;
+        map<Value *, bool> valuePool;
+        set<Type *> typePool;
     public:
         void insertBackToChild(Function *f);
-
         void insertFrontTochild(Function *f);
-
         bool insertFunc(string name, Function *f);
-
+        //进行内存管理，将new出来的东西插入内存池
+        map<Value *, bool>::iterator insertIntoPool(Value *v);
+        map<Value *, bool>::iterator insertIntoPool(Value *v, Value *rest...);
+        //从内存池中查找
+        map<Value *, bool>::iterator lookUpValuePool(Value *v);
+        void insertIntoPool(Type *ty) {
+            typePool.insert(ty);
+            return;
+        }
+        //消除指定元素,实际上是将其bool设置为false，在memory中删除
+        bool earseFromValuePool(Value *v);
+        //释放所有标记为0的内存空间，返回删除元素的个数
+        int memoryClean();
+        //打印整个模块
         void print();
+
+        ~Module();
     };
 
     class Function : public alist_node<Function> {
@@ -45,12 +62,11 @@ namespace anuc {
         Function(const Function &) = delete;
 
         Function(Module *m, FunctionType *type, string name, vector<string> &v) :
-                parent(m), name(name), type(type), params(v) {
-        }
+                parent(m), name(name), type(type), params(v) { }
 
         string getParamsName(int i) { return params.at(i); }
 
-        const Module *getParent() const { return parent; }
+        Module *getParent()  { return parent; }
 
         void insertBackToChild(BasicBlock *b);
 
@@ -83,6 +99,7 @@ namespace anuc {
 
         BasicBlock(string name) : Value(Value::VK_BasicBlock), name("block."+name) {}
 
+        void setParent(Function *func) {parent = func;}
         Function *getParent()  { return parent; }
 
         void isTerminated() { isterminated = true;}
@@ -139,11 +156,14 @@ namespace anuc {
         Use* getOperands(int n) {
             return &operands[n];
         }
-        //删除并且清空相应的user
+
+        //删除并且清空相应的user，最后释放空间
         void earseFromParent() {
-            for(auto u = operands.begin(); u != operands.end(); ++u) {
-                u->earse();
-            }
+            for(auto u = operands.begin(); u != operands.end(); ++u) u->earse();
+            auto m = this->getParent()->getParent()->getParent();
+            auto i = m->lookUpValuePool(this);
+            this->print();
+            i->second = false;
             this->earse();
         }
     };
@@ -161,7 +181,7 @@ namespace anuc {
             pointVar->setAllocateInst(this);
         }
         bool static classof(Value *v) { return v->getKind() == VK_AllocaInst; }
-        PointerVar *getPointerVar() {
+        PointerVar *getResult() {
             return pointVar;
         }
         Type *getType() {
@@ -169,7 +189,7 @@ namespace anuc {
         }
         void setPointerVar(PointerVar *p) { pointVar = p;}
 
-        void print() {cout << " %"<< pointVar->getName() << " = alloca, align 4" << endl;}
+        void print() {cout << "  %"<< pointVar->getName() << " = alloca, align 4" << endl;}
     };
 
     class StoreInst : public Instruction {
@@ -186,7 +206,7 @@ namespace anuc {
         Value *getValue() {return operands[0].value;}
         Value *getPointerVar() {return operands[1].value;}
         void print() {
-            cout << " store "<< operands[1].value->getType()->toString() << " " << operands[0].value->toString()
+            cout << "  store "<< operands[1].value->getType()->toString() << " " << operands[0].value->toString()
             << ", " << operands[1].value->getType()->toString() << operands[1].value->toString() <<", align 4" << endl;
         }
 
@@ -204,7 +224,7 @@ namespace anuc {
         bool static classof(Value *v) { return v->getKind() == VK_LoadInst; }
         Type* getType() {return ty;}
         Value *getPointerVar() { return operands[0].value; }
-        RegisterVar *getRegisterVar() {return rv;}
+        RegisterVar *getResult() {return rv;}
         void print() {
             cout <<" " << rv->toString() << " = load "<< rv->getType()->toString() << ", " <<
             rv->getType()->toString() << operands[0].value->toString() << ", align 4" << endl;
@@ -212,6 +232,7 @@ namespace anuc {
 
     };
 
+    //phi指令
     class PhiInst : public Instruction {
         Type *ty;
         RegisterVar *rv;
@@ -251,7 +272,7 @@ namespace anuc {
             addIncoming(value);
             addIncoming(rest);
         }
-        RegisterVar *getRegisterVar() {
+        RegisterVar *getResult() {
             return rv;
         }
     };

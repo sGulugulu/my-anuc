@@ -6,7 +6,7 @@ set(CMAKE_BUILD_TYPE "Debug")
 file(GLOB_RECURSE LIB_SRC "lib/*.cpp")
 file(GLOB_RECURSE GERATED "generated/*.cpp")
 
-include_directories(lib/IR lib/ADT lib/Analysis third_party/antlr4-runtime)
+include_directories(lib/IR lib/ADT lib/Analysis lib/BackEnd third_party/antlr4-runtime)
 link_directories(third_party/lib)
 
 add_executable(a main.cpp ${LIB_SRC} ${GERATED})

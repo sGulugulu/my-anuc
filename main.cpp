@@ -16,5 +16,5 @@ int main() {
     CommonTokenStream tokens(&lexer);
     tokens.fill();
 
-    return 0；
+    return 0;
 }

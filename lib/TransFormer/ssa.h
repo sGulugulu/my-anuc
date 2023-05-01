@@ -72,14 +72,14 @@ namespace anuc{
     };
 
     class SSAPass {
-        Function &func;
+        Function *func;
         vector<AllocateInst *> allocas;
         map<PhiInst*, AllocateInst*> phiToAlloca;
         map<pair<AllocateInst*, BasicBlock *>, PhiInst> phiNodeLookUp;
     public:
-        SSAPass(Function &func):func(func) {}
+        SSAPass(Function *func):func(func) {}
         void run() {
-            BasicBlock *entry = func.getEnrty();
+            BasicBlock *entry = func->getEnrty();
             vector<BasicBlock *> postOrder;
             blockDFSCalulator::calculateBBPostOrder(postOrder, entry);
             BlockDomTree dt;
@@ -91,11 +91,11 @@ namespace anuc{
             //遍历所有的alloca
             for(int idx = 0; idx < allocas.size(); idx++) {
                 AllocateInst *ai = allocas[idx];
-                PointerVar *pv = ai->getPointerVar();
+                PointerVar *pv = ai->getResult();
                 //如果alloca use链为空，直接删除
                 if (pv->usesEmpty()) {
                     removeFromAllocate(idx);
-                    ai->earse();
+                    ai->earseFromParent();
                     continue;
                 }
                 AllocaInfo allocaInfo;
@@ -130,10 +130,11 @@ namespace anuc{
                             continue;
                         }
                         Value *storeValue = allocaInfo.onlyStore->getValue();
-                        RegisterVar *rv = li->getRegisterVar();
+                        RegisterVar *rv = li->getResult();
                         rv->replaceAllUseWith(storeValue);
                         blockInfo.instToIdx.erase(li);
                         li->earseFromParent();
+                        func->getParent()->earseFromValuePool(rv);
                     }
                     removeFromAllocate(idx);
                     continue;
@@ -168,9 +169,10 @@ namespace anuc{
                             } else {
                                 auto nearestStore = dyn_cast<StoreInst>(near->second);
                                 Value *v = nearestStore->getValue();
-                                li->getRegisterVar()->replaceAllUseWith(v);
+                                li->getResult()->replaceAllUseWith(v);
                                 blockInfo.instToIdx.erase(li);
                                 li->earseFromParent();
+                                func->getParent()->earseFromValuePool(v);
                             }
                         }
                     }
@@ -239,7 +241,7 @@ namespace anuc{
 
             //遍历函数内所有基本块
             vector<pair<BasicBlock*, BasicBlock*>> renameWorkList;
-            renameWorkList.push_back({&(*func.getBegin()), nullptr});
+            renameWorkList.push_back({&(*func->getBegin()), nullptr});
             set<BasicBlock *> renameVisted;
             while(!renameWorkList.empty()) {
                 auto p= renameWorkList.back();
@@ -250,7 +252,7 @@ namespace anuc{
                         if(!phi) break;
                         AllocateInst *ai = phiToAlloca[phi];
                         phi->addIncoming({incomingValues[ai], pred});
-                        incomingValues[ai] = phi->getRegisterVar();
+                        incomingValues[ai] = phi->getResult();
                     }
                     if(!renameVisted.insert(bb).second) return;
 
@@ -262,8 +264,9 @@ namespace anuc{
                         if (LoadInst *li = dyn_cast<LoadInst>(inst)) {
                             PointerVar *pv = cast<PointerVar>(li->getPointerVar());
                             Value *v = incomingValues[pv->getInst()];
-                            li->getRegisterVar()->replaceAllUseWith(v);
+                            li->getResult()->replaceAllUseWith(v);
                             li->earseFromParent();
+                            func->getParent()->earseFromValuePool(v);
                         }
 
                         //如果为store，则修改incoming的值为store的值
@@ -286,9 +289,10 @@ namespace anuc{
                     cerr << "我擦，什么情况" << endl;
                     continue;
                 }
-                ai->earse();
+                ai->earseFromParent();
             }
-
+            //释放内存
+            func->getParent()->memoryClean();
         }
     private:
         map<int, AllocateInst*> idxToAlloca;

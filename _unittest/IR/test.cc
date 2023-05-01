@@ -162,8 +162,8 @@ TEST(IR_TEST, SSA) {
     irb->CreateAdd(ll, ll);
     m.print();
     cout << "---------------------------" << endl;
-    SSAPass(*func).run();
-    m.print();
+    SSAPass(func).run();
+    func->getParent()->print();
     cout << "---------------------------" << endl;
 }
 
