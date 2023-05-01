@@ -1,5 +1,0 @@
-/Users/gyuuekihaku/Desktop/anuc/build/CMakeFiles/a.dir
-/Users/gyuuekihaku/Desktop/anuc/build/CMakeFiles/irtest.dir
-/Users/gyuuekihaku/Desktop/anuc/build/CMakeFiles/test.dir
-/Users/gyuuekihaku/Desktop/anuc/build/CMakeFiles/edit_cache.dir
-/Users/gyuuekihaku/Desktop/anuc/build/CMakeFiles/rebuild_cache.dir
