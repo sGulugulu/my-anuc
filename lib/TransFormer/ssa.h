@@ -91,7 +91,7 @@ namespace anuc{
             //遍历所有的alloca
             for(int idx = 0; idx < allocas.size(); idx++) {
                 AllocateInst *ai = allocas[idx];
-                PointerVar *pv = ai->getResult();
+                PointerVar *pv = cast<PointerVar>(ai->getResult());
                 //如果alloca use链为空，直接删除
                 if (pv->usesEmpty()) {
                     removeFromAllocate(idx);
@@ -130,7 +130,7 @@ namespace anuc{
                             continue;
                         }
                         Value *storeValue = allocaInfo.onlyStore->getValue();
-                        RegisterVar *rv = li->getResult();
+                        RegisterVar *rv = cast<RegisterVar>(li->getResult());
                         rv->replaceAllUseWith(storeValue);
                         blockInfo.instToIdx.erase(li);
                         li->earseFromParent();

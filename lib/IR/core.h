@@ -129,6 +129,10 @@ namespace anuc {
         string toString() {return "%" + name;}
         alist<Instruction>::iterator getBegin() {return childlist.begin();}
         alist<Instruction>::iterator getEnd() {return childlist.end();}
+        alist<Instruction>::iterator getFront() {return childlist.front();}
+        alist<Instruction>::iterator getBack() {return childlist.back();}
+
+
         void print();
 
     };
@@ -166,6 +170,7 @@ namespace anuc {
             i->second = false;
             this->earse();
         }
+        virtual Value *getResult() { return nullptr; }
     };
 
 
@@ -181,7 +186,7 @@ namespace anuc {
             pointVar->setAllocateInst(this);
         }
         bool static classof(Value *v) { return v->getKind() == VK_AllocaInst; }
-        PointerVar *getResult() {
+        Value *getResult() {
             return pointVar;
         }
         Type *getType() {
@@ -224,7 +229,7 @@ namespace anuc {
         bool static classof(Value *v) { return v->getKind() == VK_LoadInst; }
         Type* getType() {return ty;}
         Value *getPointerVar() { return operands[0].value; }
-        RegisterVar *getResult() {return rv;}
+        Value *getResult() {return rv;}
         void print() {
             cout <<" " << rv->toString() << " = load "<< rv->getType()->toString() << ", " <<
             rv->getType()->toString() << operands[0].value->toString() << ", align 4" << endl;
@@ -272,7 +277,7 @@ namespace anuc {
             addIncoming(value);
             addIncoming(rest);
         }
-        RegisterVar *getResult() {
+        Value *getResult() {
             return rv;
         }
     };
