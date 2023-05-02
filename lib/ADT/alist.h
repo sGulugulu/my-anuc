@@ -125,6 +125,14 @@ namespace anuc {
         iterator end() {
             return iterator(&tail);
         }
+        //back节点，tail的prev
+        iterator back() {
+            return iterator(tail.prev);
+        }
+        //头节点（为空）
+        iterator front() {
+            return iterator(&head);
+        }
 
         void insert_front(base_node *node) {
             node->prev = &head;

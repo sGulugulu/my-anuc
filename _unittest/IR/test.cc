@@ -7,6 +7,7 @@
 #include "../../lib/ADT/rtti.h"
 #include "gtest/gtest.h"
 #include "../../lib/Analysis/blockDFSCalculator.h"
+#include "../../lib/Analysis/livenessAnalysis.h"
 #include "../../lib/ADT/blockDomTree.h"
 #include "../../lib/TransFormer/ssa.h"
 using namespace anuc;
@@ -167,7 +168,7 @@ TEST(IR_TEST, SSA) {
     cout << "---------------------------" << endl;
 }
 
-TEST(IR_TEST, BUILDER_FUNC) {
+TEST(IR_TEST, LIVENESS) {
     Module m;
     IRBuilder *irb = new IRBuilder(m);
     auto i32 = irb->GetInt32Ty();
@@ -176,20 +177,27 @@ TEST(IR_TEST, BUILDER_FUNC) {
     FunctionType *ftp = irb->GetFunctionType(i32, a);
     vector<string> p;
     p.push_back("a");
+    auto i = irb->GetConstantInt(irb->GetInt32Ty(), 1);
+
     auto func = irb->CreateFunction(ftp, "mian", p);
-    auto b0 = irb->GetBasicBlock("0");
+    auto b0 = irb->GetBasicBlock("entry");
     irb->SetBlockInsert(b0);
     auto x = irb->CreateAllocate(i32, "p");
-    auto i = irb->GetConstantInt(irb->GetInt32Ty(), 1);
     irb->CreateStore(i, x);
     auto rv =irb->CreateLoad(i32, x);
     irb->CreateAdd(rv, rv);
+    blockDFSCalulator bdc;
+    vector<BasicBlock *> postOrder;
+    bdc.calculateBBPostOrder(postOrder, b0);
+    LivenessAnalysis la;
+    la.instLivenessCalculator(postOrder);
+    la.printLivenessInfo();
     m.print();
 
 }
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
-    testing::FLAGS_gtest_filter = "IR_TEST.SSA";
+    testing::FLAGS_gtest_filter = "IR_TEST.LIVENESS";
     return RUN_ALL_TESTS();
 }
