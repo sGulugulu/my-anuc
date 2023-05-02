@@ -48,6 +48,7 @@ namespace anuc {
         ValueKind getKind() { return kind; }
         void insertBackToUses(Use *u);
         void printAllUsers();
+        //请搭配内存管理使用
         void replaceAllUseWith(Value *v);
         bool usesEmpty() {return uses.empty();}
         alist<Use>::iterator getUsesBegin() {return uses.begin();}
@@ -74,6 +75,7 @@ namespace anuc {
         vector<Use>::iterator getBegin() {return operands.begin();}
         vector<Use>::iterator getEnd() {return operands.end();}
     };
+
 
 }
 

@@ -134,7 +134,7 @@ namespace anuc {
             //    std::cerr << "the type is not a integer!" << std::endl;
         }
 
-        bool static classof(Value *v) { return v->getKind() >= Value::VK_ConstantInt; }
+        bool static classof(Value *v) { return v->getKind() == Value::VK_ConstantInt; }
 
         int getValue() { return value; }
         string toString() {return to_string(value);}
