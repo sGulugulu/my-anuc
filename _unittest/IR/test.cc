@@ -61,65 +61,6 @@ TEST(IR_TEST, BUILDER_CONST) {
     cout << ii->getValue() << endl;
 
 }
-TEST(IR_TEST, DOMTREE) {
-    Module m;
-    IRBuilder *irb = new IRBuilder(m);
-    auto i32 = irb->GetInt32Ty();
-    auto ci = irb->GetConstantInt(i32, 23);
-    vector<Type *> a;
-    a.push_back(i32);
-    FunctionType *ftp = irb->GetFunctionType(i32, a);
-    vector<string> p;
-    p.push_back("a");
-    irb->CreateFunction(ftp, "mian", p);
-
-    auto b1 = irb->GetBasicBlock("0");
-    auto b2 = irb->GetBasicBlock("1");
-    auto b3 = irb->GetBasicBlock("2");
-    auto b4 = irb->GetBasicBlock("3");
-    auto b5 = irb->GetBasicBlock("4");
-    auto b6 = irb->GetBasicBlock("5");
-    b6->pushBackToSucc(b5);
-    b6->pushBackToSucc(b4);
-    b4->pushBackToPred(b6);
-    b5->pushBackToPred(b6);
-
-    b5->pushBackToSucc(b1);
-    b1->pushBackToPred(b5);
-
-
-    b4->pushBackToSucc(b2);
-    b4->pushBackToSucc(b3);
-    b2->pushBackToPred(b4);
-    b3->pushBackToPred(b4);
-
-    b3->pushBackToSucc(b2);
-    b2->pushBackToPred(b3);
-
-    b2->pushBackToSucc(b1);
-    b2->pushBackToSucc(b3);
-    b3->pushBackToPred(b2);
-    b1->pushBackToPred(b2);
-
-    b1->pushBackToSucc(b2);
-    b2->pushBackToPred(b1);
-
-
-    irb->SetBlockInsert(b1);
-    irb->SetBlockInsert(b2);
-    irb->SetBlockInsert(b3);
-    irb->SetBlockInsert(b4);
-    irb->SetBlockInsert(b5);
-    irb->SetBlockInsert(b6);
-
-    vector<BasicBlock *> postOrder;
-    blockDFSCalulator::calculateBBPostOrder(postOrder, b6);
-    BlockDomTree dt;
-    dt.blockDomTreeCalulator(postOrder);
-    auto dom = dt.getDoms();
-    for(int i = 0; i != dom.size(); i++) cout << i << " : " << dom[i] << endl;
-
-}
 TEST(IR_TEST, SSA) {
     Module m;
     IRBuilder *irb = new IRBuilder(m);
@@ -167,7 +108,6 @@ TEST(IR_TEST, SSA) {
     func->getParent()->print();
     cout << "---------------------------" << endl;
 }
-
 TEST(IR_TEST, LIVENESS) {
     Module m;
     IRBuilder *irb = new IRBuilder(m);
@@ -177,15 +117,41 @@ TEST(IR_TEST, LIVENESS) {
     FunctionType *ftp = irb->GetFunctionType(i32, a);
     vector<string> p;
     p.push_back("a");
-    auto i = irb->GetConstantInt(irb->GetInt32Ty(), 1);
-
+    auto i1 = irb->GetConstantInt(irb->GetInt32Ty(), 1);
     auto func = irb->CreateFunction(ftp, "mian", p);
-    auto b0 = irb->GetBasicBlock("entry");
+    auto b0 = irb->GetBasicBlock("0");
+    auto b1 = irb->GetBasicBlock("1");
+    auto b2 = irb->GetBasicBlock("2");
+    auto b3 = irb->GetBasicBlock("3");
+    auto b4 = irb->GetBasicBlock("4");
+    b0->pushBackToSucc(b1, b2);
+    b1->pushBackToSucc(b3);
+    b2->pushBackToSucc(b3);
+    b3->pushBackToSucc(b4);
+    b1->pushBackToPred(b0);
+    b2->pushBackToPred(b0);
+    b3->pushBackToPred(b1, b2);
+    b4->pushBackToPred(b3);
     irb->SetBlockInsert(b0);
     auto x = irb->CreateAllocate(i32, "p");
-    irb->CreateStore(i, x);
-    auto rv =irb->CreateLoad(i32, x);
-    irb->CreateAdd(rv, rv);
+    auto i = irb->GetConstantInt(irb->GetInt32Ty(), 1);
+    auto i2 = irb->GetConstantInt(irb->GetInt32Ty(), 2);
+    auto i3 = irb->GetConstantInt(irb->GetInt32Ty(), 3);
+    auto y = irb->CreateAdd(i, i2);
+    irb->SetBlockInsert(b1);
+    irb->CreateStore(i3, x);
+
+    irb->SetBlockInsert(b2);
+    irb->CreateStore(i2, x);
+
+    irb->SetBlockInsert(b3);
+    auto llL = irb->CreateLoad(i32, x);
+
+    irb->SetBlockInsert(b4);
+    auto ll = irb->CreateLoad(i32, x);
+    irb->CreateAdd(ll, ll);
+
+
     blockDFSCalulator bdc;
     vector<BasicBlock *> postOrder;
     bdc.calculateBBPostOrder(postOrder, b0);
