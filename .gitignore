@@ -1,4 +1,6 @@
-\.idea
+.idea
+.vscode/*
 build
-cmake\-build\-debug
-\.DS_Store
+cmake-build-debug/*
+_note/*
+_unittest/*
