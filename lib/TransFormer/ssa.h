@@ -86,7 +86,8 @@ namespace anuc{
             dt.blockDomTreeCalulator(postOrder);
 
             for(auto  i = entry->getBegin(); i != entry->getEnd(); ++i)
-                if (AllocateInst *ai = dyn_cast<AllocateInst>(&(*i))) allocas.push_back(ai);
+                if (AllocateInst *ai = dyn_cast<AllocateInst>(&(*i)))
+                    if(!isa<ArrayType>(ai->getType()))allocas.push_back(ai);
 
             //遍历所有的alloca
             for(int idx = 0; idx < allocas.size(); idx++) {
@@ -263,7 +264,7 @@ namespace anuc{
                         //如果为load，将load的所有user改为incoming的值
                         if (LoadInst *li = dyn_cast<LoadInst>(inst)) {
                             PointerVar *pv = cast<PointerVar>(li->getPointerVar());
-                            Value *v = incomingValues[pv->getInst()];
+                            Value *v = incomingValues[cast<AllocateInst>(pv->getInst())];
                             li->getResult()->replaceAllUseWith(v);
                             li->earseFromParent();
                             func->getParent()->earseFromValuePool(v);
@@ -272,7 +273,7 @@ namespace anuc{
                         //如果为store，则修改incoming的值为store的值
                         else if(StoreInst *si = dyn_cast<StoreInst>(inst)) {
                             PointerVar *pv = cast<PointerVar>(si->getPointerVar());
-                            incomingValues[pv->getInst()] = si->getValue();
+                            incomingValues[cast<AllocateInst>(pv->getInst())] = si->getValue();
                             si->earseFromParent();
                         }
                     }

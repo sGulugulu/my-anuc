@@ -180,13 +180,40 @@ namespace anuc {
             for(auto u = operands.begin(); u != operands.end(); ++u) u->earse();
             auto m = this->getParent()->getParent()->getParent();
             auto i = m->lookUpValuePool(this);
-            this->print();
             i->second = false;
             this->earse();
         }
         virtual Value *getResult() { return nullptr; }
     };
 
+    //get element ptr
+    class GEPInst : public Instruction {
+        Type *type;
+        Value *ptr;
+        Value *idx;
+        PointerVar *elementPtr; //创建出的结果
+    public:
+        GEPInst(BasicBlock *parent, Type *ty, Value *ptr, Value *idx, PointerVar *elementPtr):
+                Instruction(VK_GEPInst, parent), type(ty), ptr(ptr), idx(idx), elementPtr(elementPtr) {
+            Use op0(ptr, this);
+            Use op1(idx, this);
+            operands.push_back(op0);
+            operands.push_back(op1);
+            ptr->insertBackToUses(&operands[0]);
+            idx->insertBackToUses(&operands[1]);
+            elementPtr->setInst(this);
+        }
+        bool static classof(Value *v) {return v->getKind() == VK_GEPInst;}
+        Value *getPtr() {return ptr;}
+        Value *getIdx() {return idx;}
+        Value *getResult() { return elementPtr;}
+        void print() {
+            cout << "  %"<< elementPtr->getName() << " = getelementptr" + type->toString() +
+            ", " << operands[0].value->getType()->toString() << operands[0].value->toString()
+            << ", " << operands[1].value->getType()->toString() << operands[1].value->toString()
+            << endl;
+        }
+    };
 
     //allocate/store/load
     class AllocateInst : public Instruction {
@@ -195,9 +222,9 @@ namespace anuc {
     public:
         AllocateInst &operator=(const AllocateInst &) = delete;
 
-        AllocateInst(BasicBlock *parent, Type *type,  PointerVar *pointVar) : Instruction(Value::VK_AllocaInst, parent),
+        AllocateInst(BasicBlock *parent, Type *type, PointerVar *pointVar) : Instruction(Value::VK_AllocaInst, parent),
                                                                     type(type),  pointVar(pointVar) {
-            pointVar->setAllocateInst(this);
+            pointVar->setInst(this);
         }
         bool static classof(Value *v) { return v->getKind() == VK_AllocaInst; }
         Value *getResult() {
@@ -208,7 +235,7 @@ namespace anuc {
         }
         void setPointerVar(PointerVar *p) { pointVar = p;}
 
-        void print() {cout << "  %"<< pointVar->getName() << " = alloca, align 4" << endl;}
+        void print() {cout << "  %"<< pointVar->getName() << " = alloca " << type->toString() << " , align 4" << endl;}
     };
 
     class StoreInst : public Instruction {
@@ -308,6 +335,7 @@ namespace anuc {
             Use op1(R, this);
             operands.push_back(op0);
             operands.push_back(op1);
+            rv->setInst(this);
             L->insertBackToUses(&operands[0]);
             R->insertBackToUses(&operands[1]);
         }

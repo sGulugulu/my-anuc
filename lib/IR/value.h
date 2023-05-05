@@ -20,6 +20,7 @@ namespace anuc {
             VK_BasicBlock,
 
             VK_Instruction,
+            VK_GEPInst,
             VK_AllocaInst,
             VK_StoreInst,
             VK_LoadInst,

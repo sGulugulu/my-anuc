@@ -105,8 +105,7 @@ TEST(IR_TEST, SSA) {
     m.print();
     cout << "---------------------------" << endl;
     SSAPass(func).run();
-    func->getParent()->print();
-    cout << "---------------------------" << endl;
+    m.print();
 }
 TEST(IR_TEST, LIVENESS) {
     Module m;
@@ -166,9 +165,9 @@ TEST(IR_TEST, A) {
     Module m;
     IRBuilder *irb = new IRBuilder(m);
     auto i32 = irb->GetInt32Ty();
-    auto flo = irb->GetFloatTy();
-    auto i1 = irb->GetConstantInt(irb->GetInt32Ty(), 1);
-    auto f = irb->GetConstantFloat(flo, 2.222);
+    auto const3 = irb->GetConstantInt(i32, 3);
+    auto const12 = irb->GetConstantInt(i32, 12);
+    auto const1 = irb->GetConstantInt(i32, 1);
     vector<Type *> a;
     a.push_back(i32);
     FunctionType *ftp = irb->GetFunctionType(i32, a);
@@ -177,21 +176,17 @@ TEST(IR_TEST, A) {
     irb->CreateFunction(ftp, "mian", p);
     auto b0 = irb->GetBasicBlock("0");
     irb->SetBlockInsert(b0);
-
-    auto b = irb->CreateGlobalVar(flo, "fff", f);
-    irb->CreateStore(f, b);
-    auto gb = irb->CreateLoad(flo, b);
-
-    auto x = irb->CreateAllocate(i32, "x");
-    auto var = irb->CreateLoad(i32, x);
-    irb->CreateGlobalVar(i32, "a", i1);
-    irb->CreateAdd(var, var);
+    auto aty1 = irb->GetArrayTy(i32, 3);
+    auto aty2 = irb->GetArrayTy(aty1, 4);
+    irb->CreateGlobalVar(aty2, "array", const1);
+    auto ptr1 = irb->CreateAllocate(aty2, "x");
+    auto gep = irb->CreateGEP(aty2, ptr1, const1);
     m.print();
 
 }
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
-    testing::FLAGS_gtest_filter = "IR_TEST.A";
+    testing::FLAGS_gtest_filter = "IR_TEST.SSA";
     return RUN_ALL_TESTS();
 }
