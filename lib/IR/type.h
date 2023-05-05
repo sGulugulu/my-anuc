@@ -90,6 +90,10 @@ namespace anuc {
 
         bool isArrayType() { return true; }
 
+        string toString() {
+            return '[' + to_string(size) + " x " + type->toString() + ']';
+        }
+
     };
 
     class FunctionType : public Type {
@@ -184,15 +188,15 @@ namespace anuc {
     class PointerVar : public Value {
         std::string name;
         Type *type;
-        AllocateInst *def{nullptr};
+        Instruction *def{nullptr};
     public:
         PointerVar(Type *ty, string name): Value(VK_PointerVar), type(ty), name(name) {}
         bool static classof(Value *v) { return v->getKind() == VK_PointerVar; }
 
-        void setAllocateInst(AllocateInst *a) { def = a;}
+        void setInst(Instruction *a) { def = a;}
         string getName() {return name;}
         Type *getType() {return type;}
-        AllocateInst *getInst() {return def;}
+        Instruction *getInst() {return def;}
         string toString() {
             return "* %" + name;
         }
@@ -203,13 +207,18 @@ namespace anuc {
         string name;
         Type *type;
         Constant *initValue;
+        bool isArray{false};
     public:
-        GlobalVar(Type *ty, string name, Constant *initValue): Value(VK_GlobalVar), type(ty), name(name), initValue(initValue) {}
+        GlobalVar(Type *ty, string name, Constant *initValue): Value(VK_GlobalVar), type(ty), name(name), initValue(initValue) {
+            if (isa<ArrayType>(ty)) isArray = true;
+        }
+
         bool static classof(Value *v) { return v->getKind() == VK_GlobalVar; }
 
         void setInitValue(Constant *v) {
             initValue = v;
         }
+
         string getName() { return name; }
         Type *getType() { return type;}
         string toString() { return "* @" + name; }

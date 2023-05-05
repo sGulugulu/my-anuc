@@ -109,7 +109,6 @@ namespace anuc {
                 return ci;
             }
             return i->second;
-
         }
 
         ConstantFloat *GetConstantFloat(Type *ty, float value) {
@@ -126,7 +125,7 @@ namespace anuc {
         }
         //创建全局变量
         GlobalVar *CreateGlobalVar(Type *ty, string name, Constant *init) {
-            if (init->getType() != ty) cerr << "警告：全局变量存在类型不匹配！" << endl;
+            if (!isa<ArrayType>(ty) && init->getType() != ty) cerr << "警告：全局变量存在类型不匹配！" << endl;
             GlobalVar *global = new GlobalVar(ty, name, init);
             modu.insertBackToChild(global);
             if (!modu.insertGlobal(name, global))  cerr << "全局变量创建错误！" << endl;
@@ -153,6 +152,7 @@ namespace anuc {
             return bb;
         }
 
+        //设置插入指令的块
         void SetBlockInsert(BasicBlock *bb) {
             if(! bbName.insert({{currentFunc, bb->getName()}, 0}).second) {
                 bb->getName() = bb->getName() + to_string(++bbName[{currentFunc, bb->getName()}]);
@@ -167,6 +167,18 @@ namespace anuc {
             return;
         }
 
+        //数组操作
+        //get element ptr
+        PointerVar *CreateGEP(Type *ty, Value *ptr, Value *idx) {
+            string name = "p" + to_string(registerVarNameNum++);
+            PointerVar *elementPtr = new PointerVar(ty, name);
+            GEPInst *gepInst = new GEPInst(currentBlock, ty, ptr, idx, elementPtr);
+            currentBlock->insertBackToChild(gepInst);
+            modu.insertIntoPool(elementPtr, gepInst);
+            return elementPtr;
+        }
+
+        //alloca store load
         PointerVar* CreateAllocate(Type *ty, string name) {
             if(!pointerVarName.insert({name, 0}).second)
                 name = name + (to_string(++pointerVarName[name]));
@@ -194,6 +206,7 @@ namespace anuc {
             return rv;
         }
 
+        //二元运算
         Value *CreateAdd(Value *L, Value *R) {
             if(isPointerVar(L, R)) cerr << "the addinst has a pointer!";
             if(isa<Constant>(L) && isa<Constant>(R)) {
@@ -206,7 +219,6 @@ namespace anuc {
             assert(L->getType() != nullptr && "the value have null type");
             RegisterVar* rv = new RegisterVar(L->getType() , name);
             AddInst * ai = new AddInst(currentBlock, L, R, rv);
-            rv->setInst(ai);
             currentBlock->insertBackToChild(ai);
             modu.insertIntoPool(rv, ai);
             return rv;
