@@ -8,12 +8,20 @@ namespace anuc {
         childlist.insert_back(f);
     }
 
-    void Module::insertFrontTochild(Function *f) {
+    void Module::insertFrontToChild(Function *f) {
         childlist.insert_front(f);
+    }
+
+    void Module::insertBackToChild(GlobalVar *v) {
+        globalVarList.insert_back(v);
     }
 
     bool Module::insertFunc(string name, Function *f) {
         return funcLookUp.insert({name, f}).second;
+    }
+
+    bool Module::insertGlobal(string name, GlobalVar *g) {
+        return globalLookUp.insert({name, g}).second;
     }
 
     map<Value *, bool>::iterator Module::insertIntoPool(Value *v,Value * rest...) {
@@ -51,6 +59,7 @@ namespace anuc {
 
     void Module::print() {
         cout << "module nyb:" << endl;
+        for (auto i = globalVarList.begin(); i != globalVarList.end(); ++i) (*i).print();
         for (auto i = childlist.begin(); i != childlist.end(); ++i) (*i).print();
     }
 
@@ -74,7 +83,7 @@ namespace anuc {
         childlist.insert_back(i);
     }
 
-    void BasicBlock::insertFrontTochild(Instruction *i) {
+    void BasicBlock::insertFrontToChild(Instruction *i) {
         childlist.insert_front(i);
     }
 

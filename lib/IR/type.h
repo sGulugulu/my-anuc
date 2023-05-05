@@ -6,6 +6,8 @@
 
 #include <iostream>
 #include <string>
+#include "../ADT/alist.h"
+#include "../ADT/rtti.h"
 #include "value.h"
 using namespace std;
 //类型系统
@@ -196,6 +198,29 @@ namespace anuc {
         }
     };
     /*-----------------------------------------*/
+    //全局变量（实际上也是指针）
+    class GlobalVar : public Value, public alist_node<GlobalVar> {
+        string name;
+        Type *type;
+        Constant *initValue;
+    public:
+        GlobalVar(Type *ty, string name, Constant *initValue): Value(VK_GlobalVar), type(ty), name(name), initValue(initValue) {}
+        bool static classof(Value *v) { return v->getKind() == VK_GlobalVar; }
+
+        void setInitValue(Constant *v) {
+            initValue = v;
+        }
+        string getName() { return name; }
+        Type *getType() { return type;}
+        string toString() { return "* @" + name; }
+        void print() {
+            if(isa<ConstantInt>(initValue))
+                cout << "@" + name + " = global " + type->toString() << " " << cast<ConstantInt>(initValue)->getValue();
+            if(isa<ConstantFloat>(initValue))
+                cout << "@" + name + " = global " + type->toString() << " " << cast<ConstantFloat>(initValue)->getValue();
+            cout << ", align 4" << endl;
+        }
+    };
 
 
 }

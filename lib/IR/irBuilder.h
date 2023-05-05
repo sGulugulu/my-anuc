@@ -71,7 +71,7 @@ namespace anuc {
         Type *GetFloatTy() {
             auto i = typeLookUp.find(Type::TK_Float);
             if (i == typeLookUp.end()) {
-                Type *ty = new Int32Type();
+                Type *ty = new FloatType();
                 typeLookUp.insert(pair<Type::TypeKind, Type *>
                                           (Type::TK_Float, ty));
                 modu.insertIntoPool(ty);
@@ -124,6 +124,18 @@ namespace anuc {
             return i->second;
 
         }
+        //创建全局变量
+        GlobalVar *CreateGlobalVar(Type *ty, string name, Constant *init) {
+            if (init->getType() != ty) cerr << "警告：全局变量存在类型不匹配！" << endl;
+            GlobalVar *global = new GlobalVar(ty, name, init);
+            modu.insertBackToChild(global);
+            if (!modu.insertGlobal(name, global))  cerr << "全局变量创建错误！" << endl;
+            return global;
+        }
+        //查找全局变量
+        GlobalVar *LookUpGlobalVar(string name) {
+            return modu.lookUpGlobalVar(name);
+        }
 
         //创建函数
         Function *CreateFunction(FunctionType *type, string name, vector<string> &params) {
@@ -166,13 +178,13 @@ namespace anuc {
             return pv;
         }
 
-        void CreateStore(Value *v, PointerVar *ptr) {
+        void CreateStore(Value *v, Value *ptr) {
             StoreInst *si = new StoreInst(currentBlock, v, ptr);
             currentBlock->insertBackToChild(si);
             modu.insertIntoPool(si);
         }
 
-        RegisterVar *CreateLoad(Type *ty, PointerVar *ptr) {
+        RegisterVar *CreateLoad(Type *ty, Value *ptr) {
             string name = "x" + to_string(registerVarNameNum++);
             RegisterVar* rv = new RegisterVar(ty, name);
             LoadInst *li = new LoadInst(currentBlock, ty, ptr, rv);
@@ -211,7 +223,7 @@ namespace anuc {
 
     private:
         bool isPointerVar(Value *a) {
-            return PointerVar::classof(a);
+            return PointerVar::classof(a) || GlobalVar::classof(a);
         }
         bool isPointerVar(Value *a, Value *rest ...) {
             return isPointerVar(a) || isPointerVar(rest);

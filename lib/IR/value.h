@@ -35,7 +35,8 @@ namespace anuc {
             VK_ConstantInt,
             VK_LastConstant,
             VK_PointerVar,
-            VK_RegisterVar
+            VK_RegisterVar,
+            VK_GlobalVar
         };
     private:
         const ValueKind kind;
