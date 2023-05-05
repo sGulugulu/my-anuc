@@ -173,7 +173,7 @@ TEST(IR_TEST, A) {
     FunctionType *ftp = irb->GetFunctionType(i32, a);
     vector<string> p;
     p.push_back("a");
-    irb->CreateFunction(ftp, "mian", p);
+    auto func = irb->CreateFunction(ftp, "mian", p);
     auto b0 = irb->GetBasicBlock("0");
     irb->SetBlockInsert(b0);
     auto aty1 = irb->GetArrayTy(i32, 3);
@@ -181,12 +181,14 @@ TEST(IR_TEST, A) {
     irb->CreateGlobalVar(aty2, "array", const1);
     auto ptr1 = irb->CreateAllocate(aty2, "x");
     auto gep = irb->CreateGEP(aty2, ptr1, const1);
+    SSAPass(func).run();
     m.print();
+
 
 }
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
-    testing::FLAGS_gtest_filter = "IR_TEST.SSA";
+    testing::FLAGS_gtest_filter = "IR_TEST.A";
     return RUN_ALL_TESTS();
 }
