@@ -162,8 +162,36 @@ TEST(IR_TEST, LIVENESS) {
 
 }
 
+TEST(IR_TEST, A) {
+    Module m;
+    IRBuilder *irb = new IRBuilder(m);
+    auto i32 = irb->GetInt32Ty();
+    auto flo = irb->GetFloatTy();
+    auto i1 = irb->GetConstantInt(irb->GetInt32Ty(), 1);
+    auto f = irb->GetConstantFloat(flo, 2.222);
+    vector<Type *> a;
+    a.push_back(i32);
+    FunctionType *ftp = irb->GetFunctionType(i32, a);
+    vector<string> p;
+    p.push_back("a");
+    irb->CreateFunction(ftp, "mian", p);
+    auto b0 = irb->GetBasicBlock("0");
+    irb->SetBlockInsert(b0);
+
+    auto b = irb->CreateGlobalVar(flo, "fff", f);
+    irb->CreateStore(f, b);
+    auto gb = irb->CreateLoad(flo, b);
+
+    auto x = irb->CreateAllocate(i32, "x");
+    auto var = irb->CreateLoad(i32, x);
+    irb->CreateGlobalVar(i32, "a", i1);
+    irb->CreateAdd(var, var);
+    m.print();
+
+}
+
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
-    testing::FLAGS_gtest_filter = "IR_TEST.LIVENESS";
+    testing::FLAGS_gtest_filter = "IR_TEST.A";
     return RUN_ALL_TESTS();
 }

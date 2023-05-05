@@ -10,6 +10,7 @@
 #include <map>
 #include <set>
 #include "../ADT/alist.h"
+#include "../ADT/rtti.h"
 #include "type.h"
 
 using namespace std;
@@ -22,14 +23,27 @@ namespace anuc {
 
     class Module {
         alist<Function> childlist;
+        alist<GlobalVar> globalVarList;
         //存储所有函数并查找
         map<string, Function *> funcLookUp;
+        //存储所有全局变量并查找
+        map<string, GlobalVar *> globalLookUp;
+        //内存管理池
         map<Value *, bool> valuePool;
         set<Type *> typePool;
     public:
         void insertBackToChild(Function *f);
-        void insertFrontTochild(Function *f);
+        void insertFrontToChild(Function *f);
+        void insertBackToChild(GlobalVar *v);
         bool insertFunc(string name, Function *f);
+        bool insertGlobal(string name, GlobalVar *v);
+        //查找全局变量
+        GlobalVar *lookUpGlobalVar(string name) {
+            auto p = globalLookUp.find(name);
+            if (p == globalLookUp.end()) return nullptr;
+            else return p->second;
+        }
+
         //进行内存管理，将new出来的东西插入内存池
         map<Value *, bool>::iterator insertIntoPool(Value *v);
         map<Value *, bool>::iterator insertIntoPool(Value *v, Value *rest...);
@@ -70,7 +84,7 @@ namespace anuc {
 
         void insertBackToChild(BasicBlock *b);
 
-        void insertFrontTochild(BasicBlock *b);
+        void insertFrontToChild(BasicBlock *b);
 
         alist<BasicBlock>::iterator getBegin() {return childlist.begin();}
         alist<BasicBlock>::iterator getEnd() {return childlist.end();}
@@ -106,7 +120,7 @@ namespace anuc {
         bool terminated() {return isterminated;}
 
         void insertBackToChild(Instruction *i);
-        void insertFrontTochild(Instruction *i);
+        void insertFrontToChild(Instruction *i);
         void pushBackToPred(BasicBlock *bb) {pred.push_back(bb);}
         void pushBackToPred(BasicBlock *bb, BasicBlock *rest ...) {
             pushBackToPred(bb);
@@ -199,7 +213,8 @@ namespace anuc {
 
     class StoreInst : public Instruction {
     public:
-        StoreInst(BasicBlock *parent, Value *v, PointerVar *ptr): Instruction(VK_StoreInst, parent) {
+        StoreInst(BasicBlock *parent, Value *v, Value *ptr): Instruction(VK_StoreInst, parent) {
+            if (isa<PointerVar>(ptr) && isa<GlobalVar>(ptr) ) cerr << "store的操作数既不是指针也不是全局变量！" << endl;
             Use op0(v, this);
             Use op1(ptr, this);
             operands.push_back(op0);
@@ -211,7 +226,7 @@ namespace anuc {
         Value *getValue() {return operands[0].value;}
         Value *getPointerVar() {return operands[1].value;}
         void print() {
-            cout << "  store "<< operands[1].value->getType()->toString() << " " << operands[0].value->toString()
+            cout << "  store "<< operands[0].value->getType()->toString() << " " << operands[0].value->toString()
             << ", " << operands[1].value->getType()->toString() << operands[1].value->toString() <<", align 4" << endl;
         }
 
@@ -221,7 +236,8 @@ namespace anuc {
         Type *ty;
         RegisterVar *rv;
     public:
-        LoadInst(BasicBlock *parent,Type *ty, PointerVar *ptr, RegisterVar *rv):Instruction(VK_LoadInst, parent),ty(ty),rv(rv) {
+        LoadInst(BasicBlock *parent,Type *ty, Value *ptr, RegisterVar *rv):Instruction(VK_LoadInst, parent),ty(ty),rv(rv) {
+            if (isa<PointerVar>(ptr) && isa<GlobalVar>(ptr) ) cerr << "load的操作数既不是指针也不是全局变量！" << endl;
             Use op0(ptr, this);
             operands.push_back(op0);
             ptr->insertBackToUses(&operands[0]);
@@ -251,7 +267,7 @@ namespace anuc {
             auto rv = new RegisterVar(ty, name);
             auto pi = new PhiInst(insertFront, ty, rv);
             rv->setInst(pi);
-            insertFront->insertFrontTochild(pi);
+            insertFront->insertFrontToChild(pi);
             return pi;
         }
         void print() {
