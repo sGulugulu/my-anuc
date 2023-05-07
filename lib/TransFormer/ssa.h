@@ -103,7 +103,7 @@ namespace anuc{
                 allocaInfo.calculateAllocaInfo(pv);
                 //只读不存，有问题
                 if (allocaInfo.storeBlocks.empty()) {
-                    cerr << "the var haven't defined!";
+                    cerr << "ssa pass发现一个未赋值的变量!" << endl;
                 }
 
                 BlockInfo blockInfo;
@@ -135,7 +135,6 @@ namespace anuc{
                         rv->replaceAllUseWith(storeValue);
                         blockInfo.instToIdx.erase(li);
                         li->earseFromParent();
-                        func->getParent()->earseFromValuePool(rv);
                     }
                     removeFromAllocate(idx);
                     continue;

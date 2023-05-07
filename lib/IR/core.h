@@ -59,7 +59,10 @@ namespace anuc {
         int memoryClean();
         //打印整个模块
         void print();
-
+        alist<Function>::iterator getBegin() {return childlist.begin();}
+        alist<Function>::iterator getEnd() {return childlist.end();}
+        alist<GlobalVar>::iterator getGlobalBegin() {return globalVarList.begin();}
+        alist<GlobalVar>::iterator getGlobalEnd() {return globalVarList.end();}
         ~Module();
     };
 
@@ -175,9 +178,8 @@ namespace anuc {
             return &operands[n];
         }
 
-        //删除并且清空相应的user，最后释放空间
+        //删除，最后释放空间
         void earseFromParent() {
-            for(auto u = operands.begin(); u != operands.end(); ++u) u->earse();
             auto m = this->getParent()->getParent()->getParent();
             auto i = m->lookUpValuePool(this);
             i->second = false;

@@ -120,6 +120,28 @@ namespace anuc {
                 cout << "\n";
             }
         }
+
+        void printModuleWithLiveness(Module &modu) {
+            cout << "module nyb:" << endl;
+            for (auto i = modu.getGlobalBegin(); i != modu.getGlobalEnd(); ++i) (*i).print();
+            for (auto f = modu.getBegin(); f != modu.getEnd(); ++f) {
+                auto func = &*f;
+                for (auto b = func->getBegin(); b != func->getEnd(); ++b) {
+                    auto block = &*b;
+                    for(auto i = block->getBegin(); i != block->getEnd(); ++i) {
+                        auto inst = &*i;
+                        inst->print();
+                        auto info = insturctionLivenessInfo[inst];
+                        cout << "live in :";
+                        for(auto v : info.liveIn) cout << v ->toString() << "  ";
+                        cout << "\nlive out :";
+                        for(auto v : info.liveOut) cout << v ->toString() << "  ";
+                        cout << endl;
+                    }
+                }
+            }
+        }
+
     };
 
 }

@@ -156,9 +156,8 @@ TEST(IR_TEST, LIVENESS) {
     bdc.calculateBBPostOrder(postOrder, b0);
     LivenessAnalysis la;
     la.instLivenessCalculator(postOrder);
-    la.printLivenessInfo();
+    la.printModuleWithLiveness(m);
     m.print();
-
 }
 
 TEST(IR_TEST, A) {
@@ -176,14 +175,27 @@ TEST(IR_TEST, A) {
     auto func = irb->CreateFunction(ftp, "mian", p);
     auto b0 = irb->GetBasicBlock("0");
     irb->SetBlockInsert(b0);
-    auto aty1 = irb->GetArrayTy(i32, 3);
-    auto aty2 = irb->GetArrayTy(aty1, 4);
-    irb->CreateGlobalVar(aty2, "array", const1);
-    auto ptr1 = irb->CreateAllocate(aty2, "x");
-    auto gep = irb->CreateGEP(aty2, ptr1, const1);
+    auto ai1 = irb->CreateAllocate(i32, "ai1");
+    auto ai2 = irb->CreateAllocate(i32, "ai2");
+    auto ai3 = irb->CreateAllocate(i32, "ai3");
+    auto ai4 = irb->CreateAllocate(i32, "ai4");
+    irb->CreateStore(const3, ai1);
+    irb->CreateStore(const3, ai2);
+    irb->CreateStore(const12, ai3);
+    irb->CreateStore(const1, ai4);
+    auto x1 = irb->CreateLoad(i32, ai1);
+    auto x2 = irb->CreateLoad(i32, ai2);
+    auto x3 = irb->CreateLoad(i32, ai3);
+    auto x4 = irb->CreateLoad(i32, ai4);
+    auto a1 = irb->CreateAdd(x1, x1);
     SSAPass(func).run();
     m.print();
-
+    blockDFSCalulator bdc;
+    vector<BasicBlock *> postOrder;
+    bdc.calculateBBPostOrder(postOrder, b0);
+    LivenessAnalysis la;
+    la.instLivenessCalculator(postOrder);
+    la.printModuleWithLiveness(m);
 
 }
 
