@@ -196,7 +196,7 @@ namespace anuc {
         void setInst(Instruction *a) { def = a;}
         string getName() {return name;}
         Type *getType() {return type;}
-        Instruction *getInst() {return def;}
+        Instruction *getDef() {return def;}
         string toString() {
             return "* %" + name;
         }

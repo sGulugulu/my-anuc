@@ -10,6 +10,7 @@
 #include "../../lib/Analysis/livenessAnalysis.h"
 #include "../../lib/ADT/blockDomTree.h"
 #include "../../lib/TransFormer/ssa.h"
+#include "../../lib/TransFormer/scheduleBeforeRA.h"
 using namespace anuc;
 using namespace std;
 //测试type功能
@@ -90,9 +91,15 @@ TEST(IR_TEST, SSA) {
     auto i = irb->GetConstantInt(irb->GetInt32Ty(), 1);
     auto i2 = irb->GetConstantInt(irb->GetInt32Ty(), 2);
     auto i3 = irb->GetConstantInt(irb->GetInt32Ty(), 3);
+    auto x2 = irb->CreateAllocate(i32, "x2");
+    irb->CreateStore(i2, x2);
+    irb->CreateStore(i3, x2);
+    irb->CreateLoad(i32, x2);
     auto y = irb->CreateAdd(i, i2);
     irb->SetBlockInsert(b1);
     irb->CreateStore(i3, x);
+    auto lx = irb->CreateLoad(i32, x);
+    irb->CreateAdd(lx, lx);
 
     irb->SetBlockInsert(b2);
     irb->CreateStore(i2, x);
@@ -176,26 +183,29 @@ TEST(IR_TEST, A) {
     auto b0 = irb->GetBasicBlock("0");
     irb->SetBlockInsert(b0);
     auto ai1 = irb->CreateAllocate(i32, "ai1");
-    auto ai2 = irb->CreateAllocate(i32, "ai2");
-    auto ai3 = irb->CreateAllocate(i32, "ai3");
-    auto ai4 = irb->CreateAllocate(i32, "ai4");
     irb->CreateStore(const3, ai1);
-    irb->CreateStore(const3, ai2);
-    irb->CreateStore(const12, ai3);
-    irb->CreateStore(const1, ai4);
+    irb->CreateStore(const12, ai1);
     auto x1 = irb->CreateLoad(i32, ai1);
-    auto x2 = irb->CreateLoad(i32, ai2);
-    auto x3 = irb->CreateLoad(i32, ai3);
-    auto x4 = irb->CreateLoad(i32, ai4);
-    auto a1 = irb->CreateAdd(x1, x1);
-    SSAPass(func).run();
+    auto x2 = irb->CreateLoad(i32, ai1);
+    auto x3 = irb->CreateLoad(i32, ai1);
+    auto x4 = irb->CreateLoad(i32, ai1);
+    auto a1 = irb->CreateAdd(x1, x2);
+    auto a2 = irb->CreateAdd(x3, x4);
+    irb->CreateBr(b0);
+    //SSAPass(func).run();
     m.print();
     blockDFSCalulator bdc;
     vector<BasicBlock *> postOrder;
     bdc.calculateBBPostOrder(postOrder, b0);
     LivenessAnalysis la;
     la.instLivenessCalculator(postOrder);
-    la.printModuleWithLiveness(m);
+
+
+    ScheduleBRPass sra(la);
+    sra.build(b0);
+    sra.schedule();
+
+    m.print();
 
 }
 

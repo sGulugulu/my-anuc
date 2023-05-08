@@ -6,8 +6,8 @@
 #define ANUC_LIVENESSANALYSIS_H
 #include <set>
 #include <vector>
-#include "../IR/core.h"
-#include "../ADT/rtti.h"
+#include "core.h"
+#include "rtti.h"
 using namespace std;
 namespace anuc {
     //记录每个指令livein和liveout
@@ -129,19 +129,44 @@ namespace anuc {
                 for (auto b = func->getBegin(); b != func->getEnd(); ++b) {
                     auto block = &*b;
                     for(auto i = block->getBegin(); i != block->getEnd(); ++i) {
+                        cout << "--------------------" << endl;
                         auto inst = &*i;
                         inst->print();
                         auto info = insturctionLivenessInfo[inst];
-                        cout << "live in :";
+                        cout << "  live in :";
                         for(auto v : info.liveIn) cout << v ->toString() << "  ";
-                        cout << "\nlive out :";
+                        cout << "\n  live out :";
                         for(auto v : info.liveOut) cout << v ->toString() << "  ";
-                        cout << endl;
+                        cout << "\n" << endl;
                     }
                 }
             }
         }
 
+        void printBlockWithLiveness(BasicBlock *block) {
+            cout << block->toString() << endl;
+            for(auto i = block->getBegin(); i != block->getEnd(); ++i) {
+                cout << "--------------------" << endl;
+                auto inst = &*i;
+                inst->print();
+                auto info = insturctionLivenessInfo[inst];
+                cout << "  live in :";
+                for(auto v : info.liveIn) cout << v ->toString() << "  ";
+                cout << "\n  live out :";
+                for(auto v : info.liveOut) cout << v ->toString() << "  ";
+                cout << "\n" << endl;
+            }
+
+
+        }
+        map<Instruction *, LivenessInfo> &getBlockLivenessInfo(BasicBlock *block, map<Instruction *, LivenessInfo> &blockInfo) {
+            for(auto i = block->getBegin(); i != block->getEnd(); ++i) {
+                auto inst = &*i;
+                blockInfo.insert({inst, insturctionLivenessInfo[inst]});
+            }
+            return blockInfo;
+        }
+        map<Instruction *, LivenessInfo> &getLivenessInfo() { return insturctionLivenessInfo;}
     };
 
 }

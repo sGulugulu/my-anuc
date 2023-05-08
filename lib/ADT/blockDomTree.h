@@ -9,7 +9,7 @@
 #include <set>
 #include <queue>
 #include <cmath>
-#include "../IR/core.h"
+#include "core.h"
 using namespace std;
 namespace anuc {
 

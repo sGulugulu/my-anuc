@@ -9,10 +9,10 @@
 #include <map>
 #include <algorithm>
 #include <set>
-#include "../IR/core.h"
-#include "../ADT/blockDomTree.h"
-#include "../ADT/rtti.h"
-#include "../Analysis/blockDFSCalculator.h"
+#include "core.h"
+#include "blockDomTree.h"
+#include "rtti.h"
+#include "blockDFSCalculator.h"
 using namespace std;
 namespace anuc{
     //记录alloca指令相关信息
@@ -96,7 +96,7 @@ namespace anuc{
                 //如果alloca use链为空，直接删除
                 if (pv->usesEmpty()) {
                     removeFromAllocate(idx);
-                    ai->earseFromParent();
+                    ai->eraseFromParent();
                     continue;
                 }
                 AllocaInfo allocaInfo;
@@ -134,7 +134,7 @@ namespace anuc{
                         RegisterVar *rv = cast<RegisterVar>(li->getResult());
                         rv->replaceAllUseWith(storeValue);
                         blockInfo.instToIdx.erase(li);
-                        li->earseFromParent();
+                        li->eraseFromParent();
                     }
                     removeFromAllocate(idx);
                     continue;
@@ -153,12 +153,15 @@ namespace anuc{
                         }
                     }
                     auto cmp = [](pair<int, Instruction*> a, pair<int, Instruction*> b)->bool {
+                        cout << "cmp a: " << endl;
+                        a.second->print();
+                        cout << "cmp b: " << endl;
+                        b.second->print();
                         return a.first > b.first;
                     };
                     sort(sortList.begin(), sortList.end(), cmp);
                     for(auto u = pv->getUsesBegin(); u != pv->getUsesEnd(); ++u) {
                         if (LoadInst *li = dyn_cast<LoadInst>((*u).user)) {
-
                             auto near = lower_bound(sortList.begin(), sortList.end(),
                                         pair<int, Instruction*>(blockInfo.getIdx(li), li), cmp);
 
@@ -167,12 +170,12 @@ namespace anuc{
                                 if(allocaInfo.storeBlocks.empty()) break;
                                 else continue;
                             } else {
-                                auto nearestStore = dyn_cast<StoreInst>(near->second);
+                                auto nearestStore = cast<StoreInst>(near->second);
                                 Value *v = nearestStore->getValue();
                                 li->getResult()->replaceAllUseWith(v);
                                 blockInfo.instToIdx.erase(li);
-                                li->earseFromParent();
-                                func->getParent()->earseFromValuePool(v);
+                                li->eraseFromParent();
+                                func->getParent()->eraseFromValuePool(li);
                             }
                         }
                     }
@@ -202,7 +205,8 @@ namespace anuc{
                             break;
                         }
                         if(LoadInst *li = dyn_cast<LoadInst>(&(*inst))) {
-                            if(li->getPointerVar() == pv) break;
+                            if
+                            (li->getPointerVar() == pv) break;
                         }
                     }
                 }
@@ -263,17 +267,18 @@ namespace anuc{
                         //如果为load，将load的所有user改为incoming的值
                         if (LoadInst *li = dyn_cast<LoadInst>(inst)) {
                             PointerVar *pv = cast<PointerVar>(li->getPointerVar());
-                            Value *v = incomingValues[cast<AllocateInst>(pv->getInst())];
+                            Value *v = incomingValues[cast<AllocateInst>(pv->getDef())];
                             li->getResult()->replaceAllUseWith(v);
-                            li->earseFromParent();
-                            func->getParent()->earseFromValuePool(v);
+                            li->eraseFromParent();
+                            func->getParent()->eraseFromValuePool(li);
                         }
 
                         //如果为store，则修改incoming的值为store的值
                         else if(StoreInst *si = dyn_cast<StoreInst>(inst)) {
                             PointerVar *pv = cast<PointerVar>(si->getPointerVar());
-                            incomingValues[cast<AllocateInst>(pv->getInst())] = si->getValue();
-                            si->earseFromParent();
+                            incomingValues[cast<AllocateInst>(pv->getDef())] = si->getValue();
+                            si->eraseFromParent();
+                            func->getParent()->eraseFromValuePool(si);
                         }
                     }
                     for(auto s = bb->succBegin(); s != bb->succEnd(); ++s)
@@ -289,7 +294,7 @@ namespace anuc{
                     cerr << "我擦，什么情况" << endl;
                     continue;
                 }
-                ai->earseFromParent();
+                ai->eraseFromParent();
             }
             //释放内存
             func->getParent()->memoryClean();

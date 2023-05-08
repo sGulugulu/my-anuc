@@ -18,7 +18,7 @@ namespace anuc {
 
         base_node(base_node *prev, base_node *next) : prev(prev), next(next) {}
 
-        void earse() {
+        void erase() {
             prev->next = next;
             next->prev = prev;
             next = nullptr;
@@ -149,6 +149,14 @@ namespace anuc {
             tail.prev = node;
             ++length;
         }
+        //把first插入进second前面
+        void insert_into(base_node *first, base_node *second) {
+            first->prev = second->prev;
+            first->next = second;
+            second->prev = first;
+            first->prev->next = first;
+        }
+
 
         unsigned getLength() { return length; }
 

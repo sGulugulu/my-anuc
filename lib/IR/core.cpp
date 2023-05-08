@@ -37,7 +37,7 @@ namespace anuc {
     map<Value *, bool>::iterator Module::lookUpValuePool(Value *v) {
         return valuePool.find(v);
     }
-    bool Module::earseFromValuePool(Value *v) {
+    bool Module::eraseFromValuePool(Value *v) {
         auto i = valuePool.find(v);
         if(i == valuePool.end()) return false;
         i->second = false;
@@ -87,6 +87,10 @@ namespace anuc {
 
     void BasicBlock::insertFrontToChild(Instruction *i) {
         childlist.insert_front(i);
+    }
+
+    void BasicBlock::insertIntoChild(Instruction *first, Instruction *second) {
+        childlist.insert_into(first, second);
     }
 
     void BasicBlock::print() {

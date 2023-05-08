@@ -4,7 +4,7 @@
 
 #ifndef ANUC_BLOCKDFSCALCULATOR_H
 #define ANUC_BLOCKDFSCALCULATOR_H
-#include "../IR/core.h"
+#include "core.h"
 #include <vector>
 #include <set>
 using namespace std;

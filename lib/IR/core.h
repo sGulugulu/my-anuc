@@ -9,8 +9,8 @@
 #include <vector>
 #include <map>
 #include <set>
-#include "../ADT/alist.h"
-#include "../ADT/rtti.h"
+#include "alist.h"
+#include "rtti.h"
 #include "type.h"
 
 using namespace std;
@@ -54,7 +54,7 @@ namespace anuc {
             return;
         }
         //消除指定元素,实际上是将其bool设置为false，在memory中删除
-        bool earseFromValuePool(Value *v);
+        bool eraseFromValuePool(Value *v);
         //释放所有标记为0的内存空间，返回删除元素的个数
         int memoryClean();
         //打印整个模块
@@ -124,6 +124,8 @@ namespace anuc {
 
         void insertBackToChild(Instruction *i);
         void insertFrontToChild(Instruction *i);
+        void insertIntoChild(Instruction *first, Instruction *second);
+
         void pushBackToPred(BasicBlock *bb) {pred.push_back(bb);}
         void pushBackToPred(BasicBlock *bb, BasicBlock *rest ...) {
             pushBackToPred(bb);
@@ -177,14 +179,21 @@ namespace anuc {
         Use* getOperands(int n) {
             return &operands[n];
         }
+        Instruction *getNext() {return static_cast<Instruction*>(next);}
+        Instruction *getPrev() {return static_cast<Instruction*>(prev);}
+
 
         //删除，最后释放空间
-        void earseFromParent() {
+        void eraseFromParent() {
             auto m = this->getParent()->getParent()->getParent();
             auto i = m->lookUpValuePool(this);
             i->second = false;
-            this->earse();
+            this->erase();
         }
+
+        //只从链表中删除，不删除内存
+        void removeFromParent() { this->erase(); }
+
         virtual Value *getResult() { return nullptr; }
     };
 
@@ -364,7 +373,7 @@ namespace anuc {
         BranchInst(BasicBlock *parent, BasicBlock *dest): Instruction(VK_BrInst, parent), dest(dest) {
 
         }
-        void print() {cout << " br label " << dest->toString() << endl;}
+        void print() {cout << "  br label " << dest->toString() << endl;}
         bool static classof(Value *v) { return v->getKind() == VK_BrInst; }
 
     };

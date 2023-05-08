@@ -5,7 +5,7 @@
 #ifndef ANUC_VALUE_H
 #define ANUC_VALUE_H
 
-#include "../ADT/alist.h"
+#include "alist.h"
 #include <vector>
 #include <string>
 namespace anuc {
@@ -13,6 +13,7 @@ namespace anuc {
     struct Use;
     class User;
     class Type;
+    class Instruction;
     class Value {
     public:
         enum ValueKind {
@@ -58,6 +59,8 @@ namespace anuc {
         virtual Type* getType() {return nullptr;}
         virtual string toString() {return "undef";}
         virtual void print() {}
+        virtual Instruction* getDef() {return nullptr;}
+
     };
 
     struct Use : public alist_node<Use> {
