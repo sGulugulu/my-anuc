@@ -275,7 +275,7 @@ namespace anuc{
                         if (p->first >= index) continue;
                         SNode *storeNode = p->second;
                         StoreInst *si = cast<StoreInst>(storeNode->instruction);
-                        if (si->getPointerVar() == li->getPointerVar() && p->first < index) {
+                        if (si->getPtr() == li->getPtr() && p->first < index) {
                             SNode *loadNode = instToSNode[li];
                             loadNode->predChain = storeNode;
                             storeNode->succChain = loadNode;
@@ -288,7 +288,7 @@ namespace anuc{
                         if (p->first >= index) continue;
                         SNode *storeNode2 = p->second;
                         StoreInst *si2 = cast<StoreInst>(storeNode2->instruction);
-                        if (si->getPointerVar() == si2->getPointerVar() && p->first < index) {
+                        if (si->getPtr() == si2->getPtr() && p->first < index) {
                             SNode *storeNode = instToSNode[si];
                             storeNode2->succChain = storeNode;
                             storeNode->predChain = storeNode2;

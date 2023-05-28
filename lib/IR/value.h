@@ -27,8 +27,39 @@ namespace anuc {
             VK_LoadInst,
             VK_PhiInst,
             VK_AddInst,
+            VK_SubInst,
+            VK_MulInst,
+            VK_DivInst,
+            VK_RemInst,
 
+            VK_FAddInst,
+            VK_FSubInst,
+            VK_FMulInst,
+            VK_FDivInst,
+            VK_IToFInst,
+            VK_FToIInst,
+
+            VK_ICmpEQ,
+            VK_ICmpNE,
+            VK_ICmpLT,
+            VK_ICmpLE,
+            VK_ICmpGT,
+            VK_ICmpGE,
+
+            VK_FCmpEQ,
+            VK_FCmpNE,
+            VK_FCmpLT,
+            VK_FCmpLE,
+            VK_FCmpGT,
+            VK_FCmpGE,
+            VK_CallInst,
+            VK_FNegInst,
+            VK_XorInst,
+            VK_ZExtInst,
+
+            VK_RetInst,
             VK_BrInst,
+            VK_CondBrInst,
             VK_LastInstruction,
             VK_UserLast,
 
@@ -36,9 +67,8 @@ namespace anuc {
             VK_ConstantFloat,
             VK_ConstantInt,
             VK_LastConstant,
-            VK_PointerVar,
             VK_RegisterVar,
-            VK_GlobalVar
+            VK_GlobalVar,
         };
     private:
         const ValueKind kind;
@@ -56,6 +86,9 @@ namespace anuc {
         bool usesEmpty() {return uses.empty();}
         alist<Use>::iterator getUsesBegin() {return uses.begin();}
         alist<Use>::iterator getUsesEnd() {return uses.end();}
+        alist<Use>::iterator getUsesFront() {return uses.front();}
+        alist<Use>::iterator getUsesBack() {return uses.back();}
+
         virtual Type* getType() {return nullptr;}
         virtual string toString() {return "undef";}
         virtual void print() {}

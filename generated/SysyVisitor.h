@@ -8,17 +8,16 @@
 #include "SysyParser.h"
 
 
-
 /**
  * This class defines an abstract visitor for a parse tree
  * produced by SysyParser.
  */
-class  SysyVisitor : public antlr4::tree::AbstractParseTreeVisitor {
+class SysyVisitor : public antlr4::tree::AbstractParseTreeVisitor {
 public:
 
-  /**
-   * Visit parse trees produced by SysyParser.
-   */
+    /**
+     * Visit parse trees produced by SysyParser.
+     */
     virtual std::any visitCompUnit(SysyParser::CompUnitContext *context) = 0;
 
     virtual std::any visitDecl(SysyParser::DeclContext *context) = 0;
@@ -103,29 +102,29 @@ public:
 
     virtual std::any visitStringParam(SysyParser::StringParamContext *context) = 0;
 
-    virtual std::any visitMe1(SysyParser::Me1Context *context) = 0;
+    virtual std::any visitMulExp2(SysyParser::MulExp2Context *context) = 0;
 
-    virtual std::any visitMe2(SysyParser::Me2Context *context) = 0;
+    virtual std::any visitMulExp1(SysyParser::MulExp1Context *context) = 0;
 
-    virtual std::any visitAe1(SysyParser::Ae1Context *context) = 0;
+    virtual std::any visitAddExp2(SysyParser::AddExp2Context *context) = 0;
 
-    virtual std::any visitAe2(SysyParser::Ae2Context *context) = 0;
+    virtual std::any visitAddExp1(SysyParser::AddExp1Context *context) = 0;
 
-    virtual std::any visitRel2(SysyParser::Rel2Context *context) = 0;
+    virtual std::any visitRelExp2(SysyParser::RelExp2Context *context) = 0;
 
-    virtual std::any visitRel1(SysyParser::Rel1Context *context) = 0;
+    virtual std::any visitRelExp1(SysyParser::RelExp1Context *context) = 0;
 
-    virtual std::any visitEe1(SysyParser::Ee1Context *context) = 0;
+    virtual std::any visitEqExp2(SysyParser::EqExp2Context *context) = 0;
 
-    virtual std::any visitEe2(SysyParser::Ee2Context *context) = 0;
+    virtual std::any visitEqExp1(SysyParser::EqExp1Context *context) = 0;
 
-    virtual std::any visitLae2(SysyParser::Lae2Context *context) = 0;
+    virtual std::any visitLAndExp1(SysyParser::LAndExp1Context *context) = 0;
 
-    virtual std::any visitLae1(SysyParser::Lae1Context *context) = 0;
+    virtual std::any visitLAndExp2(SysyParser::LAndExp2Context *context) = 0;
 
-    virtual std::any visitLoe2(SysyParser::Loe2Context *context) = 0;
+    virtual std::any visitLOrExp2(SysyParser::LOrExp2Context *context) = 0;
 
-    virtual std::any visitLoe1(SysyParser::Loe1Context *context) = 0;
+    virtual std::any visitLOrExp1(SysyParser::LOrExp1Context *context) = 0;
 
     virtual std::any visitConstExp(SysyParser::ConstExpContext *context) = 0;
 

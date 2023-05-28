@@ -117,7 +117,6 @@ namespace anuc {
             else return false;
         }
 
-        //如果非空，返回头节点
         iterator begin() {
             return iterator(head.next);
         }
@@ -155,6 +154,12 @@ namespace anuc {
             first->next = second;
             second->prev = first;
             first->prev->next = first;
+        }
+        void insert_into_back(base_node *first, base_node *second) {
+            second->prev = first;
+            second->next = first->next;
+            first->next = second;
+            second->next->prev = second;
         }
 
 

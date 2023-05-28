@@ -15,63 +15,16 @@ using namespace anuc;
 using namespace std;
 //测试type功能
 
-TEST(IR_TEST, BUILDER_TYPE) {
-    auto m = new Module();
-    auto irb = new IRBuilder(*m);
-    auto i32 = irb->GetInt32Ty();
-    auto i32_ = irb->GetInt32Ty();
-    EXPECT_EQ(i32, i32_);
-
-    auto i1 = irb->GetInt1Ty();
-    auto i1_ = irb->GetInt1Ty();
-    EXPECT_EQ(i1, i1_);
-
-    Type *arr1 = irb->GetArrayTy(i1, 5);
-    Type *arr2 = irb->GetArrayTy(arr1, 5);
-    Type *arr3 = irb->GetArrayTy(arr2, 5);
-
-    Type *arr1_ = irb->GetArrayTy(i1, 5);
-    Type *arr2_ = irb->GetArrayTy(arr1_, 5);
-    Type *arr3_ = irb->GetArrayTy(arr2_, 5);
-    EXPECT_EQ(arr3, arr3_);
-
-}
-TEST(ADT_TEST, RTTI) {
-    auto m = new Module();
-    IRBuilder *irb = new IRBuilder(*m);
-    auto ty = irb->GetInt32Ty();
-    ConstantInt i(ty, 3);
-    ConstantFloat f(irb->GetFloatTy(), 3.2);
-    EXPECT_EQ(isa<ConstantInt>(&f), false);
-    EXPECT_EQ(isa<Constant>(&f), true);
-    Constant *c = dyn_cast<Constant>(&i);
-    EXPECT_NE(c, nullptr);
-}
-TEST(IR_TEST, BUILDER_CONST) {
-    auto m = new Module();
-    IRBuilder *irb = new IRBuilder(*m);
-    auto i = irb->GetConstantInt(irb->GetInt32Ty(), 233);
-    auto f = irb->GetConstantFloat(irb->GetFloatTy(), 2.2);
-    auto i2 = irb->GetConstantInt(irb->GetInt32Ty(), 233);
-    auto f2 = irb->GetConstantFloat(irb->GetFloatTy(), 2.2);
-    EXPECT_EQ(i, i2);
-    EXPECT_EQ(i->getValue(), 233);
-    EXPECT_EQ(f, f2);
-    EXPECT_EQ(f->getValue(), (float)2.2);
-    auto ii = new ConstantInt(irb->GetInt32Ty(), 233);
-    cout << ii->getValue() << endl;
-
-}
 TEST(IR_TEST, SSA) {
     Module m;
     IRBuilder *irb = new IRBuilder(m);
     auto i32 = irb->GetInt32Ty();
-    vector<Type *> a;
-    a.push_back(i32);
-    FunctionType *ftp = irb->GetFunctionType(i32, a);
-    vector<string> p;
-    p.push_back("a");
-    auto func = irb->CreateFunction(ftp, "mian", p);
+    vector<Type *> argvsType = {i32, i32, i32, irb->GetFloatTy() };
+    FunctionType *ftp = irb->GetFunctionType(i32, argvsType);
+    vector<string> argvNames = {"a", "b", "c", "d"};
+    auto func = irb->CreateFunction(ftp, "mian", argvNames);
+
+
     auto b0 = irb->GetBasicBlock("0");
     auto b1 = irb->GetBasicBlock("1");
     auto b2 = irb->GetBasicBlock("2");
@@ -166,7 +119,6 @@ TEST(IR_TEST, LIVENESS) {
     la.printModuleWithLiveness(m);
     m.print();
 }
-
 TEST(IR_TEST, A) {
     Module m;
     IRBuilder *irb = new IRBuilder(m);
@@ -208,9 +160,33 @@ TEST(IR_TEST, A) {
     m.print();
 
 }
+TEST(IR_TEST, IR) {
+    Module m;
+    IRBuilder *irb = new IRBuilder(m);
+    auto i32 = irb->GetInt32Ty();
+    auto fty = irb->GetFloatTy();
+    auto aty = irb->GetArrayTy(i32, 3);
+    vector<Type *> argvsType = {};
+    FunctionType *ftp = irb->GetFunctionType(fty, argvsType);
+    vector<string> argvNames = {};
+    auto func = irb->CreateFunction(ftp, "test", argvNames);
+    BasicBlock *entry = irb->GetBasicBlock("entry");
+    irb->SetBlockInsert(entry);
+    auto ptr = irb->CreateAllocate(i32, "a");
+    irb->CreateStore(irb->GetConstantInt32(3), ptr);
+    //irb->CreateLoad(i32, ptr);
+    irb->CreateStore(irb->GetConstantInt32(3), ptr);
+    irb->CreateStore(irb->GetConstantInt32(3), ptr);
+    auto iv =irb->CreateLoad(i32, ptr);
+    auto fv = irb->CreateIToF(iv, fty);
+    irb->CreateFToI(fv, i32);
+
+    m.print();
+
+}
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
-    testing::FLAGS_gtest_filter = "IR_TEST.A";
+    testing::FLAGS_gtest_filter = "IR_TEST.IR";
     return RUN_ALL_TESTS();
 }

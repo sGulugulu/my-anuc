@@ -58,7 +58,7 @@ namespace anuc {
     }
 
     void Module::print() {
-        cout << "module nyb:" << endl;
+        cout << "; ModuleID = 'nyb'" << endl;
         for (auto i = globalVarList.begin(); i != globalVarList.end(); ++i) (*i).print();
         for (auto i = childlist.begin(); i != childlist.end(); ++i) (*i).print();
     }
@@ -76,7 +76,13 @@ namespace anuc {
     }
 
     void Function::print() {
-        cout << "func " << name << "{" << endl;
+        cout << "define " << type->getRetType()->toString() << " @" << name
+        << "(";
+        for(int i = 0; i < argvs.size(); ++i) {
+            cout << argvs[i].second->toString() << " %" << argvs[i].first;
+            if (i != argvs.size() - 1) cout << ", ";
+        }
+        cout << ") " << "{" << endl;
         for (auto i = childlist.begin(); i != childlist.end(); ++i) (*i).print();
         cout << "}" << endl;
     }
@@ -91,6 +97,10 @@ namespace anuc {
 
     void BasicBlock::insertIntoChild(Instruction *first, Instruction *second) {
         childlist.insert_into(first, second);
+    }
+
+    void BasicBlock::insertIntoBackChild(Instruction *first, Instruction *second) {
+        childlist.insert_into_back(first, second);
     }
 
     void BasicBlock::print() {
