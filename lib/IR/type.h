@@ -50,7 +50,6 @@ namespace anuc {
         Int32Type() : Type(Type::TK_Int32) {}
         bool static classof(Type *v) { return v->getKind() == Type::TK_Int32; }
         bool isArrayType() { return false; }
-        void print() {cout << "i32" << endl;}
         string toString() {return "i32";}
     };
 
@@ -61,8 +60,7 @@ namespace anuc {
         bool static classof(Type *v) { return v->getKind() == Type::TK_Int1; }
 
         bool isArrayType() { return false; }
-        void print() {cout << "i1" << endl;}
-        string toSring() {return "i1";}
+        string toString() {return "i1";}
     };
 
     class FloatType : public Type {

@@ -625,7 +625,7 @@ namespace anuc {
         bool static classof(Value *v) { return v->getKind() == VK_ICmpEQ; }
 
         void print() {
-            cout << " " << rv->toString() << " = icmp eq i32 " <<
+            cout << " " << rv->toString() << " = icmp eq i32" <<
                  operands[0].value->toString() << "," << operands[1].value->toString()
                  << endl;
         }
@@ -652,7 +652,7 @@ namespace anuc {
         bool static classof(Value *v) { return v->getKind() == VK_ICmpNE; }
 
         void print() {
-            cout << " " << rv->toString() << " = icmp ne i32 " <<
+            cout << " " << rv->toString() << " = icmp ne i32" <<
                  operands[0].value->toString() << "," << operands[1].value->toString()
                  << endl;
         }
@@ -679,7 +679,7 @@ namespace anuc {
         bool static classof(Value *v) { return v->getKind() == VK_ICmpLT; }
 
         void print() {
-            cout << " " << rv->toString() << " = icmp slt i32 " <<
+            cout << " " << rv->toString() << " = icmp slt i32" <<
                  operands[0].value->toString() << "," << operands[1].value->toString()
                  << endl;
         }
@@ -706,7 +706,7 @@ namespace anuc {
         bool static classof(Value *v) { return v->getKind() == VK_ICmpLE; }
 
         void print() {
-            cout << " " << rv->toString() << " = icmp sle i32 " <<
+            cout << " " << rv->toString() << " = icmp sle i32" <<
                  operands[0].value->toString() << "," << operands[1].value->toString()
                  << endl;
         }
@@ -733,7 +733,7 @@ namespace anuc {
         bool static classof(Value *v) { return v->getKind() == VK_ICmpGT; }
 
         void print() {
-            cout << " " << rv->toString() << " = icmp sge i32 " <<
+            cout << " " << rv->toString() << " = icmp sge i32" <<
                  operands[0].value->toString() << "," << operands[1].value->toString()
                  << endl;
         }
@@ -760,7 +760,7 @@ namespace anuc {
         bool static classof(Value *v) { return v->getKind() == VK_ICmpGE; }
 
         void print() {
-            cout << " " << rv->toString() << " = icmp sle i32 " <<
+            cout << " " << rv->toString() << " = icmp sle i32" <<
                  operands[0].value->toString() << "," << operands[1].value->toString()
                  << endl;
         }
@@ -787,7 +787,7 @@ namespace anuc {
         bool static classof(Value *v) { return v->getKind() == VK_FCmpEQ; }
 
         void print() {
-            cout << " " << rv->toString() << " = fcmp eq i32 " <<
+            cout << " " << rv->toString() << " = fcmp eq i32" <<
                  operands[0].value->toString() << "," << operands[1].value->toString()
                  << endl;
         }
@@ -814,7 +814,7 @@ namespace anuc {
         bool static classof(Value *v) { return v->getKind() == VK_FCmpNE; }
 
         void print() {
-            cout << " " << rv->toString() << " = fcmp ne i32 " <<
+            cout << " " << rv->toString() << " = fcmp ne i32" <<
                  operands[0].value->toString() << "," << operands[1].value->toString()
                  << endl;
         }
@@ -843,7 +843,7 @@ namespace anuc {
         bool static classof(Value *v) { return v->getKind() == VK_FCmpLT; }
 
         void print() {
-            cout << " " << rv->toString() << " = fcmp slt i32 " <<
+            cout << " " << rv->toString() << " = fcmp slt i32" <<
                  operands[0].value->toString() << "," << operands[1].value->toString()
                  << endl;
         }
@@ -870,7 +870,7 @@ namespace anuc {
         bool static classof(Value *v) { return v->getKind() == VK_FCmpLE; }
 
         void print() {
-            cout << " " << rv->toString() << " = fcmp sle i32 " <<
+            cout << " " << rv->toString() << " = fcmp sle i32" <<
                  operands[0].value->toString() << "," << operands[1].value->toString()
                  << endl;
         }
@@ -897,7 +897,7 @@ namespace anuc {
         bool static classof(Value *v) { return v->getKind() == VK_FCmpGT; }
 
         void print() {
-            cout << " " << rv->toString() << " = fcmp sge i32 " <<
+            cout << " " << rv->toString() << " = fcmp sge i32" <<
                  operands[0].value->toString() << "," << operands[1].value->toString()
                  << endl;
         }
@@ -924,7 +924,7 @@ namespace anuc {
         bool static classof(Value *v) { return v->getKind() == VK_FCmpGE; }
 
         void print() {
-            cout << " " << rv->toString() << " = fcmp sle i32 " <<
+            cout << " " << rv->toString() << " = fcmp sle i32" <<
                  operands[0].value->toString() << "," << operands[1].value->toString()
                  << endl;
         }
@@ -1122,7 +1122,7 @@ namespace anuc {
         }
         bool static classof(Value *v) { return v->getKind() == VK_RetInst; }
         void print() {
-            if(isa<VoidType>(fn->getFuncType())) {
+            if(!isa<VoidType>(fn->getFuncType())) {
                 cout << " " << ret->toString() << " =";
             } else cout << " ";
             cout << " call " << fn->getFuncType()->getRetType()->toString()

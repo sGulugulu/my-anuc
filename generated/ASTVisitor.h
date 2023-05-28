@@ -656,11 +656,11 @@ public:
         return ctx->exp()->accept(this);
     }
 
+    //不能load的情况 函数传参里的gep
     virtual std::any visitPrimaryExp2(SysyParser::PrimaryExp2Context *ctx) override {
         Value *ptr = any_cast<Value*>(ctx->lVal()->accept(this));
         //函数调用参数
-        if (isFuncCallArgs) {
-            isFuncCallArgs = false;
+        if (isFuncCallArgs && isa<GEPInst>(ptr->getDef())) {
             return ptr;
         }
         Type *ty = cast<PointerType>(ptr->getType())->getElementType();
@@ -703,6 +703,7 @@ public:
                 params.push_back(param);
             }
         Value *call = Builder->CreateCall(fn, params);
+        isFuncCallArgs = false;
         return call;
     }
 

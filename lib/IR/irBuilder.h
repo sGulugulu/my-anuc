@@ -888,10 +888,10 @@ namespace anuc {
         }
 
         Value *CreateCall(Function *fn, vector<Value*> args) {
-            string name = to_string(registerVarNameNum++);
+            string name = "x" + to_string(registerVarNameNum++);
             RegisterVar *rv;
             if(isa<VoidType>(fn->getFuncType())) rv = nullptr;
-            else rv = new RegisterVar(fn->getFuncType(), name);
+            else rv = new RegisterVar(fn->getFuncType()->getRetType(), name);
             CallInst *inst = new CallInst(currentBlock, fn, args, rv);
             currentBlock->insertIntoBackChild(insertPoint, inst);
             insertPoint = inst;
