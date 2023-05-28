@@ -123,12 +123,18 @@ namespace anuc {
                     for(auto succ = x->succBegin(); succ != x->succEnd(); ++succ) {
                         auto y = *succ;
                         int ylevel = domTree.getLevel(y);
-                        if (!domTree.dominates(x, y) && ylevel <= level && liveInBlocks.count(y) && inPhi.insert(y).second) {
-                            idfBlocks.insert(y);
-                            if(!alpha.count(y)) piggyBank.push({ylevel, y});
+                        if (!domTree.dominates(x, y) && ylevel <= level && liveInBlocks.count(y)) {
+                            if(!inPhi.count(y)) {
+                                inPhi.insert(y);
+                                idfBlocks.insert(y);
+                                if(!alpha.count(y)) piggyBank.push({ylevel, y});
+                            }
                         } else {
-                            visited.insert(y);
-                            workList.push_back(y);
+                            if (!visited.count(y)) {
+                                visited.insert(y);
+                                workList.push_back(y);
+                            }
+
                         }
                     }
                 };
