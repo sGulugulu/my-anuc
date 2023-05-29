@@ -24,7 +24,7 @@ int main() {
     visitor.visitCompUnit(root);
     auto M = visitor.getModule();
     for(auto fn = M->getBegin(); fn != M->getEnd(); ++fn) {
-        SSAPass(&*fn).run();
+        //SSAPass(&*fn).run();
     }
     freopen("../l.ll", "w", stdout);
     M->print();

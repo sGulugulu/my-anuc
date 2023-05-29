@@ -12,9 +12,11 @@ void Value::printAllUsers() {
     }
 }
 void Value::replaceAllUseWith(Value *v) {
-    for(auto i = uses.begin(); i != uses.end(); ++i) {
-        (*i).value = v;
+    for(auto i = uses.begin(); i != uses.end();) {
+        Use *u = &*i;
+        ++i;
+        u->value = v;
+        v->insertBackToUses(u);
     }
-    v->uses.listMove(this->uses);
 
 }

@@ -89,7 +89,8 @@ namespace anuc{
 
             for(auto  i = entry->getBegin(); i != entry->getEnd(); ++i)
                 if (AllocateInst *ai = dyn_cast<AllocateInst>(&(*i)))
-                    if(!isa<ArrayType>(ai->getType()))allocas.push_back(ai);
+                    if(!isa<ArrayType>(ai->getType())) allocas.push_back(ai);
+
 
             //遍历所有的alloca
             for(int idx = 0; idx < allocas.size(); idx++) {
@@ -159,6 +160,8 @@ namespace anuc{
                         Use *currentUse = &*u;
                         ++u;
                         if (StoreInst *si = dyn_cast<StoreInst>(currentUse->user)) {
+                            cout << blockInfo.getIdx(si) << endl;
+                            si->print();
                             sortList.push_back({blockInfo.getIdx(si), si});
                         }
                     }
@@ -171,16 +174,20 @@ namespace anuc{
                         Use *currentUse = &*u;
                         ++u;
                         if (LoadInst *li = dyn_cast<LoadInst>(currentUse->user)) {
+                            cout << blockInfo.getIdx(li) << endl;
+                            li->print();
                             auto near = lower_bound(sortList.begin(), sortList.end(),
                                                     pair<int, Instruction*>(blockInfo.getIdx(li),
                                                                             static_cast<StoreInst *>(nullptr)), cmp);
-                            if (near->first < sortList.begin()->first) {
+                            if (!near->first && sortList.begin()->first) {
                                 //该变量没有进行过任何赋值
                                 if(allocaInfo.storeBlocks.empty()) break;
-                                else continue;
+                                else {
+                                    cerr << "load了一个没有store的变量！" << endl;
+                                    continue;
+                                }
                             } else {
                                 auto nearestStore = cast<StoreInst>(near->second);
-                                nearestStore->print();
                                 Value *v = nearestStore->getVal();
                                 li->getResult()->replaceAllUseWith(v);
                                 blockInfo.instToIdx.erase(li);
@@ -188,7 +195,7 @@ namespace anuc{
                             }
                         }
                     }
-                    vector<StoreInst*> deadStore;
+                    //pv->printAllUsers();
                     while(!pv->usesEmpty()) {
                         StoreInst *si = cast<StoreInst>((*pv->getUsesBack()).user);
                         si->eraseFromParent();
@@ -212,7 +219,7 @@ namespace anuc{
                     BasicBlock *bb = liveInBlocksWorkList[i];
                     if (!storeBlocks.count(bb)) continue;
                     //load和store在同一个块内，分析load是否在所有store前
-                    for(auto inst = bb->getBegin(); inst != bb->getEnd(); ++i) {
+                    for(auto inst = bb->getBegin(); inst != bb->getEnd(); ++inst) {
                         if(StoreInst *si = dyn_cast<StoreInst>(&(*inst))) {
                             if(si->getPtr() != pv) continue;
                             liveInBlocksWorkList[i] = liveInBlocksWorkList.back();
@@ -221,8 +228,7 @@ namespace anuc{
                             break;
                         }
                         if(LoadInst *li = dyn_cast<LoadInst>(&(*inst))) {
-                            if
-                            (li->getPtr() == pv) break;
+                            if(li->getPtr() == pv) break;
                         }
                     }
                 }
@@ -283,8 +289,10 @@ namespace anuc{
                         ++i;
                         //如果为load，将load的所有user改为incoming的值
                         if (LoadInst *li = dyn_cast<LoadInst>(inst)) {
-                            RegisterVar *pv = cast<RegisterVar>(li->getPtr());
-                            Value *v = incomingValues[cast<AllocateInst>(pv->getDef())];
+                            RegisterVar *ptr = cast<RegisterVar>(li->getPtr());
+                            AllocateInst *src = dyn_cast<AllocateInst>(ptr->getDef());
+                            if(!src) continue;
+                            Value *v = incomingValues[src];
                             li->getResult()->replaceAllUseWith(v);
                             li->eraseFromParent();
                             func->getParent()->eraseFromValuePool(li);
@@ -292,8 +300,10 @@ namespace anuc{
 
                         //如果为store，则修改incoming的值为store的值
                         else if(StoreInst *si = dyn_cast<StoreInst>(inst)) {
-                            RegisterVar *pv = cast<RegisterVar>(si->getPtr());
-                            incomingValues[cast<AllocateInst>(pv->getDef())] = si->getVal();
+                            RegisterVar *ptr = cast<RegisterVar>(si->getPtr());
+                            AllocateInst *dest = dyn_cast<AllocateInst>(ptr->getDef());
+                            if(!dest) continue;
+                            incomingValues[dest] = si->getVal();
                             si->eraseFromParent();
                             func->getParent()->eraseFromValuePool(si);
                         }

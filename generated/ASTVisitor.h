@@ -723,7 +723,7 @@ public:
                 Value *xOr = Builder->CreateXor(cmp, Builder->GetConstantInt(Builder->GetInt1Ty(), 1));
                 result = Builder->CreateIToF(xOr, FloatTy);
             }
-        }
+        } else result = v;
         return result;
     }
 
