@@ -8,16 +8,16 @@
 #include "XPathElement.h"
 
 namespace antlr4 {
-namespace tree {
-namespace xpath {
+    namespace tree {
+        namespace xpath {
 
-  class ANTLR4CPP_PUBLIC XPathWildcardAnywhereElement : public XPathElement {
-  public:
-    XPathWildcardAnywhereElement();
+            class ANTLR4CPP_PUBLIC XPathWildcardAnywhereElement : public XPathElement {
+            public:
+                XPathWildcardAnywhereElement();
 
-    virtual std::vector<ParseTree *> evaluate(ParseTree *t) override;
-  };
+                virtual std::vector<ParseTree *> evaluate(ParseTree *t) override;
+            };
 
-} // namespace xpath
-} // namespace tree
+        } // namespace xpath
+    } // namespace tree
 } // namespace antlr4

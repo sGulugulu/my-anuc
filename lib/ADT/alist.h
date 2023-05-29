@@ -96,7 +96,7 @@ namespace anuc {
 
         };
 
-        alist &operator=(alist const &other) =delete;
+        alist &operator=(alist const &other) = delete;
 
         alist() : head(), tail() {
             head.next = &tail;
@@ -124,10 +124,12 @@ namespace anuc {
         iterator end() {
             return iterator(&tail);
         }
+
         //back节点，tail的prev
         iterator back() {
             return iterator(tail.prev);
         }
+
         //头节点（为空）
         iterator front() {
             return iterator(&head);
@@ -148,6 +150,7 @@ namespace anuc {
             tail.prev = node;
             ++length;
         }
+
         //把first插入进second前面
         void insert_into(base_node *first, base_node *second) {
             first->prev = second->prev;
@@ -155,6 +158,7 @@ namespace anuc {
             second->prev = first;
             first->prev->next = first;
         }
+
         void insert_into_back(base_node *first, base_node *second) {
             second->prev = first;
             second->next = first->next;

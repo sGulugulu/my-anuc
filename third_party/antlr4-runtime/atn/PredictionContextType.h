@@ -10,12 +10,12 @@
 #include "antlr4-common.h"
 
 namespace antlr4 {
-namespace atn {
+    namespace atn {
 
-  enum class PredictionContextType : size_t {
-    SINGLETON = 1,
-    ARRAY = 2,
-  };
+        enum class PredictionContextType : size_t {
+            SINGLETON = 1,
+            ARRAY = 2,
+        };
 
-} // namespace atn
+    } // namespace atn
 } // namespace antlr4

@@ -4,7 +4,9 @@
 
 #ifndef ANUC_RTTI_H
 #define ANUC_RTTI_H
+
 #include <assert.h>
+
 template<class To, class From>
 inline bool isa(From *from) {
     return To::classof(from);

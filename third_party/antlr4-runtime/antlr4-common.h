@@ -35,44 +35,44 @@
 
 // Defines for the Guid class and other platform dependent stuff.
 #ifdef _WIN32
-  #ifdef _MSC_VER
-    #pragma warning (disable: 4250) // Class inherits by dominance.
-    #pragma warning (disable: 4512) // assignment operator could not be generated
+#ifdef _MSC_VER
+#pragma warning (disable: 4250) // Class inherits by dominance.
+#pragma warning (disable: 4512) // assignment operator could not be generated
 
-    #if _MSC_VER < 1900
-      // Before VS 2015 code like "while (true)" will create a (useless) warning in level 4.
-      #pragma warning (disable: 4127) // conditional expression is constant
-    #endif
-  #endif
+#if _MSC_VER < 1900
+// Before VS 2015 code like "while (true)" will create a (useless) warning in level 4.
+#pragma warning (disable: 4127) // conditional expression is constant
+#endif
+#endif
 
-  #ifdef _WIN64
-    typedef __int64 ssize_t;
-  #else
-    typedef __int32 ssize_t;
-  #endif
+#ifdef _WIN64
+typedef __int64 ssize_t;
+#else
+typedef __int32 ssize_t;
+#endif
 
-  #ifdef ANTLR4CPP_EXPORTS
-    #define ANTLR4CPP_PUBLIC __declspec(dllexport)
-  #else
-    #ifdef ANTLR4CPP_STATIC
-      #define ANTLR4CPP_PUBLIC
-    #else
-      #define ANTLR4CPP_PUBLIC __declspec(dllimport)
-    #endif
-  #endif
+#ifdef ANTLR4CPP_EXPORTS
+#define ANTLR4CPP_PUBLIC __declspec(dllexport)
+#else
+#ifdef ANTLR4CPP_STATIC
+#define ANTLR4CPP_PUBLIC
+#else
+#define ANTLR4CPP_PUBLIC __declspec(dllimport)
+#endif
+#endif
 
 #elif defined(__APPLE__)
-  #if __GNUC__ >= 4
-    #define ANTLR4CPP_PUBLIC __attribute__ ((visibility ("default")))
-  #else
-    #define ANTLR4CPP_PUBLIC
-  #endif
+#if __GNUC__ >= 4
+#define ANTLR4CPP_PUBLIC __attribute__ ((visibility ("default")))
 #else
-  #if __GNUC__ >= 6
-    #define ANTLR4CPP_PUBLIC __attribute__ ((visibility ("default")))
-  #else
-    #define ANTLR4CPP_PUBLIC
-  #endif
+#define ANTLR4CPP_PUBLIC
+#endif
+#else
+#if __GNUC__ >= 6
+#define ANTLR4CPP_PUBLIC __attribute__ ((visibility ("default")))
+#else
+#define ANTLR4CPP_PUBLIC
+#endif
 #endif
 
 #ifdef __has_builtin

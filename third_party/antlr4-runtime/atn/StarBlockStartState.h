@@ -8,17 +8,19 @@
 #include "atn/BlockStartState.h"
 
 namespace antlr4 {
-namespace atn {
+    namespace atn {
 
-  /// The block that begins a closure loop.
-  class ANTLR4CPP_PUBLIC StarBlockStartState final : public BlockStartState {
-  public:
-    static bool is(const ATNState &atnState) { return atnState.getStateType() == ATNStateType::STAR_BLOCK_START; }
+        /// The block that begins a closure loop.
+        class ANTLR4CPP_PUBLIC StarBlockStartState final : public BlockStartState {
+        public:
+            static bool is(const ATNState &atnState) {
+                return atnState.getStateType() == ATNStateType::STAR_BLOCK_START;
+            }
 
-    static bool is(const ATNState *atnState) { return atnState != nullptr && is(*atnState); }
+            static bool is(const ATNState *atnState) { return atnState != nullptr && is(*atnState); }
 
-    StarBlockStartState() : BlockStartState(ATNStateType::STAR_BLOCK_START) {}
-  };
+            StarBlockStartState() : BlockStartState(ATNStateType::STAR_BLOCK_START) {}
+        };
 
-} // namespace atn
+    } // namespace atn
 } // namespace antlr4

@@ -8,15 +8,15 @@
 #include "dfa/DFASerializer.h"
 
 namespace antlr4 {
-namespace dfa {
+    namespace dfa {
 
-  class ANTLR4CPP_PUBLIC LexerDFASerializer final : public DFASerializer {
-  public:
-    explicit LexerDFASerializer(const DFA *dfa);
+        class ANTLR4CPP_PUBLIC LexerDFASerializer final : public DFASerializer {
+        public:
+            explicit LexerDFASerializer(const DFA *dfa);
 
-  protected:
-    std::string getEdgeLabel(size_t i) const override;
-  };
+        protected:
+            std::string getEdgeLabel(size_t i) const override;
+        };
 
-} // namespace atn
+    } // namespace atn
 } // namespace antlr4

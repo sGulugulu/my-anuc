@@ -10,14 +10,14 @@
 #include "antlr4-common.h"
 
 namespace antlr4 {
-namespace atn {
+    namespace atn {
 
-  enum class SemanticContextType : size_t {
-    PREDICATE = 1,
-    PRECEDENCE = 2,
-    AND = 3,
-    OR = 4,
-  };
+        enum class SemanticContextType : size_t {
+            PREDICATE = 1,
+            PRECEDENCE = 2,
+            AND = 3,
+            OR = 4,
+        };
 
-} // namespace atn
+    } // namespace atn
 } // namespace antlr4

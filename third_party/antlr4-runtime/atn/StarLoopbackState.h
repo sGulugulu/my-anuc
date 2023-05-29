@@ -8,18 +8,18 @@
 #include "atn/ATNState.h"
 
 namespace antlr4 {
-namespace atn {
+    namespace atn {
 
-  class ANTLR4CPP_PUBLIC StarLoopbackState final : public ATNState {
-  public:
-    static bool is(const ATNState &atnState) { return atnState.getStateType() == ATNStateType::STAR_LOOP_BACK; }
+        class ANTLR4CPP_PUBLIC StarLoopbackState final : public ATNState {
+        public:
+            static bool is(const ATNState &atnState) { return atnState.getStateType() == ATNStateType::STAR_LOOP_BACK; }
 
-    static bool is(const ATNState *atnState) { return atnState != nullptr && is(*atnState); }
+            static bool is(const ATNState *atnState) { return atnState != nullptr && is(*atnState); }
 
-    StarLoopbackState() : ATNState(ATNStateType::STAR_LOOP_BACK) {}
+            StarLoopbackState() : ATNState(ATNStateType::STAR_LOOP_BACK) {}
 
-    StarLoopEntryState *getLoopEntryState() const;
-  };
+            StarLoopEntryState *getLoopEntryState() const;
+        };
 
-} // namespace atn
+    } // namespace atn
 } // namespace antlr4

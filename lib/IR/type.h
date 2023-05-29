@@ -18,11 +18,15 @@ using namespace std;
 //类型系统
 namespace anuc {
     class Instruction;
+
     class AllocateInst;
+
     class InitList;
+
     class Type {
     public:
         enum TypeKind {
+            TK_Block,
             TK_Int1,
             TK_Int32,
             TK_Float,
@@ -40,17 +44,32 @@ namespace anuc {
         TypeKind getKind() { return kind; }
 
         virtual bool isArrayType() { return false; }
-        virtual string toString() {return "";}
+
+        virtual string toString() { return ""; }
+
         bool static classof(Type *v) { return v->getKind() >= Type::TK_Int1 && v->getKind() <= Type::TK_Last; }
+
+    };
+
+    class BlockType: public Type {
+    public:
+        BlockType() : Type(Type::TK_Block) {}
+        bool static classof(Type *v) { return v->getKind() == Type::TK_Block; }
+        bool isArrayType() { return false; }
+
+        string toString() { return "block"; }
 
     };
 
     class Int32Type : public Type {
     public:
         Int32Type() : Type(Type::TK_Int32) {}
+
         bool static classof(Type *v) { return v->getKind() == Type::TK_Int32; }
+
         bool isArrayType() { return false; }
-        string toString() {return "i32";}
+
+        string toString() { return "i32"; }
     };
 
     class Int1Type : public Type {
@@ -60,7 +79,8 @@ namespace anuc {
         bool static classof(Type *v) { return v->getKind() == Type::TK_Int1; }
 
         bool isArrayType() { return false; }
-        string toString() {return "i1";}
+
+        string toString() { return "i1"; }
     };
 
     class FloatType : public Type {
@@ -70,7 +90,8 @@ namespace anuc {
         bool static classof(Type *v) { return v->getKind() == Type::TK_Float; }
 
         bool isArrayType() { return false; }
-        string toString() {return "float";}
+
+        string toString() { return "float"; }
     };
 
     class VoidType : public Type {
@@ -80,7 +101,8 @@ namespace anuc {
         bool static classof(Type *v) { return v->getKind() == Type::TK_Void; }
 
         bool isArrayType() { return false; }
-        string toString() {return "void";}
+
+        string toString() { return "void"; }
     };
 
     class ArrayType : public Type {
@@ -92,7 +114,8 @@ namespace anuc {
         bool static classof(Type *v) { return v->getKind() == Type::TK_Array; }
 
         Type *getArrayType() { return type; }
-        unsigned  getSize() {return size;}
+
+        unsigned getSize() { return size; }
 
         bool isArrayType() { return true; }
 
@@ -102,13 +125,16 @@ namespace anuc {
 
     };
 
-    class PointerType : public Type  {
+    class PointerType : public Type {
         Type *type;
     public:
-        PointerType(Type *type) :  Type(Type::TK_Ptr), type(type) {}
+        PointerType(Type *type) : Type(Type::TK_Ptr), type(type) {}
+
         bool static classof(Type *v) { return v->getKind() == Type::TK_Ptr; }
-        Type *getElementType() {return type;}
-        string toString() {return "ptr";}
+
+        Type *getElementType() { return type; }
+
+        string toString() { return "ptr"; }
 
     };
 
@@ -116,14 +142,16 @@ namespace anuc {
         Type *returnType;
         std::vector<Type *> argvs;
     public:
-        FunctionType(Type *returnType, std::vector<Type *> argvs) : Type(Type::TK_Func), returnType(returnType), argvs(argvs) {}
+        FunctionType(Type *returnType, std::vector<Type *> argvs) : Type(Type::TK_Func), returnType(returnType),
+                                                                    argvs(argvs) {}
 
         bool static classof(Type *v) { return v->getKind() == Type::TK_Func; }
 
         bool isArrayType() { return false; }
 
         Type *getRetType() { return returnType; }
-        std::vector<Type *> & getArgvs() {return argvs;}
+
+        std::vector<Type *> &getArgvs() { return argvs; }
 
     };
 
@@ -156,7 +184,8 @@ namespace anuc {
         bool static classof(Value *v) { return v->getKind() == Value::VK_ConstantInt; }
 
         int getValue() { return value; }
-        string toString() {return " " + to_string(value);}
+
+        string toString() { return " " + to_string(value); }
 
     };
 
@@ -168,8 +197,9 @@ namespace anuc {
         bool static classof(Value *v) { return v->getKind() == Value::VK_ConstantFloat; }
 
         float getValue() { return value; }
+
         string toString() {
-            auto toHex = [=](float number)->string {
+            auto toHex = [=](float number) -> string {
                 union FloatToHex {
                     double d;
                     uint64_t i;
@@ -192,7 +222,7 @@ namespace anuc {
     };
 
     struct InitList {
-        using indexInfo = pair<vector<int>, Value*>;
+        using indexInfo = pair<vector<int>, Value *>;
         vector<indexInfo> initInfos;
     };
     /*--------------------------------------------*/
@@ -204,13 +234,18 @@ namespace anuc {
         Instruction *def{nullptr};
 
     public:
-        RegisterVar(Type *type, string name): Value(VK_RegisterVar), type(type), name(name) {}
-        bool static classof(Value *v) { return v->getKind() == VK_RegisterVar; }
-        void setInst(Instruction *a) { def = a;}
-        Instruction* getDef() { return def;}
+        RegisterVar(Type *type, string name) : Value(VK_RegisterVar), type(type), name(name) {}
 
-        string getName() {return name;}
-        Type *getType() {return type;}
+        bool static classof(Value *v) { return v->getKind() == VK_RegisterVar; }
+
+        void setInst(Instruction *a) { def = a; }
+
+        Instruction *getDef() { return def; }
+
+        string getName() { return name; }
+
+        Type *getType() { return type; }
+
         string toString() {
             return " %" + name;
         }
@@ -228,15 +263,18 @@ namespace anuc {
         InitList *list{nullptr};
         bool isArray{false};
     public:
-        GlobalVar(Type *ty, string name, Constant *initValue): Value(VK_GlobalVar), type(ty), name(name), initValue(initValue) {
+        GlobalVar(Type *ty, string name, Constant *initValue) : Value(VK_GlobalVar), type(ty), name(name),
+                                                                initValue(initValue) {
             if (isa<ArrayType>(ty)) isArray = true;
             valueType = cast<PointerType>(type)->getElementType();
         }
-        GlobalVar(Type *ty, string name): Value(VK_GlobalVar), type(ty), name(name) {
+
+        GlobalVar(Type *ty, string name) : Value(VK_GlobalVar), type(ty), name(name) {
             if (isa<ArrayType>(ty)) isArray = true;
             valueType = cast<PointerType>(type)->getElementType();
         }
-        GlobalVar(Type *ty, string name, InitList *list): Value(VK_GlobalVar), type(ty), name(name), list(list) {
+
+        GlobalVar(Type *ty, string name, InitList *list) : Value(VK_GlobalVar), type(ty), name(name), list(list) {
             if (isa<ArrayType>(ty)) isArray = true;
             valueType = cast<PointerType>(type)->getElementType();
         }
@@ -248,9 +286,13 @@ namespace anuc {
         }
 
         string getName() { return name; }
-        Type *getType() { return type;}
-        Type *getValueType() {return valueType;}
+
+        Type *getType() { return type; }
+
+        Type *getValueType() { return valueType; }
+
         string toString() { return " @" + name; }
+
         void print() {
             if (initValue) {
                 if (isa<ConstantInt>(initValue))

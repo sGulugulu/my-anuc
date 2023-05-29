@@ -32,40 +32,40 @@
 #include "antlr4-common.h"
 
 namespace antlr4 {
-namespace atn {
+    namespace atn {
 
-  class ANTLR4CPP_PUBLIC PredictionContextMergeCacheOptions final {
-  public:
-    PredictionContextMergeCacheOptions() = default;
+        class ANTLR4CPP_PUBLIC PredictionContextMergeCacheOptions final {
+        public:
+            PredictionContextMergeCacheOptions() = default;
 
-    size_t getMaxSize() const { return _maxSize; }
+            size_t getMaxSize() const { return _maxSize; }
 
-    bool hasMaxSize() const { return getMaxSize() != std::numeric_limits<size_t>::max(); }
+            bool hasMaxSize() const { return getMaxSize() != std::numeric_limits<size_t>::max(); }
 
-    PredictionContextMergeCacheOptions& setMaxSize(size_t maxSize) {
-      _maxSize = maxSize;
-      return *this;
-    }
+            PredictionContextMergeCacheOptions &setMaxSize(size_t maxSize) {
+                _maxSize = maxSize;
+                return *this;
+            }
 
-    size_t getClearEveryN() const {
-      return _clearEveryN;
-    }
+            size_t getClearEveryN() const {
+                return _clearEveryN;
+            }
 
-    bool hasClearEveryN() const { return getClearEveryN() != 0; }
+            bool hasClearEveryN() const { return getClearEveryN() != 0; }
 
-    PredictionContextMergeCacheOptions& setClearEveryN(uint64_t clearEveryN) {
-      _clearEveryN = clearEveryN;
-      return *this;
-    }
+            PredictionContextMergeCacheOptions &setClearEveryN(uint64_t clearEveryN) {
+                _clearEveryN = clearEveryN;
+                return *this;
+            }
 
-    PredictionContextMergeCacheOptions& neverClear() {
-      return setClearEveryN(0);
-    }
+            PredictionContextMergeCacheOptions &neverClear() {
+                return setClearEveryN(0);
+            }
 
-  private:
-    size_t _maxSize = std::numeric_limits<size_t>::max();
-    uint64_t _clearEveryN = 1;
-  };
+        private:
+            size_t _maxSize = std::numeric_limits<size_t>::max();
+            uint64_t _clearEveryN = 1;
+        };
 
-}  // namespace atn
+    }  // namespace atn
 }  // namespace antlr4

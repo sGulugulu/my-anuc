@@ -4,16 +4,22 @@
 
 #ifndef ANUC_LIVENESSANALYSIS_H
 #define ANUC_LIVENESSANALYSIS_H
+
 #include <set>
 #include <vector>
 #include "core.h"
 #include "rtti.h"
+
 using namespace std;
 namespace anuc {
     //记录每个指令livein和liveout
     struct LivenessInfo {
         set<Value *> liveOut;
         set<Value *> liveIn;
+        set<Value *> fregliveOut;
+        set<Value *> fregliveIn;
+        set<Value *> regliveOut;
+        set<Value *> regliveIn;
     };
     //存储每个指令的succ
     struct SuccessorInfo {
@@ -26,7 +32,7 @@ namespace anuc {
         //将指令映射为SuccessorInfo
         map<Instruction *, SuccessorInfo> instructionSuccessInfo;
     public:
-        map<Instruction *, LivenessInfo>& instLivenessCalculator(vector<BasicBlock *> &postOrder) {
+        map<Instruction *, LivenessInfo> &instLivenessCalculator(vector<BasicBlock *> &postOrder) {
             //初始化，后序遍历并将所有指令的活跃变量信息设置为空，并且计算后继指令
             //标记访问过的块
             set<BasicBlock *> blockVisited;
@@ -52,7 +58,7 @@ namespace anuc {
                         continue;
                     }
                     SuccessorInfo sinfo;
-                    if(succ) sinfo.succ.push_back(succ);
+                    if (succ) sinfo.succ.push_back(succ);
                     instructionSuccessInfo.insert({inst, sinfo});
                     succ = inst;
                 }
@@ -72,14 +78,14 @@ namespace anuc {
             }
 
             //不动点算法计算活跃变量
-            for (int b = 0; b !=  postOrder.size(); ++b) {
+            for (int b = 0; b != postOrder.size(); ++b) {
                 BasicBlock *bb = postOrder[b];
                 bool changed = true;
-                while(changed) {
+                while (changed) {
                     changed = false;
                     for (auto i = bb->getBack(); i != bb->getFront(); --i) {
                         Instruction *inst = &(*i);
-                        auto p =insturctionLivenessInfo.find(inst);
+                        auto p = insturctionLivenessInfo.find(inst);
                         //如果没找到对应指令，说明有点问题
                         if (p == insturctionLivenessInfo.end()) {
                             cerr << "calculatorFindLiveness insert waring" << endl;
@@ -88,34 +94,72 @@ namespace anuc {
                         LivenessInfo &linfo = p->second;
                         //liveOut(s)为s的所有后继的liveIn并集
                         SuccessorInfo &sinfo = instructionSuccessInfo[inst];
-                        for(auto s = sinfo.succ.begin(); s != sinfo.succ.end(); ++s)
-                            for(auto v : insturctionLivenessInfo[*s].liveIn)
+                        for (auto s = sinfo.succ.begin(); s != sinfo.succ.end(); ++s)
+                            for (auto v: insturctionLivenessInfo[*s].liveIn)
                                 if (linfo.liveOut.insert(v).second) changed = true;
 
                         //liveIn(s) 为(liveOut(s) - def(s) )和use(s)取交集
-                        for (auto v : linfo.liveOut)
-                            if(v != inst->getResult())
+                        for (auto v: linfo.liveOut)
+                            if (v != inst->getResult())
                                 if (linfo.liveIn.insert(v).second) changed = true;
                         //use(s)
-                        for(auto v = inst->getBegin(); v != inst->getEnd(); ++v) {
-                            Value *use = (*v).value;
-                            if(isa<Constant>(use)) continue;
+                        for (auto v = inst->getBegin(); v != inst->getEnd(); ++v) {
+                            Value *use = (*v)->value;
+                            if (isa<Constant>(use) || isa<BlockType>(use->getType())) continue;
                             if (linfo.liveIn.insert(use).second) changed = true;
                         }
                     }
                 }
             }
+            //将浮点寄存器与整数寄存器变量进行分类
+            for (auto &info: insturctionLivenessInfo) {
+                for(auto v: info.second.liveIn){
+                    if(isa<BlockType>(v->getType())) continue;
+                    if(isa<FloatType>(v->getType()))
+                        info.second.fregliveIn.insert(v);
+                    else info.second.regliveIn.insert(v);
+                }
+                for(auto v: info.second.liveOut){
+                    if(isa<BlockType>(v->getType())) continue;
+                    if(isa<FloatType>(v->getType()))
+                        info.second.fregliveOut.insert(v);
+                    else info.second.regliveOut.insert(v);
+                }
+            }
+
             return insturctionLivenessInfo;
         }
+
+        static void calculateRegAndFReg(map<Instruction *, LivenessInfo> &insturctionLivenessInfo) {
+            for (auto &info: insturctionLivenessInfo) {
+                set<Value*>().swap(info.second.fregliveIn);
+                set<Value*>().swap(info.second.fregliveOut);
+                set<Value*>().swap(info.second.regliveIn);
+                set<Value*>().swap(info.second.regliveOut);
+                for(auto v: info.second.liveIn){
+                    if(isa<BlockType>(v->getType())) continue;
+                    if(isa<FloatType>(v->getType()))
+                        info.second.fregliveIn.insert(v);
+                    else info.second.regliveIn.insert(v);
+                }
+                for(auto v: info.second.liveOut){
+                    if(isa<BlockType>(v->getType())) continue;
+                    if(isa<FloatType>(v->getType()))
+                        info.second.fregliveOut.insert(v);
+                    else info.second.regliveOut.insert(v);
+                }
+            }
+        }
+
         void printLivenessInfo() {
-            for (auto i : insturctionLivenessInfo) {
+            for (auto i: insturctionLivenessInfo) {
                 cout << "指令 :" << endl;
                 i.first->print();
                 cout << "活跃变量livein:" << endl;
-                for(auto v : i.second.liveIn)
+                for (auto v: i.second.liveIn)
                     cout << v->toString() << endl;
                 cout << "活跃变量liveout:" << endl;
-                for(auto v : i.second.liveOut)
+                for (auto v: i.second.liveOut)
                     cout << v->toString() << endl;
                 cout << "\n";
             }
@@ -128,15 +172,15 @@ namespace anuc {
                 auto func = &*f;
                 for (auto b = func->getBegin(); b != func->getEnd(); ++b) {
                     auto block = &*b;
-                    for(auto i = block->getBegin(); i != block->getEnd(); ++i) {
+                    for (auto i = block->getBegin(); i != block->getEnd(); ++i) {
                         cout << "--------------------" << endl;
                         auto inst = &*i;
                         inst->print();
                         auto info = insturctionLivenessInfo[inst];
                         cout << "  live in :";
-                        for(auto v : info.liveIn) cout << v ->toString() << "  ";
+                        for (auto v: info.liveIn) cout << v->toString() << "  ";
                         cout << "\n  live out :";
-                        for(auto v : info.liveOut) cout << v ->toString() << "  ";
+                        for (auto v: info.liveOut) cout << v->toString() << "  ";
                         cout << "\n" << endl;
                     }
                 }
@@ -145,28 +189,31 @@ namespace anuc {
 
         void printBlockWithLiveness(BasicBlock *block) {
             cout << block->toString() << endl;
-            for(auto i = block->getBegin(); i != block->getEnd(); ++i) {
+            for (auto i = block->getBegin(); i != block->getEnd(); ++i) {
                 cout << "--------------------" << endl;
                 auto inst = &*i;
                 inst->print();
                 auto info = insturctionLivenessInfo[inst];
                 cout << "  live in :";
-                for(auto v : info.liveIn) cout << v ->toString() << "  ";
+                for (auto v: info.liveIn) cout << v->toString() << "  ";
                 cout << "\n  live out :";
-                for(auto v : info.liveOut) cout << v ->toString() << "  ";
+                for (auto v: info.liveOut) cout << v->toString() << "  ";
                 cout << "\n" << endl;
             }
 
 
         }
-        map<Instruction *, LivenessInfo> &getBlockLivenessInfo(BasicBlock *block, map<Instruction *, LivenessInfo> &blockInfo) {
-            for(auto i = block->getBegin(); i != block->getEnd(); ++i) {
+
+        map<Instruction *, LivenessInfo> &
+        getBlockLivenessInfo(BasicBlock *block, map<Instruction *, LivenessInfo> &blockInfo) {
+            for (auto i = block->getBegin(); i != block->getEnd(); ++i) {
                 auto inst = &*i;
                 blockInfo.insert({inst, insturctionLivenessInfo[inst]});
             }
             return blockInfo;
         }
-        map<Instruction *, LivenessInfo> &getLivenessInfo() { return insturctionLivenessInfo;}
+
+        map<Instruction *, LivenessInfo> &getLivenessInfo() { return insturctionLivenessInfo; }
     };
 
 }

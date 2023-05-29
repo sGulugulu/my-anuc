@@ -8,20 +8,22 @@
 #include "atn/SetTransition.h"
 
 namespace antlr4 {
-namespace atn {
+    namespace atn {
 
-  class ANTLR4CPP_PUBLIC NotSetTransition final : public SetTransition {
-  public:
-    static bool is(const Transition &transition) { return transition.getTransitionType() == TransitionType::NOT_SET; }
+        class ANTLR4CPP_PUBLIC NotSetTransition final : public SetTransition {
+        public:
+            static bool is(const Transition &transition) {
+                return transition.getTransitionType() == TransitionType::NOT_SET;
+            }
 
-    static bool is(const Transition *transition) { return transition != nullptr && is(*transition); }
+            static bool is(const Transition *transition) { return transition != nullptr && is(*transition); }
 
-    NotSetTransition(ATNState *target, misc::IntervalSet set);
+            NotSetTransition(ATNState *target, misc::IntervalSet set);
 
-    virtual bool matches(size_t symbol, size_t minVocabSymbol, size_t maxVocabSymbol) const override;
+            virtual bool matches(size_t symbol, size_t minVocabSymbol, size_t maxVocabSymbol) const override;
 
-    virtual std::string toString() const override;
-  };
+            virtual std::string toString() const override;
+        };
 
-} // namespace atn
+    } // namespace atn
 } // namespace antlr4

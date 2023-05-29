@@ -24,29 +24,33 @@ namespace anuc {
         return globalLookUp.insert({name, g}).second;
     }
 
-    map<Value *, bool>::iterator Module::insertIntoPool(Value *v,Value * rest...) {
+    map<Value *, bool>::iterator Module::insertIntoPool(Value *v, Value *rest...) {
         auto i = insertIntoPool(v);
         insertIntoPool(rest);
-        return i ;
+        return i;
     }
+
     map<Value *, bool>::iterator Module::insertIntoPool(Value *v) {
         auto i = valuePool.find(v);
-        if(i == valuePool.end()) i = valuePool.insert({v, true}).first;
-        return i ;
+        if (i == valuePool.end()) i = valuePool.insert({v, true}).first;
+        return i;
     }
+
     map<Value *, bool>::iterator Module::lookUpValuePool(Value *v) {
         return valuePool.find(v);
     }
+
     bool Module::eraseFromValuePool(Value *v) {
         auto i = valuePool.find(v);
-        if(i == valuePool.end()) return false;
+        if (i == valuePool.end()) return false;
         i->second = false;
         return true;
     }
+
     int Module::memoryClean() {
         unsigned num{0};
-        for(auto i = valuePool.begin(); i != valuePool.end();) {
-            if(!(*i).second) {
+        for (auto i = valuePool.begin(); i != valuePool.end();) {
+            if (!(*i).second) {
                 delete (*i).first;
                 valuePool.erase(i++);
                 ++num;
@@ -64,11 +68,10 @@ namespace anuc {
     }
 
 
-
     Module::~Module() {
         for (auto i = valuePool.begin(); i != valuePool.end(); ++i) delete (*i).first;
         for (auto i = funcLookUp.begin(); i != funcLookUp.end(); ++i) delete (*i).second;
-        for(auto i = typePool.begin(); i != typePool.end(); ++i) delete *i;
+        for (auto i = typePool.begin(); i != typePool.end(); ++i) delete *i;
     }
 
     void Function::insertBackToChild(BasicBlock *b) {
@@ -77,8 +80,8 @@ namespace anuc {
 
     void Function::print() {
         cout << "define " << type->getRetType()->toString() << " @" << name
-        << "(";
-        for(int i = 0; i < argvs.size(); ++i) {
+             << "(";
+        for (int i = 0; i < argvs.size(); ++i) {
             cout << argvs[i].second->toString() << " %" << argvs[i].first;
             if (i != argvs.size() - 1) cout << ", ";
         }

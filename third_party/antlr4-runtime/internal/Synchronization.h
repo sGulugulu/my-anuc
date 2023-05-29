@@ -47,108 +47,114 @@
 
 namespace antlr4::internal {
 
-  // Must be compatible with C++ standard library Mutex requirement.
-  class ANTLR4CPP_PUBLIC Mutex final {
-  public:
-    Mutex() = default;
+    // Must be compatible with C++ standard library Mutex requirement.
+    class ANTLR4CPP_PUBLIC Mutex final {
+    public:
+        Mutex() = default;
 
-    // No copying or moving, we are as strict as possible to support other implementations.
-    Mutex(const Mutex&) = delete;
-    Mutex(Mutex&&) = delete;
+        // No copying or moving, we are as strict as possible to support other implementations.
+        Mutex(const Mutex &) = delete;
 
-    // No copying or moving, we are as strict as possible to support other implementations.
-    Mutex& operator=(const Mutex&) = delete;
-    Mutex& operator=(Mutex&&) = delete;
+        Mutex(Mutex &&) = delete;
 
-    void lock() ANTLR4CPP_NO_THREAD_SAFTEY_ANALYSIS;
+        // No copying or moving, we are as strict as possible to support other implementations.
+        Mutex &operator=(const Mutex &) = delete;
 
-    bool try_lock() ANTLR4CPP_NO_THREAD_SAFTEY_ANALYSIS;
+        Mutex &operator=(Mutex &&) = delete;
 
-    void unlock() ANTLR4CPP_NO_THREAD_SAFTEY_ANALYSIS;
+        void lock() ANTLR4CPP_NO_THREAD_SAFTEY_ANALYSIS;
 
-  private:
+        bool try_lock() ANTLR4CPP_NO_THREAD_SAFTEY_ANALYSIS;
+
+        void unlock() ANTLR4CPP_NO_THREAD_SAFTEY_ANALYSIS;
+
+    private:
 #if ANTLR4CPP_USING_ABSEIL
-    absl::Mutex _impl;
+        absl::Mutex _impl;
 #else
-    std::mutex _impl;
+        std::mutex _impl;
 #endif
-  };
+    };
 
-  template <typename Mutex>
-  using UniqueLock = std::unique_lock<Mutex>;
+    template<typename Mutex>
+    using UniqueLock = std::unique_lock<Mutex>;
 
-  // Must be compatible with C++ standard library SharedMutex requirement.
-  class ANTLR4CPP_PUBLIC SharedMutex final {
-  public:
-    SharedMutex() = default;
+    // Must be compatible with C++ standard library SharedMutex requirement.
+    class ANTLR4CPP_PUBLIC SharedMutex final {
+    public:
+        SharedMutex() = default;
 
-    // No copying or moving, we are as strict as possible to support other implementations.
-    SharedMutex(const SharedMutex&) = delete;
-    SharedMutex(SharedMutex&&) = delete;
+        // No copying or moving, we are as strict as possible to support other implementations.
+        SharedMutex(const SharedMutex &) = delete;
 
-    // No copying or moving, we are as strict as possible to support other implementations.
-    SharedMutex& operator=(const SharedMutex&) = delete;
-    SharedMutex& operator=(SharedMutex&&) = delete;
+        SharedMutex(SharedMutex &&) = delete;
 
-    void lock() ANTLR4CPP_NO_THREAD_SAFTEY_ANALYSIS;
+        // No copying or moving, we are as strict as possible to support other implementations.
+        SharedMutex &operator=(const SharedMutex &) = delete;
 
-    bool try_lock() ANTLR4CPP_NO_THREAD_SAFTEY_ANALYSIS;
+        SharedMutex &operator=(SharedMutex &&) = delete;
 
-    void unlock() ANTLR4CPP_NO_THREAD_SAFTEY_ANALYSIS;
+        void lock() ANTLR4CPP_NO_THREAD_SAFTEY_ANALYSIS;
 
-    void lock_shared() ANTLR4CPP_NO_THREAD_SAFTEY_ANALYSIS;
+        bool try_lock() ANTLR4CPP_NO_THREAD_SAFTEY_ANALYSIS;
 
-    bool try_lock_shared() ANTLR4CPP_NO_THREAD_SAFTEY_ANALYSIS;
+        void unlock() ANTLR4CPP_NO_THREAD_SAFTEY_ANALYSIS;
 
-    void unlock_shared() ANTLR4CPP_NO_THREAD_SAFTEY_ANALYSIS;
+        void lock_shared() ANTLR4CPP_NO_THREAD_SAFTEY_ANALYSIS;
 
-  private:
+        bool try_lock_shared() ANTLR4CPP_NO_THREAD_SAFTEY_ANALYSIS;
+
+        void unlock_shared() ANTLR4CPP_NO_THREAD_SAFTEY_ANALYSIS;
+
+    private:
 #if ANTLR4CPP_USING_ABSEIL
-    absl::Mutex _impl;
+        absl::Mutex _impl;
 #else
-    std::shared_mutex _impl;
+        std::shared_mutex _impl;
 #endif
-  };
+    };
 
-  template <typename Mutex>
-  using SharedLock = std::shared_lock<Mutex>;
+    template<typename Mutex>
+    using SharedLock = std::shared_lock<Mutex>;
 
-  class OnceFlag;
+    class OnceFlag;
 
-  template <typename Callable, typename... Args>
-  void call_once(OnceFlag &onceFlag, Callable &&callable, Args&&... args);
+    template<typename Callable, typename... Args>
+    void call_once(OnceFlag &onceFlag, Callable &&callable, Args &&... args);
 
-  // Must be compatible with std::once_flag.
-  class ANTLR4CPP_PUBLIC OnceFlag final {
-  public:
-    constexpr OnceFlag() = default;
+    // Must be compatible with std::once_flag.
+    class ANTLR4CPP_PUBLIC OnceFlag final {
+    public:
+        constexpr OnceFlag() = default;
 
-    // No copying or moving, we are as strict as possible to support other implementations.
-    OnceFlag(const OnceFlag&) = delete;
-    OnceFlag(OnceFlag&&) = delete;
+        // No copying or moving, we are as strict as possible to support other implementations.
+        OnceFlag(const OnceFlag &) = delete;
 
-    // No copying or moving, we are as strict as possible to support other implementations.
-    OnceFlag& operator=(const OnceFlag&) = delete;
-    OnceFlag& operator=(OnceFlag&&) = delete;
+        OnceFlag(OnceFlag &&) = delete;
 
-  private:
-    template <typename Callable, typename... Args>
-    friend void call_once(OnceFlag &onceFlag, Callable &&callable, Args&&... args);
+        // No copying or moving, we are as strict as possible to support other implementations.
+        OnceFlag &operator=(const OnceFlag &) = delete;
+
+        OnceFlag &operator=(OnceFlag &&) = delete;
+
+    private:
+        template<typename Callable, typename... Args>
+        friend void call_once(OnceFlag &onceFlag, Callable &&callable, Args &&... args);
 
 #if ANTLR4CPP_USING_ABSEIL
-    absl::once_flag _impl;
+        absl::once_flag _impl;
 #else
-    std::once_flag _impl;
+        std::once_flag _impl;
 #endif
-  };
+    };
 
-  template <typename Callable, typename... Args>
-  void call_once(OnceFlag &onceFlag, Callable &&callable, Args&&... args) {
+    template<typename Callable, typename... Args>
+    void call_once(OnceFlag &onceFlag, Callable &&callable, Args &&... args) {
 #if ANTLR4CPP_USING_ABSEIL
-    absl::call_once(onceFlag._impl, std::forward<Callable>(callable), std::forward<Args>(args)...);
+        absl::call_once(onceFlag._impl, std::forward<Callable>(callable), std::forward<Args>(args)...);
 #else
-    std::call_once(onceFlag._impl, std::forward<Callable>(callable), std::forward<Args>(args)...);
+        std::call_once(onceFlag._impl, std::forward<Callable>(callable), std::forward<Args>(args)...);
 #endif
-  }
+    }
 
 }  // namespace antlr4::internal

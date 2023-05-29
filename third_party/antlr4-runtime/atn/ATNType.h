@@ -8,13 +8,13 @@
 #include "antlr4-common.h"
 
 namespace antlr4 {
-namespace atn {
+    namespace atn {
 
-  /// Represents the type of recognizer an ATN applies to.
-  enum class ATNType {
-    LEXER = 0,
-    PARSER = 1,
-  };
+        /// Represents the type of recognizer an ATN applies to.
+        enum class ATNType {
+            LEXER = 0,
+            PARSER = 1,
+        };
 
-} // namespace atn
+    } // namespace atn
 } // namespace antlr4

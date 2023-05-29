@@ -32,7 +32,7 @@ namespace anuc {
         map<string, unsigned> pointerVarName;
         //中间变量名称
         unsigned registerVarNameNum{0};
-        map<pair<Function*, string>, unsigned> bbName;
+        map<pair<Function *, string>, unsigned> bbName;
 
         //指向当前函数
         Function *currentFunc{nullptr};
@@ -41,15 +41,16 @@ namespace anuc {
         //指向当前插入指令
         Instruction *insertPoint{nullptr};
         //建立指针变量-allocate的映射
-        map<Value*, AllocateInst*> poinToAllocate;
+        map<Value *, AllocateInst *> poinToAllocate;
+        Type *blockType{nullptr};
     public:
         IRBuilder &operator=(const IRBuilder &) = delete;
 
         IRBuilder(Module &modu) : modu(modu) {}
 
         Module *getMoudle() { return &modu; }
-        Instruction *getCurrentInst() {return insertPoint;}
 
+        Instruction *getCurrentInst() { return insertPoint; }
 
 
         //创建type的API
@@ -115,7 +116,7 @@ namespace anuc {
 
         PointerType *GetPointerType(Type *ty) {
             auto i = pointerTypeLookUp.find(ty);
-            if(i == pointerTypeLookUp.end() ) {
+            if (i == pointerTypeLookUp.end()) {
                 PointerType *pointerType = new PointerType(ty);
                 pointerTypeLookUp.insert({ty, pointerType});
                 modu.insertIntoPool(pointerType);
@@ -142,6 +143,7 @@ namespace anuc {
             }
             return i->second;
         }
+
         ConstantInt *GetConstantInt32(int value) {
             Type *ty = this->GetInt32Ty();
             auto i = constantIntLookUp.find({ty, value});
@@ -186,7 +188,7 @@ namespace anuc {
             auto ptrTy = this->GetPointerType(ty);
             GlobalVar *global = new GlobalVar(ptrTy, name, init);
             modu.insertBackToChild(global);
-            if (!modu.insertGlobal(name, global))  cerr << "全局变量创建错误！" << endl;
+            if (!modu.insertGlobal(name, global)) cerr << "全局变量创建错误！" << endl;
             return global;
         }
 
@@ -194,14 +196,15 @@ namespace anuc {
             auto ptrTy = this->GetPointerType(ty);
             GlobalVar *global = new GlobalVar(ptrTy, name);
             modu.insertBackToChild(global);
-            if (!modu.insertGlobal(name, global))  cerr << "全局变量创建错误！" << endl;
+            if (!modu.insertGlobal(name, global)) cerr << "全局变量创建错误！" << endl;
             return global;
         }
+
         GlobalVar *CreateGlobalVar(Type *ty, string name, InitList *list) {
             auto ptrTy = this->GetPointerType(ty);
             GlobalVar *global = new GlobalVar(ptrTy, name, list);
             modu.insertBackToChild(global);
-            if (!modu.insertGlobal(name, global))  cerr << "全局变量创建错误！" << endl;
+            if (!modu.insertGlobal(name, global)) cerr << "全局变量创建错误！" << endl;
             return global;
         }
 
@@ -222,14 +225,16 @@ namespace anuc {
 
         //获取BasicBlock
         BasicBlock *GetBasicBlock(string name) {
-            if(!bbName.insert({{currentFunc, name}, 0}).second) {
-                name = name + to_string(++bbName[{currentFunc,name}]);
+            if(!blockType)blockType = new BlockType();
+
+            if (!bbName.insert({{currentFunc, name}, 0}).second) {
+                name = name + to_string(++bbName[{currentFunc, name}]);
             }
             if (!currentFunc) {
                 cerr << "must have create func";
                 exit(1);
             }
-            BasicBlock *bb = new BasicBlock(name);
+            BasicBlock *bb = new BasicBlock(name, blockType);
             modu.insertIntoPool(bb);
             currentFunc->insertBackToChild(bb);
             return bb;
@@ -244,12 +249,12 @@ namespace anuc {
         }
 
         //设置插入指令的节点
-        void SetInstInsert(Instruction *inst) { }
+        void SetInstInsert(Instruction *inst) {}
 
 
         //数组操作
         //get element ptr
-        Value *CreateGEP(Type *ty, Value *ptr, vector<Value*> idx) {
+        Value *CreateGEP(Type *ty, Value *ptr, vector<Value *> idx) {
             Type *ptrTy;
             if (ty->isArrayType()) {
                 ptrTy = this->GetPointerType(cast<ArrayType>(ty)->getArrayType());
@@ -266,20 +271,20 @@ namespace anuc {
         }
 
         //alloca store load
-        Value* CreateAllocate(Type *ty, string name, bool insertIntoEntry = false) {
-            if(!pointerVarName.insert({name, 0}).second)
+        Value *CreateAllocate(Type *ty, string name, bool insertIntoEntry = false) {
+            if (!pointerVarName.insert({name, 0}).second)
                 name = name + (to_string(++pointerVarName[name]));
             auto ptrTy = this->GetPointerType(ty);
             auto ptr = new RegisterVar(ptrTy, name);
             auto ai = new AllocateInst(currentBlock, ty, ptr);
-            if(!insertIntoEntry) {
+            if (!insertIntoEntry) {
                 currentBlock->insertIntoBackChild(insertPoint, ai);
                 insertPoint = ai;
             } else {
                 BasicBlock *entry = currentFunc->getEnrty();
                 Instruction *inst = &*entry->getBegin();
                 entry->insertFrontToChild(ai);
-                if(insertPoint == &*entry->getFront()) insertPoint = &*currentBlock->getBack();
+                if (insertPoint == &*entry->getFront()) insertPoint = &*currentBlock->getBack();
             }
             modu.insertIntoPool(ptr, ai);
             return ptr;
@@ -295,8 +300,8 @@ namespace anuc {
         RegisterVar *CreateLoad(Type *ty, Value *ptr) {
             PointerType *pty = cast<PointerType>(ptr->getType());
             assert(pty->getElementType() == ty && "Load操作符类型不一致！");
-            string name =  "x" + to_string(registerVarNameNum++);
-            RegisterVar* rv = new RegisterVar(ty, name);
+            string name = "x" + to_string(registerVarNameNum++);
+            RegisterVar *rv = new RegisterVar(ty, name);
             LoadInst *inst = new LoadInst(currentBlock, ty, ptr, rv);
             currentBlock->insertIntoBackChild(insertPoint, inst);
             insertPoint = inst;
@@ -307,16 +312,16 @@ namespace anuc {
         //二元运算
         Value *CreateAdd(Value *L, Value *R) {
             assert(isSameType(L, R) && "加法指令两个操作数类型不同！");
-            if(isa<ConstantInt>(L) && isa<ConstantInt>(R)) {
+            if (isa<ConstantInt>(L) && isa<ConstantInt>(R)) {
                 int lv = dyn_cast<ConstantInt>(L)->getValue();
                 int rv = dyn_cast<ConstantInt>(R)->getValue();
-                ConstantInt* result = this->GetConstantInt(this->GetInt32Ty(), lv + rv);
+                ConstantInt *result = this->GetConstantInt(this->GetInt32Ty(), lv + rv);
                 return result;
             }
-            string name =  "x" + to_string(registerVarNameNum++);
+            string name = "x" + to_string(registerVarNameNum++);
             assert(L->getType() != nullptr && "the value have null type");
-            RegisterVar* rv = new RegisterVar(L->getType() , name);
-            AddInst * inst = new AddInst(currentBlock, L, R, rv);
+            RegisterVar *rv = new RegisterVar(L->getType(), name);
+            AddInst *inst = new AddInst(currentBlock, L, R, rv);
             currentBlock->insertIntoBackChild(insertPoint, inst);
             insertPoint = inst;
             modu.insertIntoPool(rv, inst);
@@ -325,52 +330,54 @@ namespace anuc {
 
         Value *CreateSub(Value *L, Value *R) {
             assert(isSameType(L, R) && "减法指令两个操作数类型不同！");
-            if(isa<ConstantInt>(L) && isa<ConstantInt>(R)) {
+            if (isa<ConstantInt>(L) && isa<ConstantInt>(R)) {
                 int lv = dyn_cast<ConstantInt>(L)->getValue();
                 int rv = dyn_cast<ConstantInt>(R)->getValue();
-                ConstantInt* result = this->GetConstantInt(this->GetInt32Ty(), lv - rv);
+                ConstantInt *result = this->GetConstantInt(this->GetInt32Ty(), lv - rv);
                 return result;
             }
-            string name =  "x" + to_string(registerVarNameNum++);
-            RegisterVar* rv = new RegisterVar(L->getType() , name);
-            SubInst * inst = new SubInst(currentBlock, L, R, rv);
+            string name = "x" + to_string(registerVarNameNum++);
+            RegisterVar *rv = new RegisterVar(L->getType(), name);
+            SubInst *inst = new SubInst(currentBlock, L, R, rv);
             currentBlock->insertIntoBackChild(insertPoint, inst);
             insertPoint = inst;
             modu.insertIntoPool(rv, inst);
             return rv;
         }
+
         //mul
         Value *CreateMul(Value *L, Value *R) {
             assert(isSameType(L, R) && "乘法指令两个操作数类型不同！");
-            if(isa<Constant>(L) && isa<Constant>(R)) {
+            if (isa<Constant>(L) && isa<Constant>(R)) {
                 int lv = dyn_cast<ConstantInt>(L)->getValue();
                 int rv = dyn_cast<ConstantInt>(R)->getValue();
-                ConstantInt* result = this->GetConstantInt(this->GetInt32Ty(), lv * rv);
+                ConstantInt *result = this->GetConstantInt(this->GetInt32Ty(), lv * rv);
                 return result;
             }
-            string name =  "x" + to_string(registerVarNameNum++);
-            RegisterVar* rv = new RegisterVar(L->getType() , name);
-            MulInst* inst = new MulInst(currentBlock, L, R, rv);
+            string name = "x" + to_string(registerVarNameNum++);
+            RegisterVar *rv = new RegisterVar(L->getType(), name);
+            MulInst *inst = new MulInst(currentBlock, L, R, rv);
             currentBlock->insertIntoBackChild(insertPoint, inst);
             insertPoint = inst;
             modu.insertIntoPool(rv, inst);
             return rv;
         }
+
         //div
         Value *CreateDiv(Value *L, Value *R) {
             assert(isSameType(L, R) && "除法指令两个操作数类型不同！");
-            if(isa<Constant>(R)) {
+            if (isa<Constant>(R)) {
                 int rv = dyn_cast<ConstantInt>(R)->getValue();
                 assert(rv != 0 && "被除数为0！");
             }
-            if(isa<Constant>(L) && isa<Constant>(R)) {
+            if (isa<Constant>(L) && isa<Constant>(R)) {
                 int lv = dyn_cast<ConstantInt>(L)->getValue();
                 int rv = dyn_cast<ConstantInt>(R)->getValue();
-                ConstantInt* result = this->GetConstantInt(this->GetInt32Ty(), lv / rv);
+                ConstantInt *result = this->GetConstantInt(this->GetInt32Ty(), lv / rv);
                 return result;
             }
-            string name =  "x" + to_string(registerVarNameNum++);
-            RegisterVar* rv = new RegisterVar(L->getType() , name);
+            string name = "x" + to_string(registerVarNameNum++);
+            RegisterVar *rv = new RegisterVar(L->getType(), name);
             DivInst *inst = new DivInst(currentBlock, L, R, rv);
             currentBlock->insertIntoBackChild(insertPoint, inst);
             insertPoint = inst;
@@ -391,7 +398,7 @@ namespace anuc {
                 ConstantInt *result = this->GetConstantInt(this->GetInt32Ty(), lv % rv);
                 return result;
             }
-            string name =  "x" + to_string(registerVarNameNum++);
+            string name = "x" + to_string(registerVarNameNum++);
             RegisterVar *rv = new RegisterVar(L->getType(), name);
             RemInst *inst = new RemInst(currentBlock, L, R, rv);
             currentBlock->insertIntoBackChild(insertPoint, inst);
@@ -409,7 +416,7 @@ namespace anuc {
                 ConstantFloat *result = this->GetConstantFloat(this->GetFloatTy(), lv + rv);
                 return result;
             }
-            string name =   "x" + to_string(registerVarNameNum++);
+            string name = "x" + to_string(registerVarNameNum++);
             RegisterVar *rv = new RegisterVar(L->getType(), name);
             FAddInst *inst = new FAddInst(currentBlock, L, R, rv);
             currentBlock->insertIntoBackChild(insertPoint, inst);
@@ -428,7 +435,7 @@ namespace anuc {
                 ConstantFloat *result = this->GetConstantFloat(this->GetFloatTy(), lv - rv);
                 return result;
             }
-            string name =  "x" + to_string(registerVarNameNum++);
+            string name = "x" + to_string(registerVarNameNum++);
             RegisterVar *rv = new RegisterVar(L->getType(), name);
             FSubInst *inst = new FSubInst(currentBlock, L, R, rv);
             currentBlock->insertIntoBackChild(insertPoint, inst);
@@ -448,7 +455,7 @@ namespace anuc {
                 ConstantFloat *result = this->GetConstantFloat(this->GetFloatTy(), lv * rv);
                 return result;
             }
-            string name =  "x" + to_string(registerVarNameNum++);
+            string name = "x" + to_string(registerVarNameNum++);
             RegisterVar *rv = new RegisterVar(L->getType(), name);
             FMulInst *inst = new FMulInst(currentBlock, L, R, rv);
             currentBlock->insertIntoBackChild(insertPoint, inst);
@@ -467,12 +474,12 @@ namespace anuc {
             }
 
             if (isa<Constant>(L) && isa<Constant>(R)) {
-                float lv =  dyn_cast<ConstantFloat>(L)->getValue();
+                float lv = dyn_cast<ConstantFloat>(L)->getValue();
                 float rv = dyn_cast<ConstantFloat>(R)->getValue();
                 ConstantFloat *result = this->GetConstantFloat(this->GetFloatTy(), lv / rv);
                 return result;
             }
-            string name =  "x" + to_string(registerVarNameNum++);
+            string name = "x" + to_string(registerVarNameNum++);
             RegisterVar *rv = new RegisterVar(L->getType(), name);
             FDivInst *inst = new FDivInst(currentBlock, L, R, rv);
             currentBlock->insertIntoBackChild(insertPoint, inst);
@@ -615,7 +622,7 @@ namespace anuc {
             if (isa<Constant>(L) && isa<Constant>(R)) {
                 float lv = dyn_cast<ConstantFloat>(L)->getValue();
                 float rv = dyn_cast<ConstantFloat>(R)->getValue();
-                ConstantInt *result = GetConstantInt(GetInt1Ty(), fabs(lv-rv) < 1e-6);
+                ConstantInt *result = GetConstantInt(GetInt1Ty(), fabs(lv - rv) < 1e-6);
                 return result;
             }
 
@@ -627,8 +634,8 @@ namespace anuc {
             modu.insertIntoPool(rv, inst);
             return rv;
         }
-        
-        
+
+
         Value *CreateFCmpNE(Value *L, Value *R) {
             assert(L->getType() == R->getType() && "指令两个操作数类型不同！");
 
@@ -642,7 +649,7 @@ namespace anuc {
             if (isa<Constant>(L) && isa<Constant>(R)) {
                 float lv = dyn_cast<ConstantFloat>(L)->getValue();
                 float rv = dyn_cast<ConstantFloat>(R)->getValue();
-                ConstantInt *result = GetConstantInt(GetInt1Ty(), fabs(lv-rv) > 1e-6);
+                ConstantInt *result = GetConstantInt(GetInt1Ty(), fabs(lv - rv) > 1e-6);
                 return result;
             }
 
@@ -696,7 +703,7 @@ namespace anuc {
             if (isa<Constant>(L) && isa<Constant>(R)) {
                 float lv = dyn_cast<ConstantFloat>(L)->getValue();
                 float rv = dyn_cast<ConstantFloat>(R)->getValue();
-                ConstantInt *result = GetConstantInt(GetInt1Ty(), (lv<rv||fabs(lv-rv)<1e-6));
+                ConstantInt *result = GetConstantInt(GetInt1Ty(), (lv < rv || fabs(lv - rv) < 1e-6));
                 return result;
             }
 
@@ -749,7 +756,7 @@ namespace anuc {
             if (isa<Constant>(L) && isa<Constant>(R)) {
                 float lv = dyn_cast<ConstantFloat>(L)->getValue();
                 float rv = dyn_cast<ConstantFloat>(R)->getValue();
-                ConstantInt *result = GetConstantInt(GetInt1Ty(), (lv>rv||fabs(lv-rv)<1e-6));
+                ConstantInt *result = GetConstantInt(GetInt1Ty(), (lv > rv || fabs(lv - rv) < 1e-6));
                 return result;
             }
 
@@ -769,6 +776,7 @@ namespace anuc {
             ConstantFloat *result = GetConstantFloat(GetFloatTy(), fv);
             return result;
         }
+
         Constant *ConstantFToI(Constant *V, Type *DestTy) {
             assert(V->getType() == GetFloatTy() && "浮点转换为整型的操作数不是浮点数！");
             float fv = dyn_cast<ConstantFloat>(V)->getValue();
@@ -776,6 +784,7 @@ namespace anuc {
             ConstantInt *result = GetConstantInt(GetInt32Ty(), iv);
             return result;
         }
+
         Value *CreateIToF(Value *V, Type *DestTy) {
             assert(V->getType() == GetInt32Ty() && "整数转浮点数操作数不为整数！");
             if (isa<ConstantInt>(V)) {
@@ -805,7 +814,7 @@ namespace anuc {
             }
             string name = "x" + to_string(registerVarNameNum++);
             RegisterVar *rv = new RegisterVar(DestTy, name);
-            FToIInst *inst = new FToIInst(currentBlock, V, DestTy,rv);
+            FToIInst *inst = new FToIInst(currentBlock, V, DestTy, rv);
             currentBlock->insertIntoBackChild(insertPoint, inst);
             insertPoint = inst;
             modu.insertIntoPool(rv, inst);
@@ -826,11 +835,12 @@ namespace anuc {
             modu.insertIntoPool(rv, inst);
             return rv;
         }
+
         Value *CreateXor(Value *L, Value *R) {
-            if(isa<ConstantInt>(L) && isa<ConstantInt>(R)) {
+            if (isa<ConstantInt>(L) && isa<ConstantInt>(R)) {
                 int lv = cast<ConstantInt>(L)->getValue();
                 int rv = cast<ConstantInt>(R)->getValue();
-                ConstantInt *result = GetConstantInt(GetInt1Ty(), lv^rv);
+                ConstantInt *result = GetConstantInt(GetInt1Ty(), lv ^ rv);
                 return result;
             }
             string name = "x" + to_string(registerVarNameNum++);
@@ -841,6 +851,7 @@ namespace anuc {
             modu.insertIntoPool(rv, inst);
             return rv;
         };
+
         Value *CreateZExt(Value *V, Type *DestTy) {
             if (isa<ConstantInt>(V)) {
                 int v = cast<ConstantInt>(V)->getValue();
@@ -887,10 +898,10 @@ namespace anuc {
             return;
         }
 
-        Value *CreateCall(Function *fn, vector<Value*> args) {
+        Value *CreateCall(Function *fn, vector<Value *> args) {
             string name = "x" + to_string(registerVarNameNum++);
             RegisterVar *rv;
-            if(isa<VoidType>(fn->getFuncType())) rv = nullptr;
+            if (isa<VoidType>(fn->getFuncType()->getRetType())) rv = nullptr;
             else rv = new RegisterVar(fn->getFuncType()->getRetType(), name);
             CallInst *inst = new CallInst(currentBlock, fn, args, rv);
             currentBlock->insertIntoBackChild(insertPoint, inst);

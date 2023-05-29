@@ -8,50 +8,50 @@
 #include "antlr4-common.h"
 
 namespace antlr4 {
-namespace atn {
+    namespace atn {
 
-  /// <summary>
-  /// Represents the serialization type of a <seealso cref="LexerAction"/>.
-  ///
-  /// @author Sam Harwell
-  /// @since 4.2
-  /// </summary>
-  enum class LexerActionType : size_t {
-    /// <summary>
-    /// The type of a <seealso cref="LexerChannelAction"/> action.
-    /// </summary>
-    CHANNEL = 0,
-    /// <summary>
-    /// The type of a <seealso cref="LexerCustomAction"/> action.
-    /// </summary>
-    CUSTOM,
-    /// <summary>
-    /// The type of a <seealso cref="LexerModeAction"/> action.
-    /// </summary>
-    MODE,
-    /// <summary>
-    /// The type of a <seealso cref="LexerMoreAction"/> action.
-    /// </summary>
-    MORE,
-    /// <summary>
-    /// The type of a <seealso cref="LexerPopModeAction"/> action.
-    /// </summary>
-    POP_MODE,
-    /// <summary>
-    /// The type of a <seealso cref="LexerPushModeAction"/> action.
-    /// </summary>
-    PUSH_MODE,
-    /// <summary>
-    /// The type of a <seealso cref="LexerSkipAction"/> action.
-    /// </summary>
-    SKIP,
-    /// <summary>
-    /// The type of a <seealso cref="LexerTypeAction"/> action.
-    /// </summary>
-    TYPE,
+        /// <summary>
+        /// Represents the serialization type of a <seealso cref="LexerAction"/>.
+        ///
+        /// @author Sam Harwell
+        /// @since 4.2
+        /// </summary>
+        enum class LexerActionType : size_t {
+            /// <summary>
+            /// The type of a <seealso cref="LexerChannelAction"/> action.
+            /// </summary>
+            CHANNEL = 0,
+            /// <summary>
+            /// The type of a <seealso cref="LexerCustomAction"/> action.
+            /// </summary>
+            CUSTOM,
+            /// <summary>
+            /// The type of a <seealso cref="LexerModeAction"/> action.
+            /// </summary>
+            MODE,
+            /// <summary>
+            /// The type of a <seealso cref="LexerMoreAction"/> action.
+            /// </summary>
+            MORE,
+            /// <summary>
+            /// The type of a <seealso cref="LexerPopModeAction"/> action.
+            /// </summary>
+            POP_MODE,
+            /// <summary>
+            /// The type of a <seealso cref="LexerPushModeAction"/> action.
+            /// </summary>
+            PUSH_MODE,
+            /// <summary>
+            /// The type of a <seealso cref="LexerSkipAction"/> action.
+            /// </summary>
+            SKIP,
+            /// <summary>
+            /// The type of a <seealso cref="LexerTypeAction"/> action.
+            /// </summary>
+            TYPE,
 
-    INDEXED_CUSTOM,
-  };
+            INDEXED_CUSTOM,
+        };
 
-} // namespace atn
+    } // namespace atn
 } // namespace antlr4

@@ -11,6 +11,6 @@
 
 namespace antlrcpp {
 
-  using Any = std::any;
+    using Any = std::any;
 
 } // namespace antlrcpp

@@ -8,37 +8,43 @@
 #include "atn/ATNConfig.h"
 
 namespace antlr4 {
-namespace atn {
+    namespace atn {
 
-  class ANTLR4CPP_PUBLIC LexerATNConfig final : public ATNConfig {
-  public:
-    LexerATNConfig(ATNState *state, int alt, Ref<const PredictionContext> context);
-    LexerATNConfig(ATNState *state, int alt, Ref<const PredictionContext> context, Ref<const LexerActionExecutor> lexerActionExecutor);
+        class ANTLR4CPP_PUBLIC LexerATNConfig final : public ATNConfig {
+        public:
+            LexerATNConfig(ATNState *state, int alt, Ref<const PredictionContext> context);
 
-    LexerATNConfig(LexerATNConfig const& other, ATNState *state);
-    LexerATNConfig(LexerATNConfig const& other, ATNState *state, Ref<const LexerActionExecutor> lexerActionExecutor);
-    LexerATNConfig(LexerATNConfig const& other, ATNState *state, Ref<const PredictionContext> context);
+            LexerATNConfig(ATNState *state, int alt, Ref<const PredictionContext> context,
+                           Ref<const LexerActionExecutor> lexerActionExecutor);
 
-    /**
-     * Gets the {@link LexerActionExecutor} capable of executing the embedded
-     * action(s) for the current configuration.
-     */
-    const Ref<const LexerActionExecutor>& getLexerActionExecutor() const { return _lexerActionExecutor; }
-    bool hasPassedThroughNonGreedyDecision() const { return _passedThroughNonGreedyDecision; }
+            LexerATNConfig(LexerATNConfig const &other, ATNState *state);
 
-    virtual size_t hashCode() const override;
+            LexerATNConfig(LexerATNConfig const &other, ATNState *state,
+                           Ref<const LexerActionExecutor> lexerActionExecutor);
 
-    bool operator==(const LexerATNConfig& other) const;
+            LexerATNConfig(LexerATNConfig const &other, ATNState *state, Ref<const PredictionContext> context);
 
-  private:
-    /**
-     * This is the backing field for {@link #getLexerActionExecutor}.
-     */
-    const Ref<const LexerActionExecutor> _lexerActionExecutor;
-    const bool _passedThroughNonGreedyDecision = false;
+            /**
+             * Gets the {@link LexerActionExecutor} capable of executing the embedded
+             * action(s) for the current configuration.
+             */
+            const Ref<const LexerActionExecutor> &getLexerActionExecutor() const { return _lexerActionExecutor; }
 
-    static bool checkNonGreedyDecision(LexerATNConfig const& source, ATNState *target);
-  };
+            bool hasPassedThroughNonGreedyDecision() const { return _passedThroughNonGreedyDecision; }
 
-} // namespace atn
+            virtual size_t hashCode() const override;
+
+            bool operator==(const LexerATNConfig &other) const;
+
+        private:
+            /**
+             * This is the backing field for {@link #getLexerActionExecutor}.
+             */
+            const Ref<const LexerActionExecutor> _lexerActionExecutor;
+            const bool _passedThroughNonGreedyDecision = false;
+
+            static bool checkNonGreedyDecision(LexerATNConfig const &source, ATNState *target);
+        };
+
+    } // namespace atn
 } // namespace antlr4

@@ -8,20 +8,20 @@
 #include "atn/ATNState.h"
 
 namespace antlr4 {
-namespace atn {
+    namespace atn {
 
-  /// The last node in the ATN for a rule, unless that rule is the start symbol.
-  /// In that case, there is one transition to EOF. Later, we might encode
-  /// references to all calls to this rule to compute FOLLOW sets for
-  /// error handling.
-  class ANTLR4CPP_PUBLIC RuleStopState final : public ATNState {
-  public:
-    static bool is(const ATNState &atnState) { return atnState.getStateType() == ATNStateType::RULE_STOP; }
+        /// The last node in the ATN for a rule, unless that rule is the start symbol.
+        /// In that case, there is one transition to EOF. Later, we might encode
+        /// references to all calls to this rule to compute FOLLOW sets for
+        /// error handling.
+        class ANTLR4CPP_PUBLIC RuleStopState final : public ATNState {
+        public:
+            static bool is(const ATNState &atnState) { return atnState.getStateType() == ATNStateType::RULE_STOP; }
 
-    static bool is(const ATNState *atnState) { return atnState != nullptr && is(*atnState); }
+            static bool is(const ATNState *atnState) { return atnState != nullptr && is(*atnState); }
 
-    RuleStopState() : ATNState(ATNStateType::RULE_STOP) {}
-  };
+            RuleStopState() : ATNState(ATNStateType::RULE_STOP) {}
+        };
 
-} // namespace atn
+    } // namespace atn
 } // namespace antlr4

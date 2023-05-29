@@ -9,17 +9,17 @@
 #include "atn/ATNConfig.h"
 
 namespace antlr4 {
-namespace atn {
+    namespace atn {
 
-  class ANTLR4CPP_PUBLIC OrderedATNConfigSet final : public ATNConfigSet {
-  public:
-    OrderedATNConfigSet() = default;
+        class ANTLR4CPP_PUBLIC OrderedATNConfigSet final : public ATNConfigSet {
+        public:
+            OrderedATNConfigSet() = default;
 
-  private:
-    size_t hashCode(const ATNConfig &atnConfig) const override;
+        private:
+            size_t hashCode(const ATNConfig &atnConfig) const override;
 
-    bool equals(const ATNConfig &lhs, const ATNConfig &rhs) const override;
-  };
+            bool equals(const ATNConfig &lhs, const ATNConfig &rhs) const override;
+        };
 
-} // namespace atn
+    } // namespace atn
 } // namespace antlr4

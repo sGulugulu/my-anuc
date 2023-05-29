@@ -29,35 +29,37 @@
 #include "FlatHashSet.h"
 
 namespace antlr4 {
-namespace atn {
+    namespace atn {
 
-  class ANTLR4CPP_PUBLIC PredictionContextCache final {
-  public:
-    PredictionContextCache() = default;
+        class ANTLR4CPP_PUBLIC PredictionContextCache final {
+        public:
+            PredictionContextCache() = default;
 
-    PredictionContextCache(const PredictionContextCache&) = delete;
-    PredictionContextCache(PredictionContextCache&&) = delete;
+            PredictionContextCache(const PredictionContextCache &) = delete;
 
-    PredictionContextCache& operator=(const PredictionContextCache&) = delete;
-    PredictionContextCache& operator=(PredictionContextCache&&) = delete;
+            PredictionContextCache(PredictionContextCache &&) = delete;
 
-    void put(const Ref<const PredictionContext> &value);
+            PredictionContextCache &operator=(const PredictionContextCache &) = delete;
 
-    Ref<const PredictionContext> get(const Ref<const PredictionContext> &value) const;
+            PredictionContextCache &operator=(PredictionContextCache &&) = delete;
 
-  private:
-    struct ANTLR4CPP_PUBLIC PredictionContextHasher final {
-      size_t operator()(const Ref<const PredictionContext> &predictionContext) const;
-    };
+            void put(const Ref<const PredictionContext> &value);
 
-    struct ANTLR4CPP_PUBLIC PredictionContextComparer final {
-      bool operator()(const Ref<const PredictionContext> &lhs,
-                      const Ref<const PredictionContext> &rhs) const;
-    };
+            Ref<const PredictionContext> get(const Ref<const PredictionContext> &value) const;
 
-    FlatHashSet<Ref<const PredictionContext>,
-                PredictionContextHasher, PredictionContextComparer> _data;
-  };
+        private:
+            struct ANTLR4CPP_PUBLIC PredictionContextHasher final {
+                size_t operator()(const Ref<const PredictionContext> &predictionContext) const;
+            };
 
-}  // namespace atn
+            struct ANTLR4CPP_PUBLIC PredictionContextComparer final {
+                bool operator()(const Ref<const PredictionContext> &lhs,
+                                const Ref<const PredictionContext> &rhs) const;
+            };
+
+            FlatHashSet <Ref<const PredictionContext>,
+            PredictionContextHasher, PredictionContextComparer> _data;
+        };
+
+    }  // namespace atn
 }  // namespace antlr4

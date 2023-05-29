@@ -10,13 +10,13 @@
 #include "antlr4-common.h"
 
 namespace antlr4 {
-namespace tree {
+    namespace tree {
 
-  enum class ParseTreeType : size_t {
-    TERMINAL = 1,
-    ERROR = 2,
-    RULE = 3,
-  };
+        enum class ParseTreeType : size_t {
+            TERMINAL = 1,
+            ERROR = 2,
+            RULE = 3,
+        };
 
-} // namespace tree
+    } // namespace tree
 } // namespace antlr4

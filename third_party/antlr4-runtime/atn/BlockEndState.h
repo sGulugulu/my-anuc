@@ -8,19 +8,19 @@
 #include "atn/ATNState.h"
 
 namespace antlr4 {
-namespace atn {
+    namespace atn {
 
-  /// Terminal node of a simple {@code (a|b|c)} block.
-  class ANTLR4CPP_PUBLIC BlockEndState final : public ATNState {
-  public:
-    static bool is(const ATNState &atnState) { return atnState.getStateType() == ATNStateType::BLOCK_END; }
+        /// Terminal node of a simple {@code (a|b|c)} block.
+        class ANTLR4CPP_PUBLIC BlockEndState final : public ATNState {
+        public:
+            static bool is(const ATNState &atnState) { return atnState.getStateType() == ATNStateType::BLOCK_END; }
 
-    static bool is(const ATNState *atnState) { return atnState != nullptr && is(*atnState); }
+            static bool is(const ATNState *atnState) { return atnState != nullptr && is(*atnState); }
 
-    BlockStartState *startState = nullptr;
+            BlockStartState *startState = nullptr;
 
-    BlockEndState() : ATNState(ATNStateType::BLOCK_END) {}
-  };
+            BlockEndState() : ATNState(ATNStateType::BLOCK_END) {}
+        };
 
-} // namespace atn
+    } // namespace atn
 } // namespace antlr4

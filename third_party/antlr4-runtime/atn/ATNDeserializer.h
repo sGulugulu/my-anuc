@@ -11,22 +11,23 @@
 #include "atn/Transition.h"
 
 namespace antlr4 {
-namespace atn {
+    namespace atn {
 
-  class ANTLR4CPP_PUBLIC ATNDeserializer final {
-  public:
-    static constexpr size_t SERIALIZED_VERSION = 4;
+        class ANTLR4CPP_PUBLIC ATNDeserializer final {
+        public:
+            static constexpr size_t SERIALIZED_VERSION = 4;
 
-    ATNDeserializer();
+            ATNDeserializer();
 
-    explicit ATNDeserializer(ATNDeserializationOptions deserializationOptions);
+            explicit ATNDeserializer(ATNDeserializationOptions deserializationOptions);
 
-    std::unique_ptr<ATN> deserialize(SerializedATNView input) const;
-    void verifyATN(const ATN &atn) const;
+            std::unique_ptr<ATN> deserialize(SerializedATNView input) const;
 
-  private:
-    const ATNDeserializationOptions _deserializationOptions;
-  };
+            void verifyATN(const ATN &atn) const;
 
-} // namespace atn
+        private:
+            const ATNDeserializationOptions _deserializationOptions;
+        };
+
+    } // namespace atn
 } // namespace antlr4

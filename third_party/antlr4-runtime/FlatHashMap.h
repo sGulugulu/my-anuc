@@ -30,7 +30,9 @@
 #if ANTLR4CPP_USING_ABSEIL
 #include "absl/container/flat_hash_map.h"
 #else
+
 #include <unordered_map>
+
 #endif
 
 // By default ANTLRv4 uses containers provided by the C++ standard library. In most deployments this
@@ -41,17 +43,17 @@
 namespace antlr4 {
 
 #if ANTLR4CPP_USING_ABSEIL
-  template <typename Key, typename Value,
-            typename Hash = typename absl::flat_hash_map<Key, Value>::hasher,
-            typename Equal = typename absl::flat_hash_map<Key, Value>::key_equal,
-            typename Allocator = typename absl::flat_hash_map<Key, Value>::allocator_type>
-  using FlatHashMap = absl::flat_hash_map<Key, Value, Hash, Equal, Allocator>;
+    template <typename Key, typename Value,
+              typename Hash = typename absl::flat_hash_map<Key, Value>::hasher,
+              typename Equal = typename absl::flat_hash_map<Key, Value>::key_equal,
+              typename Allocator = typename absl::flat_hash_map<Key, Value>::allocator_type>
+    using FlatHashMap = absl::flat_hash_map<Key, Value, Hash, Equal, Allocator>;
 #else
-  template <typename Key, typename Value,
+    template<typename Key, typename Value,
             typename Hash = std::hash<Key>,
             typename Equal = std::equal_to<Key>,
             typename Allocator = std::allocator<std::pair<const Key, Value>>>
-  using FlatHashMap = std::unordered_map<Key, Value, Hash, Equal, Allocator>;
+    using FlatHashMap = std::unordered_map<Key, Value, Hash, Equal, Allocator>;
 #endif
 
 } // namespace antlr4

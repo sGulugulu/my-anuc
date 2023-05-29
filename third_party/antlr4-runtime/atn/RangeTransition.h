@@ -8,24 +8,27 @@
 #include "atn/Transition.h"
 
 namespace antlr4 {
-namespace atn {
+    namespace atn {
 
-  class ANTLR4CPP_PUBLIC RangeTransition final : public Transition {
-  public:
-    static bool is(const Transition &transition) { return transition.getTransitionType() == TransitionType::RANGE; }
+        class ANTLR4CPP_PUBLIC RangeTransition final : public Transition {
+        public:
+            static bool is(const Transition &transition) {
+                return transition.getTransitionType() == TransitionType::RANGE;
+            }
 
-    static bool is(const Transition *transition) { return transition != nullptr && is(*transition); }
+            static bool is(const Transition *transition) { return transition != nullptr && is(*transition); }
 
-    const size_t from;
-    const size_t to;
+            const size_t from;
+            const size_t to;
 
-    RangeTransition(ATNState *target, size_t from, size_t to);
+            RangeTransition(ATNState *target, size_t from, size_t to);
 
-    virtual misc::IntervalSet label() const override;
-    virtual bool matches(size_t symbol, size_t minVocabSymbol, size_t maxVocabSymbol) const override;
+            virtual misc::IntervalSet label() const override;
 
-    virtual std::string toString() const override;
-  };
+            virtual bool matches(size_t symbol, size_t minVocabSymbol, size_t maxVocabSymbol) const override;
 
-} // namespace atn
+            virtual std::string toString() const override;
+        };
+
+    } // namespace atn
 } // namespace antlr4

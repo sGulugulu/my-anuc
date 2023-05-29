@@ -8,17 +8,19 @@
 #include "tree/TerminalNode.h"
 
 namespace antlr4 {
-namespace tree {
+    namespace tree {
 
-  class ANTLR4CPP_PUBLIC ErrorNode : public TerminalNode {
-  public:
-    static bool is(const tree::ParseTree &parseTree) { return parseTree.getTreeType() == tree::ParseTreeType::ERROR; }
+        class ANTLR4CPP_PUBLIC ErrorNode : public TerminalNode {
+        public:
+            static bool is(const tree::ParseTree &parseTree) {
+                return parseTree.getTreeType() == tree::ParseTreeType::ERROR;
+            }
 
-    static bool is(const tree::ParseTree *parseTree) { return parseTree != nullptr && is(*parseTree); }
+            static bool is(const tree::ParseTree *parseTree) { return parseTree != nullptr && is(*parseTree); }
 
-  protected:
-    using TerminalNode::TerminalNode;
-  };
+        protected:
+            using TerminalNode::TerminalNode;
+        };
 
-} // namespace tree
+    } // namespace tree
 } // namespace antlr4

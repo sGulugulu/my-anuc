@@ -8,19 +8,19 @@
 #include "atn/ATNState.h"
 
 namespace antlr4 {
-namespace atn {
+    namespace atn {
 
-  class ANTLR4CPP_PUBLIC RuleStartState final : public ATNState {
-  public:
-    static bool is(const ATNState &atnState) { return atnState.getStateType() == ATNStateType::RULE_START; }
+        class ANTLR4CPP_PUBLIC RuleStartState final : public ATNState {
+        public:
+            static bool is(const ATNState &atnState) { return atnState.getStateType() == ATNStateType::RULE_START; }
 
-    static bool is(const ATNState *atnState) { return atnState != nullptr && is(*atnState); }
+            static bool is(const ATNState *atnState) { return atnState != nullptr && is(*atnState); }
 
-    RuleStopState *stopState = nullptr;
-    bool isLeftRecursiveRule = false;
+            RuleStopState *stopState = nullptr;
+            bool isLeftRecursiveRule = false;
 
-    RuleStartState() : ATNState(ATNStateType::RULE_START) {}
-  };
+            RuleStartState() : ATNState(ATNStateType::RULE_START) {}
+        };
 
-} // namespace atn
+    } // namespace atn
 } // namespace antlr4

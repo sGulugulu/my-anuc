@@ -12,35 +12,39 @@
 
 namespace antlr4 {
 
-  class ANTLR4CPP_PUBLIC LexerInterpreter : public Lexer {
-  public:
-    LexerInterpreter(const std::string &grammarFileName, const dfa::Vocabulary &vocabulary,
-                     const std::vector<std::string> &ruleNames, const std::vector<std::string> &channelNames,
-                     const std::vector<std::string> &modeNames, const atn::ATN &atn, CharStream *input);
+    class ANTLR4CPP_PUBLIC LexerInterpreter : public Lexer {
+    public:
+        LexerInterpreter(const std::string &grammarFileName, const dfa::Vocabulary &vocabulary,
+                         const std::vector<std::string> &ruleNames, const std::vector<std::string> &channelNames,
+                         const std::vector<std::string> &modeNames, const atn::ATN &atn, CharStream *input);
 
-    ~LexerInterpreter();
+        ~LexerInterpreter();
 
-    virtual const atn::ATN& getATN() const override;
-    virtual std::string getGrammarFileName() const override;
-    virtual const std::vector<std::string>& getRuleNames() const override;
-    virtual const std::vector<std::string>& getChannelNames() const override;
-    virtual const std::vector<std::string>& getModeNames() const override;
+        virtual const atn::ATN &getATN() const override;
 
-    virtual const dfa::Vocabulary& getVocabulary() const override;
+        virtual std::string getGrammarFileName() const override;
 
-  protected:
-    const std::string _grammarFileName;
-    const atn::ATN &_atn;
+        virtual const std::vector<std::string> &getRuleNames() const override;
 
-    const std::vector<std::string> &_ruleNames;
-    const std::vector<std::string> &_channelNames;
-    const std::vector<std::string> &_modeNames;
-    std::vector<dfa::DFA> _decisionToDFA;
+        virtual const std::vector<std::string> &getChannelNames() const override;
 
-    atn::PredictionContextCache _sharedContextCache;
+        virtual const std::vector<std::string> &getModeNames() const override;
 
-  private:
-    dfa::Vocabulary _vocabulary;
-  };
+        virtual const dfa::Vocabulary &getVocabulary() const override;
+
+    protected:
+        const std::string _grammarFileName;
+        const atn::ATN &_atn;
+
+        const std::vector<std::string> &_ruleNames;
+        const std::vector<std::string> &_channelNames;
+        const std::vector<std::string> &_modeNames;
+        std::vector<dfa::DFA> _decisionToDFA;
+
+        atn::PredictionContextCache _sharedContextCache;
+
+    private:
+        dfa::Vocabulary _vocabulary;
+    };
 
 } // namespace antlr4

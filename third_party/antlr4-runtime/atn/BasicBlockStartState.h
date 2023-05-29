@@ -9,16 +9,16 @@
 #include "atn/BlockStartState.h"
 
 namespace antlr4 {
-namespace atn {
+    namespace atn {
 
-  class ANTLR4CPP_PUBLIC BasicBlockStartState final : public BlockStartState {
-  public:
-    static bool is(const ATNState &atnState) { return atnState.getStateType() == ATNStateType::BLOCK_START; }
+        class ANTLR4CPP_PUBLIC BasicBlockStartState final : public BlockStartState {
+        public:
+            static bool is(const ATNState &atnState) { return atnState.getStateType() == ATNStateType::BLOCK_START; }
 
-    static bool is(const ATNState *atnState) { return atnState != nullptr && is(*atnState); }
+            static bool is(const ATNState *atnState) { return atnState != nullptr && is(*atnState); }
 
-    BasicBlockStartState() : BlockStartState(ATNStateType::BLOCK_START) {}
-  };
+            BasicBlockStartState() : BlockStartState(ATNStateType::BLOCK_START) {}
+        };
 
-} // namespace atn
+    } // namespace atn
 } // namespace antlr4

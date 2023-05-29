@@ -8,14 +8,14 @@
 #include "antlr4-common.h"
 
 namespace antlr4 {
-namespace misc {
+    namespace misc {
 
-  class ANTLR4CPP_PUBLIC Predicate {
-  public:
-    virtual ~Predicate();
+        class ANTLR4CPP_PUBLIC Predicate {
+        public:
+            virtual ~Predicate();
 
-    virtual bool test(tree::ParseTree *t) = 0;
-  };
+            virtual bool test(tree::ParseTree *t) = 0;
+        };
 
-} // namespace tree
+    } // namespace tree
 } // namespace antlr4

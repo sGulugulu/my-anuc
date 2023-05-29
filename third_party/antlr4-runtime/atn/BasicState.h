@@ -8,16 +8,16 @@
 #include "atn/ATNState.h"
 
 namespace antlr4 {
-namespace atn {
+    namespace atn {
 
-  class ANTLR4CPP_PUBLIC BasicState final : public ATNState {
-  public:
-    static bool is(const ATNState &atnState) { return atnState.getStateType() == ATNStateType::BASIC; }
+        class ANTLR4CPP_PUBLIC BasicState final : public ATNState {
+        public:
+            static bool is(const ATNState &atnState) { return atnState.getStateType() == ATNStateType::BASIC; }
 
-    static bool is(const ATNState *atnState) { return atnState != nullptr && is(*atnState); }
+            static bool is(const ATNState *atnState) { return atnState != nullptr && is(*atnState); }
 
-    BasicState() : ATNState(ATNStateType::BASIC) {}
-  };
+            BasicState() : ATNState(ATNStateType::BASIC) {}
+        };
 
-} // namespace atn
+    } // namespace atn
 } // namespace antlr4

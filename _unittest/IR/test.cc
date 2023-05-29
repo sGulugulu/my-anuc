@@ -11,6 +11,7 @@
 #include "../../lib/ADT/blockDomTree.h"
 #include "../../lib/TransFormer/ssa.h"
 #include "../../lib/TransFormer/scheduleBeforeRA.h"
+
 using namespace anuc;
 using namespace std;
 //测试type功能
@@ -19,7 +20,7 @@ TEST(IR_TEST, SSA) {
     Module m;
     IRBuilder *irb = new IRBuilder(m);
     auto i32 = irb->GetInt32Ty();
-    vector<Type *> argvsType = {i32, i32, i32, irb->GetFloatTy() };
+    vector<Type *> argvsType = {i32, i32, i32, irb->GetFloatTy()};
     FunctionType *ftp = irb->GetFunctionType(i32, argvsType);
     vector<string> argvNames = {"a", "b", "c", "d"};
     auto func = irb->CreateFunction(ftp, "mian", argvNames);
@@ -67,6 +68,7 @@ TEST(IR_TEST, SSA) {
     SSAPass(func).run();
     m.print();
 }
+
 TEST(IR_TEST, LIVENESS) {
     Module m;
     IRBuilder *irb = new IRBuilder(m);
@@ -151,8 +153,6 @@ TEST(IR_TEST, A) {
     bdc.calculateBBPostOrder(postOrder, b0);
     LivenessAnalysis la;
     la.instLivenessCalculator(postOrder);
-
-
     ScheduleBRPass sra(la);
     sra.build(b0);
     sra.schedule();
@@ -177,7 +177,7 @@ TEST(IR_TEST, IR) {
     //irb->CreateLoad(i32, ptr);
     irb->CreateStore(irb->GetConstantInt32(3), ptr);
     irb->CreateStore(irb->GetConstantInt32(3), ptr);
-    auto iv =irb->CreateLoad(i32, ptr);
+    auto iv = irb->CreateLoad(i32, ptr);
     auto fv = irb->CreateIToF(iv, fty);
     irb->CreateFToI(fv, i32);
 
@@ -187,6 +187,6 @@ TEST(IR_TEST, IR) {
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
-    testing::FLAGS_gtest_filter = "IR_TEST.IR";
+    testing::FLAGS_gtest_filter = "IR_TEST.A";
     return RUN_ALL_TESTS();
 }

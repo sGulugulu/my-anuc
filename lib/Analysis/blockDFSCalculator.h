@@ -4,9 +4,11 @@
 
 #ifndef ANUC_BLOCKDFSCALCULATOR_H
 #define ANUC_BLOCKDFSCALCULATOR_H
+
 #include "core.h"
 #include <vector>
 #include <set>
+
 using namespace std;
 namespace anuc {
     class blockDFSCalulator {

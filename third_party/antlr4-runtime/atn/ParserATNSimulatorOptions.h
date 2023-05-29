@@ -28,23 +28,23 @@
 #include "atn/PredictionContextMergeCacheOptions.h"
 
 namespace antlr4 {
-namespace atn {
+    namespace atn {
 
-  class ANTLR4CPP_PUBLIC ParserATNSimulatorOptions final {
-  public:
-    ParserATNSimulatorOptions& setPredictionContextMergeCacheOptions(
-        PredictionContextMergeCacheOptions predictionContextMergeCacheOptions) {
-      _predictionContextMergeCacheOptions = std::move(predictionContextMergeCacheOptions);
-      return *this;
-    }
+        class ANTLR4CPP_PUBLIC ParserATNSimulatorOptions final {
+        public:
+            ParserATNSimulatorOptions &setPredictionContextMergeCacheOptions(
+                    PredictionContextMergeCacheOptions predictionContextMergeCacheOptions) {
+                _predictionContextMergeCacheOptions = std::move(predictionContextMergeCacheOptions);
+                return *this;
+            }
 
-    const PredictionContextMergeCacheOptions& getPredictionContextMergeCacheOptions() const {
-      return _predictionContextMergeCacheOptions;
-    }
+            const PredictionContextMergeCacheOptions &getPredictionContextMergeCacheOptions() const {
+                return _predictionContextMergeCacheOptions;
+            }
 
-  private:
-    PredictionContextMergeCacheOptions _predictionContextMergeCacheOptions;
-  };
+        private:
+            PredictionContextMergeCacheOptions _predictionContextMergeCacheOptions;
+        };
 
-}  // namespace atn
+    }  // namespace atn
 }  // namespace antlr4

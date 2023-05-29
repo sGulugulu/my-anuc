@@ -8,19 +8,19 @@
 #include "atn/ATNState.h"
 
 namespace antlr4 {
-namespace atn {
+    namespace atn {
 
-  /// Mark the end of a * or + loop.
-  class ANTLR4CPP_PUBLIC LoopEndState final : public ATNState {
-  public:
-    static bool is(const ATNState &atnState) { return atnState.getStateType() == ATNStateType::LOOP_END; }
+        /// Mark the end of a * or + loop.
+        class ANTLR4CPP_PUBLIC LoopEndState final : public ATNState {
+        public:
+            static bool is(const ATNState &atnState) { return atnState.getStateType() == ATNStateType::LOOP_END; }
 
-    static bool is(const ATNState *atnState) { return atnState != nullptr && is(*atnState); }
+            static bool is(const ATNState *atnState) { return atnState != nullptr && is(*atnState); }
 
-    ATNState *loopBackState = nullptr;
+            ATNState *loopBackState = nullptr;
 
-    LoopEndState() : ATNState(ATNStateType::LOOP_END) {}
-  };
+            LoopEndState() : ATNState(ATNStateType::LOOP_END) {}
+        };
 
-} // namespace atn
+    } // namespace atn
 } // namespace antlr4
