@@ -151,19 +151,24 @@ namespace anuc {
             ++length;
         }
 
-        //把first插入进second前面
-        void insert_into(base_node *first, base_node *second) {
-            first->prev = second->prev;
-            first->next = second;
-            second->prev = first;
-            first->prev->next = first;
+        void erase_from_list(base_node *node) {
+            node->erase();
+            --length;
         }
 
-        void insert_into_back(base_node *first, base_node *second) {
-            second->prev = first;
-            second->next = first->next;
-            first->next = second;
-            second->next->prev = second;
+        //把first插入进second前面
+        void insert_into(base_node *inst, base_node *insert_point) {
+            inst->prev = insert_point->prev;
+            inst->next = insert_point;
+            insert_point->prev = inst;
+            inst->prev->next = inst;
+        }
+
+        void insert_into_back(base_node *insert_point, base_node *inst) {
+            inst->prev = insert_point;
+            inst->next = insert_point->next;
+            insert_point->next = inst;
+            inst->next->prev = inst;
         }
 
 

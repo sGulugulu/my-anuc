@@ -90,6 +90,9 @@ namespace anuc {
         cout << "}" << endl;
     }
 
+    void BasicBlock::eraseFromList(Instruction *inst) {
+        childlist.erase_from_list(inst);
+    }
     void BasicBlock::insertBackToChild(Instruction *i) {
         childlist.insert_back(i);
     }
@@ -98,12 +101,12 @@ namespace anuc {
         childlist.insert_front(i);
     }
 
-    void BasicBlock::insertIntoChild(Instruction *first, Instruction *second) {
-        childlist.insert_into(first, second);
+    void BasicBlock::insertIntoChild(Instruction *inst, Instruction *insetPoint) {
+        childlist.insert_into(inst, insetPoint);
     }
 
-    void BasicBlock::insertIntoBackChild(Instruction *first, Instruction *second) {
-        childlist.insert_into_back(first, second);
+    void BasicBlock::insertIntoBackChild(Instruction *insertPoint, Instruction *inst) {
+        childlist.insert_into_back(insertPoint, inst);
     }
 
     void BasicBlock::print() {
@@ -111,4 +114,13 @@ namespace anuc {
         for (auto i = childlist.begin(); i != childlist.end(); ++i) (*i).print();
     }
 
+    void GEPInst::accept(Visitor *V) { V->visit(this);}
+    void AllocateInst::accept(Visitor *V) { V->visit(this);}
+    void LoadInst::accept(Visitor *V) { V->visit(this);}
+    void StoreInst::accept(Visitor *V) { V->visit(this);}
+    void AddInst::accept(Visitor *V) { V->visit(this);}
+    void SubInst::accept(Visitor *V) { V->visit(this);}
+    void MulInst::accept(Visitor *V) { V->visit(this);}
+    void DivInst::accept(Visitor *V) { V->visit(this);}
+    void RemInst::accept(Visitor *V) { V->visit(this);}
 }

@@ -37,7 +37,7 @@ int main(int argc , char* argv[]) {
     visitor.visitCompUnit(root);
     auto M = visitor.getModule();
     auto Builder = visitor.getBuilder();
-    PassDriver driver(move(M), move(Builder), passSwitch);
+    PassDriver driver(std::move(M), std::move(Builder), passSwitch);
     driver.run();
     return 0;
 }

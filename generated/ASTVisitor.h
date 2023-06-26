@@ -76,11 +76,11 @@ class ASTVisitor : public SysyVisitor {
 public:
 
     unique_ptr<Module> getModule() {
-        return move(M);
+        return std::move(M);
     }
 
     unique_ptr<IRBuilder> getBuilder() {
-        return move(Builder);
+        return std::move(Builder);
     }
 
     ASTVisitor() {
@@ -427,10 +427,10 @@ public:
         Function *fn = Builder->CreateFunction(fty, ctx->Ident()->getText(), args);
         BasicBlock *entry = Builder->GetBasicBlock("entry");
         Builder->SetBlockInsert(entry);
-        for (int i = 0; i < fn->argvals.size(); ++i) {
-            Value *ptr = Builder->CreateAllocate(fn->argvals[i]->getType(), args[i]);
+        for (int i = 0; i < fn->getArgVals().size(); ++i) {
+            Value *ptr = Builder->CreateAllocate(fn->getArgVals()[i]->getType(), args[i]);
             params.push_back(ptr);
-            Builder->CreateStore(fn->argvals[i], ptr);
+            Builder->CreateStore(fn->getArgVals()[i], ptr);
         }
         Value *ret{nullptr};
         if (ty != Builder->GetVoidTy()) {

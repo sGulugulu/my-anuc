@@ -11,6 +11,8 @@
 #include "irBuilder.h"
 #include "ssa.h"
 #include "scheduleBeforeRA.h"
+#include "lowerToLIR.h"
+#include "rvValue.h"
 
 using namespace std;
 namespace anuc {
@@ -18,10 +20,14 @@ namespace anuc {
         unique_ptr<Module> M;
         unique_ptr<IRBuilder> Builder;
         vector<bool> passSwitch;
+        unique_ptr<RegTable> regTable;
     public:
-        PassDriver(unique_ptr<Module> M, unique_ptr<IRBuilder> Builder): M(move(M)), Builder(move(Builder)) {}
+        PassDriver(unique_ptr<Module> M, unique_ptr<IRBuilder> Builder, unique_ptr<RegTable> regTable):
+        M(std::move(M)), Builder(std::move(Builder)) {}
         PassDriver(unique_ptr<Module> M, unique_ptr<IRBuilder> Builder,  vector<bool> passSwitch):
-        M(move(M)), Builder(move(Builder)), passSwitch(passSwitch) {}
+        M(std::move(M)), Builder(std::move(Builder)), passSwitch(passSwitch) {
+            regTable = make_unique<RegTable>();
+        }
 
         void run() {
             bool j{false};
@@ -30,6 +36,10 @@ namespace anuc {
             if(j || passSwitch[0]) runSSAPass();
             //调度器
             if(j || passSwitch[1]) runScheduleBRPass();
+            //降级
+            if(j || passSwitch[2]) runLowerPass1();
+            if(j || passSwitch[3]) runLowerPass2();
+
             freopen("../l.ll", "w", stdout);
             M->print();
 
@@ -57,7 +67,31 @@ namespace anuc {
                     sra.schedule();
                 }
             }
+        }
 
+        void runLowerPass1() {
+            LIRVisitor1 *visitor1 = new LIRVisitor1(Builder.get(), regTable.get());
+            for (auto fn = M->getBegin(); fn != M->getEnd(); ++fn) {
+                for (auto bb = (*fn).getBegin(); bb != (*fn).getEnd(); ++bb) {
+                    for(auto inst = (*bb).getBegin(); inst != (*bb).getEnd(); ) {
+                        Instruction *i = &*inst;
+                        ++inst;
+                        i->accept(visitor1);
+                    }
+                }
+            }
+        }
+        void runLowerPass2() {
+            LIRVisitor2 *visitor2 = new LIRVisitor2(Builder.get());
+            for (auto fn = M->getBegin(); fn != M->getEnd(); ++fn) {
+                for (auto bb = (*fn).getBegin(); bb != (*fn).getEnd(); ++bb) {
+                    for(auto inst = (*bb).getBegin(); inst != (*bb).getEnd(); ) {
+                        Instruction *i = &*inst;
+                        ++inst;
+                        i->accept(visitor2);
+                    }
+                }
+            }
         }
     };
 }

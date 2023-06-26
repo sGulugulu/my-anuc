@@ -66,6 +66,22 @@ namespace anuc {
             VK_RetInst,
             VK_BrInst,
             VK_CondBrInst,
+
+            VK_LowInst,
+            VK_LowLoad,
+            VK_LowStore,
+            VK_GlobalLoad,
+            VK_RVlw,
+            VK_RVsw,
+            VK_RVli,
+            VK_RVadd,
+            VK_RVaddi,
+            VK_RVsub,
+            VK_RVsubi,
+            VK_RVmul,
+            VK_RVdiv,
+            VK_RVrem,
+            VK_LastLowInst,
             VK_LastInstruction,
             VK_UserLast,
 
@@ -75,14 +91,17 @@ namespace anuc {
             VK_LastConstant,
             VK_RegisterVar,
             VK_GlobalVar,
+            VK_StackFrame,
+            VK_RvRegister
         };
     private:
         const ValueKind kind;
+        Type *type;
     protected:
         alist<Use> uses;
 
     public:
-        Value(ValueKind kind) : kind(kind) {}
+        Value(ValueKind kind, Type *type) : kind(kind), type(type) {}
 
         ValueKind getKind() { return kind; }
 
@@ -103,7 +122,10 @@ namespace anuc {
 
         alist<Use>::iterator getUsesBack() { return uses.back(); }
 
-        virtual Type *getType() { return nullptr; }
+        void eraseFromList(Use *node);
+
+        Type *getType() { return type; }
+        void setType(Type *ty) {type = ty;}
 
         virtual string toString() { return "undef"; }
 
@@ -126,15 +148,16 @@ namespace anuc {
     protected:
         std::vector<Use *> operands;
     public:
-        User(Value::ValueKind kind) : Value(kind) {}
+        User(Value::ValueKind kind) : Value(kind, nullptr) {}
 
         virtual void print() {}
 
         bool static classof(Value *v) { return v->getKind() >= VK_User && v->getKind() < VK_UserLast; }
 
         vector<Use *>::iterator getBegin() { return operands.begin(); }
-
         vector<Use *>::iterator getEnd() { return operands.end(); }
+        vector<Use *> *getOperands() {return &operands;}
+        Use *getOperands(int n) { return operands[n]; }
     };
 
 

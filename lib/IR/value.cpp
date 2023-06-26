@@ -21,5 +21,7 @@ void Value::replaceAllUseWith(Value *v) {
         u->value = v;
         v->insertBackToUses(u);
     }
-
+}
+void Value::eraseFromList(Use *node) {
+    uses.erase_from_list(static_cast<base_node*>(node));
 }

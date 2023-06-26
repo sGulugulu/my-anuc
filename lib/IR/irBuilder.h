@@ -249,7 +249,11 @@ namespace anuc {
         }
 
         //设置插入指令的节点
-        void SetInstInsert(Instruction *inst) {}
+        void SetInstInsert(Instruction *inst) {
+            currentBlock = inst->getParent();
+            insertPoint = inst;
+            return;
+        }
 
 
         //数组操作
@@ -257,7 +261,7 @@ namespace anuc {
         Value *CreateGEP(Type *ty, Value *ptr, vector<Value *> idx) {
             Type *ptrTy;
             if (ty->isArrayType()) {
-                ptrTy = this->GetPointerType(cast<ArrayType>(ty)->getArrayType());
+                ptrTy = this->GetPointerType(cast<ArrayType>(ty)->getArrayType() );
             } else {
                 ptrTy = this->GetPointerType(ty);
             }
@@ -910,6 +914,17 @@ namespace anuc {
             return rv;
         }
 
+        string GetNewVarName() {
+            return "x" + to_string(registerVarNameNum++);
+        }
+        void InsertIntoPool(Value *v) {
+            modu.insertIntoPool(v);
+        }
+
+        void InsertIntoPool(Value *v, Value *rest ...) {
+            InsertIntoPool(v);
+            InsertIntoPool(rest);
+        }
     private:
         bool isSameType(Value *a, Value *b) {
             return a->getType() == b->getType();

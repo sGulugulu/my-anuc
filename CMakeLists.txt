@@ -9,7 +9,7 @@ file(GLOB_RECURSE GERATED "generated/*.cpp")
 include_directories(lib/IR lib/ADT lib/Analysis lib/BackEnd lib/PassDriver lib/TransFormer third_party/antlr4-runtime)
 link_directories(third_party/lib)
 
-add_executable(a main.cpp ${LIB_SRC} ${GERATED})
+add_executable(a main.cpp ${LIB_SRC} ${GERATED} lib/Backend/rvValue.cpp lib/Backend/rvValue.h)
 target_link_libraries(a libantlr4-runtime.a)
 
 #google test

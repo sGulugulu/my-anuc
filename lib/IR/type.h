@@ -18,11 +18,8 @@ using namespace std;
 //类型系统
 namespace anuc {
     class Instruction;
-
     class AllocateInst;
-
     class InitList;
-
     class Type {
     public:
         enum TypeKind {
@@ -40,14 +37,11 @@ namespace anuc {
         const TypeKind kind;
     public:
         Type(TypeKind kind) : kind(kind) {}
-
         TypeKind getKind() { return kind; }
-
         virtual bool isArrayType() { return false; }
-
         virtual string toString() { return ""; }
-
         bool static classof(Type *v) { return v->getKind() >= Type::TK_Int1 && v->getKind() <= Type::TK_Last; }
+        virtual int getByteSize() {return 0;}
 
     };
 
@@ -56,52 +50,42 @@ namespace anuc {
         BlockType() : Type(Type::TK_Block) {}
         bool static classof(Type *v) { return v->getKind() == Type::TK_Block; }
         bool isArrayType() { return false; }
-
         string toString() { return "block"; }
-
     };
 
     class Int32Type : public Type {
     public:
         Int32Type() : Type(Type::TK_Int32) {}
-
         bool static classof(Type *v) { return v->getKind() == Type::TK_Int32; }
-
         bool isArrayType() { return false; }
-
         string toString() { return "i32"; }
+        int getByteSize() {return 4;}
+
     };
 
     class Int1Type : public Type {
     public:
         Int1Type() : Type(Type::TK_Int1) {}
-
         bool static classof(Type *v) { return v->getKind() == Type::TK_Int1; }
-
         bool isArrayType() { return false; }
-
         string toString() { return "i1"; }
+        int getByteSize() {return 1;}
     };
 
     class FloatType : public Type {
     public:
         FloatType() : Type(Type::TK_Float) {}
-
         bool static classof(Type *v) { return v->getKind() == Type::TK_Float; }
-
         bool isArrayType() { return false; }
-
         string toString() { return "float"; }
+        int getByteSize() {return 4;}
     };
 
     class VoidType : public Type {
     public:
         VoidType() : Type(Type::TK_Void) {}
-
         bool static classof(Type *v) { return v->getKind() == Type::TK_Void; }
-
         bool isArrayType() { return false; }
-
         string toString() { return "void"; }
     };
 
@@ -110,17 +94,24 @@ namespace anuc {
         unsigned size{0};
     public:
         ArrayType(Type *type, unsigned size) : Type(Type::TK_Array), type(type), size(size) {}
-
         bool static classof(Type *v) { return v->getKind() == Type::TK_Array; }
-
         Type *getArrayType() { return type; }
-
-        unsigned getSize() { return size; }
-
+        int getSize() { return size; }
         bool isArrayType() { return true; }
-
         string toString() {
             return '[' + to_string(size) + " x " + type->toString() + ']';
+        }
+        int getElementSize() {return type->getByteSize();}
+        int getByteSize() {
+            Type *ty = type;
+            int byteSize =  size;
+            while(isa<ArrayType>(ty)) {
+                ArrayType *aty = cast<ArrayType>(ty);
+                byteSize = aty->getSize() * size;
+                ty = aty->getArrayType();
+            }
+            byteSize = ty->getByteSize() * byteSize;
+            return byteSize;
         }
 
     };
@@ -129,12 +120,10 @@ namespace anuc {
         Type *type;
     public:
         PointerType(Type *type) : Type(Type::TK_Ptr), type(type) {}
-
         bool static classof(Type *v) { return v->getKind() == Type::TK_Ptr; }
-
         Type *getElementType() { return type; }
-
         string toString() { return "ptr"; }
+        int getSize() { return 8; }
 
     };
 
@@ -161,19 +150,14 @@ namespace anuc {
     /*-------------------------------------------------------------------*/
     //constant
     class Constant : public Value {
-    protected:
-        Type *type;
     public:
-        Constant(Type *type, Value::ValueKind kind) : Value(kind), type(type) {}
+        Constant(Type *type, Value::ValueKind kind) : Value(kind, type) {}
 
         bool static classof(Value *v) {
             return v->getKind() >= Value::VK_Constant
                    && v->getKind() < Value::VK_LastConstant;
         }
 
-        Type *getType() {
-            return type;
-        }
     };
 
     class ConstantInt : public Constant {
@@ -230,11 +214,10 @@ namespace anuc {
 
     class RegisterVar : public Value {
         std::string name;
-        Type *type;
         Instruction *def{nullptr};
 
     public:
-        RegisterVar(Type *type, string name) : Value(VK_RegisterVar), type(type), name(name) {}
+        RegisterVar(Type *type, string name) : Value(VK_RegisterVar, type), name(name) {}
 
         bool static classof(Value *v) { return v->getKind() == VK_RegisterVar; }
 
@@ -244,7 +227,6 @@ namespace anuc {
 
         string getName() { return name; }
 
-        Type *getType() { return type; }
 
         string toString() {
             return " %" + name;
@@ -263,18 +245,18 @@ namespace anuc {
         InitList *list{nullptr};
         bool isArray{false};
     public:
-        GlobalVar(Type *ty, string name, Constant *initValue) : Value(VK_GlobalVar), type(ty), name(name),
+        GlobalVar(Type *ty, string name, Constant *initValue) : Value(VK_GlobalVar, ty), type(ty), name(name),
                                                                 initValue(initValue) {
             if (isa<ArrayType>(ty)) isArray = true;
             valueType = cast<PointerType>(type)->getElementType();
         }
 
-        GlobalVar(Type *ty, string name) : Value(VK_GlobalVar), type(ty), name(name) {
+        GlobalVar(Type *ty, string name) : Value(VK_GlobalVar, ty), type(ty), name(name) {
             if (isa<ArrayType>(ty)) isArray = true;
             valueType = cast<PointerType>(type)->getElementType();
         }
 
-        GlobalVar(Type *ty, string name, InitList *list) : Value(VK_GlobalVar), type(ty), name(name), list(list) {
+        GlobalVar(Type *ty, string name, InitList *list) : Value(VK_GlobalVar, ty), type(ty), name(name), list(list) {
             if (isa<ArrayType>(ty)) isArray = true;
             valueType = cast<PointerType>(type)->getElementType();
         }
@@ -309,6 +291,7 @@ namespace anuc {
             }
         }
     };
+
 
 
 }
