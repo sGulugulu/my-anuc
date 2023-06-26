@@ -14,6 +14,7 @@ void Value::printAllUsers() {
     }
 }
 
+//不删除被替换调的use链，rapu完记得手动erasefromparent
 void Value::replaceAllUseWith(Value *v) {
     for (auto i = uses.begin(); i != uses.end();) {
         Use *u = &*i;

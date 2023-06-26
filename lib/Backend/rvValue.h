@@ -9,11 +9,11 @@
 #include "value.h"
 using namespace std;
 namespace anuc {
-    
+
     class RvRegister : public Value {
     public:
         enum RgKind {
-            RK_Sp
+            sp,zero, s0, s1
         };
     private:
         RgKind rgKind;
@@ -25,9 +25,13 @@ namespace anuc {
         string toString() {
             string s;
             switch (rgKind) {
-                case RgKind::RK_Sp: s = "sp"; break;
+#define REG_TOSTRING_CASE(KIND) case RgKind::KIND: s = #KIND; break;
+                REG_TOSTRING_CASE(sp)
+                REG_TOSTRING_CASE(zero)
+                REG_TOSTRING_CASE(s0)
+                REG_TOSTRING_CASE(s1)
             }
-            return s;
+            return ' ' + s;
         }
     };
 
@@ -48,19 +52,31 @@ namespace anuc {
 
     class RegTable {
         unique_ptr<RvRegister> sp;
+        unique_ptr<RvRegister> zero;
+        unique_ptr<RvRegister> s0;
+        unique_ptr<RvRegister> s1;
+
         map<Value *, RvRegister* > valueToReg;
     public:
         RegTable() {
-            sp = make_unique<RvRegister>(RvRegister::RK_Sp);
+            sp = make_unique<RvRegister>(RvRegister::sp);
+            zero = make_unique<RvRegister>(RvRegister::zero);
+            s0 = make_unique<RvRegister>(RvRegister::s0);
+            s1 = make_unique<RvRegister>(RvRegister::s1);
+
         }
-        void insertToMap(Value *v, RvRegister::RgKind kind) {
+        bool insertToMap(Value *v, RvRegister::RgKind kind) {
             RvRegister *reg;
             switch (kind) {
-                case RvRegister::RK_Sp:
-                    reg = sp.get();
-                    break;
-            }
+#define REG_INSERT_CASE(KIND) case RvRegister::KIND : reg = KIND.get();break;
+                REG_INSERT_CASE(sp)
+                REG_INSERT_CASE(zero)
+                REG_INSERT_CASE(s0)
+                REG_INSERT_CASE(s1)
 
+
+            }
+            return valueToReg.insert({v, reg}).second;
         }
 
         RvRegister *find(Value *v) {
@@ -71,12 +87,17 @@ namespace anuc {
 
         RvRegister *getReg(RvRegister::RgKind kind) {
             switch (kind) {
-                case RvRegister::RK_Sp:
-                    return sp.get();
+#define REG_GET_CASE(KIND) case RvRegister::KIND : return KIND.get();
+                REG_GET_CASE(sp)
+                REG_GET_CASE(zero)
+                REG_GET_CASE(s0)
+                REG_GET_CASE(s1)
+
+
             }
         }
-
     };
+
 }
 
 #endif //ANUC_RVVALUE_H

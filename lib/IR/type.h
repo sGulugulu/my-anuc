@@ -203,6 +203,9 @@ namespace anuc {
             return " 0x" + toHex(value);
         }
 
+        string toStringInDecimal() {
+            return " " + to_string(value);
+        }
     };
 
     struct InitList {
@@ -242,6 +245,7 @@ namespace anuc {
         Type *type;
         Type *valueType;
         Constant *initValue{nullptr};
+        //处理列表表达式赋值
         InitList *list{nullptr};
         bool isArray{false};
     public:

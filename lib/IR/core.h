@@ -16,9 +16,13 @@
 using namespace std;
 namespace anuc {
     class Module;
+
     class Function;
+
     class BasicBlock;
+
     class Instruction;
+
     class Visitor;
 
     class Module {
@@ -91,21 +95,13 @@ namespace anuc {
 
     class Function : public alist_node<Function> {
         friend class ASTVisitor;
+
     public:
-        struct StackFrame {
-            set<Value*> frames;
-            int stackOffset{0};
-            Value* find(Value *v) {
-                auto it = frames.find(v);
-                if(it == frames.end()) return nullptr;
-                else return *it;
-            }
-            bool insert(Value *frame) {
-                return frames.insert(frame).second;
-            }
-        };
+
+
     private:
-        StackFrame frameTable;
+        //记录函数栈上变量+大小
+        map<Value*, int> frame;
         Module *parent;
         alist<BasicBlock> childlist;
         using argv = pair<string, Type *>;
@@ -158,7 +154,7 @@ namespace anuc {
 
         FunctionType *getFuncType() { return type; }
 
-        StackFrame &getStackFrame() {return frameTable;}
+        map<Value*, int> &getFrame() { return frame; }
 
         void print();
 
@@ -178,8 +174,11 @@ namespace anuc {
 
         BasicBlock(const BasicBlock &) = delete;
 
-        BasicBlock(string name, Type *ty): Value(Value::VK_BasicBlock, ty), name(name), type(ty) {}
-        Type *getType() {return type;}
+        BasicBlock(string name, Type *ty) : Value(Value::VK_BasicBlock, ty), name(name), type(ty) {}
+
+        bool static classof(Value *v) { return v->getKind() == VK_BasicBlock; }
+
+        Type *getType() { return type; }
 
         void setParent(Function *func) { parent = func; }
 
@@ -242,7 +241,6 @@ namespace anuc {
 
     };
 
-
     class Instruction : public User, public alist_node_with_parent<Instruction, BasicBlock> {
         unsigned num{0};
     protected:
@@ -254,7 +252,7 @@ namespace anuc {
 
         Instruction(ValueKind kind, BasicBlock *parent) : User(kind), parent(parent) {}
 
-        virtual void accept(Visitor *V){}
+        virtual void accept(Visitor *V) {}
 
         bool static classof(Value *v) {
             return v->getKind() >= Value::VK_Instruction
@@ -268,6 +266,7 @@ namespace anuc {
         }
 
         Instruction *getNext() { return static_cast<Instruction *>(next); }
+
         Instruction *getPrev() { return static_cast<Instruction *>(prev); }
 
 
@@ -285,6 +284,7 @@ namespace anuc {
 
         //只从链表中删除，不删除内存
         void removeFromParent() { this->erase(); }
+
         virtual Value *getResult() { return nullptr; }
     };
 
@@ -308,10 +308,15 @@ namespace anuc {
         }
 
         bool static classof(Value *v) { return v->getKind() == VK_GEPInst; }
+
         Value *getPtr() { return operands[0]->value; }
+
         Value *getIdx(int i) { return idx[i]; }
+
         Value *getResult() { return result; }
+
         Type *getType() { return type; }
+
         void print() {
             cout << "  %" << result->getName() << " = getelementptr " + type->toString() +
                                                   ", " << operands[0]->value->getType()->toString()
@@ -324,6 +329,7 @@ namespace anuc {
             }
             cout << s << endl;
         }
+
         void accept(Visitor *V);
     };
 
@@ -346,13 +352,16 @@ namespace anuc {
         Value *getResult() {
             return result;
         }
+
         Type *getType() {
             return type;
         }
+
         void print() {
             cout << "  %" << result->getName() << " = alloca "
                  << type->toString() << ", align " << align << endl;
         }
+
         void accept(Visitor *V);
 
     };
@@ -369,13 +378,17 @@ namespace anuc {
         }
 
         bool static classof(Value *v) { return v->getKind() == VK_StoreInst; }
+
         Value *getVal() { return operands[0]->value; }
+
         Value *getPtr() { return operands[1]->value; }
+
         void print() {
             cout << "  store " << operands[0]->value->getType()->toString() << operands[0]->value->toString()
                  << ", " << operands[1]->value->getType()->toString() << operands[1]->value->toString() << ", align 4"
                  << endl;
         }
+
         void accept(Visitor *V);
     };
 
@@ -392,13 +405,18 @@ namespace anuc {
         }
 
         bool static classof(Value *v) { return v->getKind() == VK_LoadInst; }
+
         Type *getType() { return ty; }
+
         Value *getPtr() { return operands[0]->value; }
+
         Value *getResult() { return result; }
+
         void print() {
             cout << " " << result->toString() << " = load " << result->getType()->toString() << ", " <<
                  operands[0]->value->getType()->toString() << operands[0]->value->toString() << ", align 4" << endl;
         }
+
         void accept(Visitor *V);
 
 
@@ -408,7 +426,6 @@ namespace anuc {
     class PhiInst : public Instruction {
         Type *ty;
         RegisterVar *result;
-        vector<Use *> incomingBlocks;
         using phiValue = pair<Value *, BasicBlock *>;
         unsigned valueNum;
     public:
@@ -427,12 +444,12 @@ namespace anuc {
 
         void print() {
             string printString;
-            if (incomingBlocks.empty()) printString = " [ ] ";
-            for (int i = 0; i < incomingBlocks.size(); ++i) {
+            if (operands.empty()) printString = " [ ] ";
+            for (int i = 0; i < operands.size(); i = i + 2) {
                 printString += " [";
-                printString += operands[i]->value->toString() + ", " + incomingBlocks[i]->value->toString();
+                printString += operands[i]->value->toString() + ", " + operands[i+1]->value->toString();
                 printString += " ]";
-                if (i != incomingBlocks.size() - 1) printString += ",";
+                if (i != operands.size() - 2) printString += ",";
             }
 
             cout << " " << result->toString() << " = phi " << result->getType()->toString() << printString << endl;
@@ -442,7 +459,7 @@ namespace anuc {
             Use *op0 = new Use(value.first, this);
             Use *op1 = new Use(value.second, this);
             operands.push_back(op0);
-            incomingBlocks.push_back(op1);
+            operands.push_back(op1);
             value.first->insertBackToUses(op0);
             value.second->insertBackToUses(op1);
             ++valueNum;
@@ -452,6 +469,7 @@ namespace anuc {
             addIncoming(value);
             addIncoming(rest);
         }
+
         Value *getResult() {
             return result;
         }
@@ -482,8 +500,11 @@ namespace anuc {
         }
 
         Value *getL() { return operands[0]->value; }
+
         Value *getR() { return operands[1]->value; }
-        Value *getResult() {return result;}
+
+        Value *getResult() { return result; }
+
         void accept(Visitor *V);
     };
 
@@ -500,15 +521,21 @@ namespace anuc {
             L->insertBackToUses(operands[0]);
             R->insertBackToUses(operands[1]);
         }
+
         bool static classof(Value *v) { return v->getKind() == VK_SubInst; }
+
         void print() {
             cout << " " << result->toString() << " = sub i32" <<
                  operands[0]->value->toString() << "," << operands[1]->value->toString()
                  << endl;
         }
+
         Value *getL() { return operands[0]->value; }
+
         Value *getR() { return operands[1]->value; }
-        Value *getResult() {return result;}
+
+        Value *getResult() { return result; }
+
         void accept(Visitor *V);
     };
 
@@ -534,9 +561,13 @@ namespace anuc {
                  operands[0]->value->toString() << "," << operands[1]->value->toString()
                  << endl;
         }
+
         Value *getL() { return operands[0]->value; }
+
         Value *getR() { return operands[1]->value; }
-        Value *getResult() {return result;}
+
+        Value *getResult() { return result; }
+
         void accept(Visitor *V);
 
     };
@@ -563,9 +594,13 @@ namespace anuc {
                  operands[0]->value->toString() << "," << operands[1]->value->toString()
                  << endl;
         }
+
         Value *getL() { return operands[0]->value; }
+
         Value *getR() { return operands[1]->value; }
-        Value *getResult() {return result;}
+
+        Value *getResult() { return result; }
+
         void accept(Visitor *V);
 
 
@@ -592,9 +627,13 @@ namespace anuc {
                  operands[0]->value->toString() << "," << operands[1]->value->toString()
                  << endl;
         }
+
         Value *getL() { return operands[0]->value; }
+
         Value *getR() { return operands[1]->value; }
-        Value *getResult() {return result;}
+
+        Value *getResult() { return result; }
+
         void accept(Visitor *V);
 
 
@@ -627,6 +666,9 @@ namespace anuc {
 
         Value *getR() { return operands[1]->value; }
 
+        Value *getResult() { return result; }
+
+        void accept(Visitor *V);
     };
 
     //fsub
@@ -656,6 +698,9 @@ namespace anuc {
 
         Value *getR() { return operands[1]->value; }
 
+        Value *getResult() { return result; }
+
+        void accept(Visitor *V);
     };
 
     //fmul
@@ -685,6 +730,9 @@ namespace anuc {
 
         Value *getR() { return operands[1]->value; }
 
+        Value *getResult() { return result; }
+
+        void accept(Visitor *V);
     };
 
     //FDiv
@@ -714,6 +762,9 @@ namespace anuc {
 
         Value *getR() { return operands[1]->value; }
 
+        Value *getResult() { return result; }
+
+        void accept(Visitor *V);
     };
 
     //比较
@@ -741,6 +792,11 @@ namespace anuc {
         Value *getL() { return operands[0]->value; }
 
         Value *getR() { return operands[1]->value; }
+
+        Value *getResult() { return rv; }
+
+        void accept(Visitor *V);
+
     };
 
     //IcmpNE
@@ -768,6 +824,11 @@ namespace anuc {
         Value *getL() { return operands[0]->value; }
 
         Value *getR() { return operands[1]->value; }
+
+        Value *getResult() { return rv; }
+
+        void accept(Visitor *V);
+
     };
 
     //IcmpLT
@@ -795,6 +856,11 @@ namespace anuc {
         Value *getL() { return operands[0]->value; }
 
         Value *getR() { return operands[1]->value; }
+
+        Value *getResult() { return rv; }
+
+        void accept(Visitor *V);
+
     };
 
     //IcmpLE
@@ -822,6 +888,11 @@ namespace anuc {
         Value *getL() { return operands[0]->value; }
 
         Value *getR() { return operands[1]->value; }
+
+        Value *getResult() { return rv; }
+
+        void accept(Visitor *V);
+
     };
 
     //IcmpGT
@@ -849,6 +920,11 @@ namespace anuc {
         Value *getL() { return operands[0]->value; }
 
         Value *getR() { return operands[1]->value; }
+
+        Value *getResult() { return rv; }
+
+        void accept(Visitor *V);
+
     };
 
     //IcmpGE
@@ -876,6 +952,11 @@ namespace anuc {
         Value *getL() { return operands[0]->value; }
 
         Value *getR() { return operands[1]->value; }
+
+        Value *getResult() { return rv; }
+
+        void accept(Visitor *V);
+
     };
 
     //FcmpEQ
@@ -903,6 +984,12 @@ namespace anuc {
         Value *getL() { return operands[0]->value; }
 
         Value *getR() { return operands[1]->value; }
+
+        Value *getResult() { return rv; }
+
+        void accept(Visitor *V);
+
+
     };
 
     //FcmpNE
@@ -930,6 +1017,12 @@ namespace anuc {
         Value *getL() { return operands[0]->value; }
 
         Value *getR() { return operands[1]->value; }
+
+        Value *getResult() { return rv; }
+
+        void accept(Visitor *V);
+
+
     };
 
     //FcmpLT
@@ -957,6 +1050,12 @@ namespace anuc {
         Value *getL() { return operands[0]->value; }
 
         Value *getR() { return operands[1]->value; }
+
+        Value *getResult() { return rv; }
+
+        void accept(Visitor *V);
+
+
     };
 
     //FcmpLE
@@ -984,6 +1083,12 @@ namespace anuc {
         Value *getL() { return operands[0]->value; }
 
         Value *getR() { return operands[1]->value; }
+
+        Value *getResult() { return rv; }
+
+        void accept(Visitor *V);
+
+
     };
 
     //FcmpGT
@@ -1011,6 +1116,12 @@ namespace anuc {
         Value *getL() { return operands[0]->value; }
 
         Value *getR() { return operands[1]->value; }
+
+        Value *getResult() { return rv; }
+
+        void accept(Visitor *V);
+
+
     };
 
     //FcmpGE
@@ -1038,6 +1149,12 @@ namespace anuc {
         Value *getL() { return operands[0]->value; }
 
         Value *getR() { return operands[1]->value; }
+
+        Value *getResult() { return rv; }
+
+        void accept(Visitor *V);
+
+
     };
 
 
@@ -1063,7 +1180,10 @@ namespace anuc {
 
         Value *getSrc() { return operands[0]->value; }
 
-        Value *getDest() { return rv; }
+        Value *getResult() { return rv; }
+
+        void accept(Visitor *V);
+
     };
 
     //FToI
@@ -1088,7 +1208,10 @@ namespace anuc {
 
         Value *getSrc() { return operands[0]->value; }
 
-        Value *getDest() { return rv; }
+        Value *getResult() { return rv; }
+
+        void accept(Visitor *V);
+
     };
 
     class FNegInst : public Instruction {
@@ -1108,6 +1231,11 @@ namespace anuc {
             cout << " " << result->toString() << " = fneg float"
                  << operands[0]->value->toString() << endl;
         }
+
+        Value *getResult() { return result; }
+
+        void accept(Visitor *V);
+
 
     };
 
@@ -1132,6 +1260,10 @@ namespace anuc {
                  << operands[0]->value->toString() << ","
                  << operands[1]->value->toString() << endl;
         }
+
+        Value *getResult() { return result; }
+
+        void accept(Visitor *V);
     };
 
     class ZExtInst : public Instruction {
@@ -1153,6 +1285,10 @@ namespace anuc {
                  operands[0]->value->toString() << " to " << destTy->toString()
                  << endl;
         }
+
+        Value *getResult() { return result; }
+        Value *getSrc() {return operands[0]->value;}
+        void accept(Visitor *V);
     };
 
     //块操作
@@ -1170,6 +1306,8 @@ namespace anuc {
 
         bool static classof(Value *v) { return v->getKind() == VK_BrInst; }
 
+        void accept(Visitor *V);
+
     };
 
     class CondBranchInst : public Instruction {
@@ -1183,6 +1321,7 @@ namespace anuc {
             Use *op1 = new Use(trueBB, this);
             operands.push_back(op1);
             trueBB->insertBackToUses(operands[1]);
+
             Use *op2 = new Use(falseBB, this);
             operands.push_back(op2);
             falseBB->insertBackToUses(operands[2]);
@@ -1200,6 +1339,8 @@ namespace anuc {
                  << operands[0]->value->toString() << ", label " << operands[1]->value->toString()
                  << ", label " << operands[2]->value->toString() << endl;
         }
+
+        void accept(Visitor *V);
 
         bool static classof(Value *v) { return v->getKind() == VK_CondBrInst; }
 
@@ -1263,15 +1404,69 @@ namespace anuc {
 
     class Visitor {
     public:
-        virtual bool visit(AllocateInst *inst) {return false;}
-        virtual bool visit(LoadInst *inst) {return false;}
-        virtual bool visit(StoreInst *inst) {return false;}
-        virtual bool visit(GEPInst *inst) {return false;}
-        virtual bool visit(AddInst *inst) {return false;}
-        virtual bool visit(SubInst *inst) {return false;}
-        virtual bool visit(MulInst *inst) {return false;}
-        virtual bool visit(DivInst *inst) {return false;}
-        virtual bool visit(RemInst *inst) {return false;}
+        virtual bool visit(AllocateInst *inst) { return false; }
+
+        virtual bool visit(LoadInst *inst) { return false; }
+
+        virtual bool visit(StoreInst *inst) { return false; }
+
+        virtual bool visit(GEPInst *inst) { return false; }
+
+        virtual bool visit(AddInst *inst) { return false; }
+
+        virtual bool visit(SubInst *inst) { return false; }
+
+        virtual bool visit(MulInst *inst) { return false; }
+
+        virtual bool visit(DivInst *inst) { return false; }
+
+        virtual bool visit(RemInst *inst) { return false; }
+
+        virtual bool visit(FAddInst *inst) { return false; }
+
+        virtual bool visit(FSubInst *inst) { return false; }
+
+        virtual bool visit(FMulInst *inst) { return false; }
+
+        virtual bool visit(FDivInst *inst) { return false; }
+
+        virtual bool visit(ICmpEQ *inst) { return false; }
+
+        virtual bool visit(ICmpNE *inst) { return false; }
+
+        virtual bool visit(ICmpGE *inst) { return false; }
+
+        virtual bool visit(ICmpGT *inst) { return false; }
+
+        virtual bool visit(ICmpLE *inst) { return false; }
+
+        virtual bool visit(ICmpLT *inst) { return false; }
+
+        virtual bool visit(FCmpEQ *inst) { return false; }
+
+        virtual bool visit(FCmpNE *inst) { return false; }
+
+        virtual bool visit(FCmpGE *inst) { return false; }
+
+        virtual bool visit(FCmpGT *inst) { return false; }
+
+        virtual bool visit(FCmpLE *inst) { return false; }
+
+        virtual bool visit(FCmpLT *inst) { return false; }
+
+        virtual bool visit(CondBranchInst *inst) { return false; }
+
+        virtual bool visit(BranchInst *inst) { return false; }
+
+        virtual bool visit(IToFInst *inst) { return false; }
+
+        virtual bool visit(FToIInst *inst) { return false; }
+
+        virtual bool visit(XorInst *inst) { return false; }
+
+        virtual bool visit(FNegInst *inst) { return false; }
+
+        virtual bool visit(ZExtInst *inst) { return false; }
 
 
     };

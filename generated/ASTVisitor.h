@@ -170,9 +170,16 @@ public:
             }
             reverse(eleNums.begin(), eleNums.end());
             if (Table.scopes.empty()) {
-                ptr = Builder->CreateGlobalVar(arrayType, varName);
-
-
+                for (int i = 0; i < ctx->Lbarck().size(); ++i) currentIndex.push_back(0);
+                ctx->constInitVal()->accept(this);
+                //pair<vector<int>, Value*>
+                InitList *list = new InitList;
+                for (int i = 0; i < indexInfos.size(); ++i) {
+                    indexInfo info = indexInfos[i];
+                    vector<int> index = info.first;
+                    list->initInfos.push_back({index, info.second});
+                }
+                ptr = Builder->CreateGlobalVar(arrayType, varName, list);
                 return nullptr;
             } else {
                 //非全局变量
@@ -328,14 +335,13 @@ public:
                 for (int i = 0; i < ctx->Lbarck().size(); ++i) currentIndex.push_back(0);
                 ctx->initVal()->accept(this);
                 //pair<vector<int>, Value*>
-                InitList *list;
+                InitList *list = new InitList;
                 for (int i = 0; i < indexInfos.size(); ++i) {
-                    indexInfo &info = indexInfos[i];
-                    vector<int> &index = info.first;
+                    indexInfo info = indexInfos[i];
+                    vector<int> index = info.first;
                     list->initInfos.push_back({index, info.second});
                 }
                 ptr = Builder->CreateGlobalVar(arrayType, varName, list);
-
                 return nullptr;
             } else {
                 //非全局变量
@@ -721,13 +727,14 @@ public:
             if (v->getType() == FloatTy) result = Builder->CreateFNeg(v);
         } else if (ctx->unaryOp()->Point()) {
             if (v->getType() == Int32Ty) {
-                Value *cmp = Builder->CreateICmpNE(v, Builder->GetConstantInt32(0));
-                Value *xOr = Builder->CreateXor(cmp, Builder->GetConstantInt(Builder->GetInt1Ty(), 1));
-                result = Builder->CreateZExt(xOr, Int32Ty);
+                Value *cmp = Builder->CreateICmpEQ(v, Builder->GetConstantInt32(0));
+                //Value *xOr = Builder->CreateXor(cmp, Builder->GetConstantInt(Builder->GetInt1Ty(), 1));
+                result = Builder->CreateZExt(cmp, Int32Ty);
             } else if (v->getType() == FloatTy) {
-                Value *cmp = Builder->CreateFCmpNE(v, Builder->GetConstantFloat(0));
+                Value *cmp = Builder->CreateFCmpEQ(v, Builder->GetConstantFloat(0));
                 Value *xOr = Builder->CreateXor(cmp, Builder->GetConstantInt(Builder->GetInt1Ty(), 1));
-                result = Builder->CreateIToF(xOr, FloatTy);
+                Value *zext = Builder->CreateZExt(xOr , Int32Ty);
+                result = Builder->CreateIToF(zext, FloatTy);
             }
         } else result = v;
         return result;

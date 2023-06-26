@@ -1,7 +1,5 @@
-int a;
-int main(){
-
-    int c = a;
-    a = 2;
-    return c;
+// Use complex expression in assign structure
+int main () {
+    int a[20000]={0};
+    return a[19999];
 }

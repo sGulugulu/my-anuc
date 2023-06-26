@@ -13,6 +13,7 @@
 #include "scheduleBeforeRA.h"
 #include "lowerToLIR.h"
 #include "rvValue.h"
+#include "sbRegSpill.h"
 
 using namespace std;
 namespace anuc {
@@ -39,6 +40,7 @@ namespace anuc {
             //降级
             if(j || passSwitch[2]) runLowerPass1();
             if(j || passSwitch[3]) runLowerPass2();
+            if(j || passSwitch[4]) runRaPass();
 
             freopen("../l.ll", "w", stdout);
             M->print();
@@ -80,9 +82,10 @@ namespace anuc {
                     }
                 }
             }
+            M->memoryClean();
         }
         void runLowerPass2() {
-            LIRVisitor2 *visitor2 = new LIRVisitor2(Builder.get());
+            LIRVisitor2 *visitor2 = new LIRVisitor2(Builder.get(), regTable.get());
             for (auto fn = M->getBegin(); fn != M->getEnd(); ++fn) {
                 for (auto bb = (*fn).getBegin(); bb != (*fn).getEnd(); ++bb) {
                     for(auto inst = (*bb).getBegin(); inst != (*bb).getEnd(); ) {
@@ -91,6 +94,13 @@ namespace anuc {
                         i->accept(visitor2);
                     }
                 }
+            }
+            M->memoryClean();
+        }
+        void runRaPass() {
+            for (auto fn = M->getBegin(); fn != M->getEnd(); ++fn) {
+                SBRegAlloca *sbr = new SBRegAlloca(&*fn, Builder.get(), regTable.get());
+                sbr->run();
             }
         }
     };

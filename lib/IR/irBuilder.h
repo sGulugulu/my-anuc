@@ -41,7 +41,7 @@ namespace anuc {
         //指向当前插入指令
         Instruction *insertPoint{nullptr};
         //建立指针变量-allocate的映射
-        map<Value *, AllocateInst *> poinToAllocate;
+        map<Value *, AllocateInst *> pointToAllocate;
         Type *blockType{nullptr};
     public:
         IRBuilder &operator=(const IRBuilder &) = delete;
@@ -634,7 +634,7 @@ namespace anuc {
             RegisterVar *rv = new RegisterVar(GetInt1Ty(), name);
             FCmpEQ *inst = new FCmpEQ(currentBlock, L, R, rv);
             currentBlock->insertIntoBackChild(insertPoint, inst);
-            currentBlock->insertBackToChild(inst);
+            insertPoint = inst;
             modu.insertIntoPool(rv, inst);
             return rv;
         }
@@ -662,6 +662,7 @@ namespace anuc {
             FCmpNE *inst = new FCmpNE(currentBlock, L, R, rv);
             currentBlock->insertIntoBackChild(insertPoint, inst);
             currentBlock->insertBackToChild(inst);
+            insertPoint = inst;
             modu.insertIntoPool(rv, inst);
             return rv;
         }
@@ -689,6 +690,7 @@ namespace anuc {
             FCmpLT *inst = new FCmpLT(currentBlock, L, R, rv);
             currentBlock->insertIntoBackChild(insertPoint, inst);
             currentBlock->insertBackToChild(inst);
+            insertPoint = inst;
             modu.insertIntoPool(rv, inst);
             return rv;
         }
@@ -716,6 +718,7 @@ namespace anuc {
             FCmpLE *inst = new FCmpLE(currentBlock, L, R, rv);
             currentBlock->insertIntoBackChild(insertPoint, inst);
             currentBlock->insertBackToChild(inst);
+            insertPoint = inst;
             modu.insertIntoPool(rv, inst);
             return rv;
         }
@@ -743,6 +746,7 @@ namespace anuc {
             FCmpGT *inst = new FCmpGT(currentBlock, L, R, rv);
             currentBlock->insertIntoBackChild(insertPoint, inst);
             currentBlock->insertBackToChild(inst);
+            insertPoint = inst;
             modu.insertIntoPool(rv, inst);
             return rv;
         }
@@ -769,6 +773,7 @@ namespace anuc {
             FCmpGE *inst = new FCmpGE(currentBlock, L, R, rv);
             currentBlock->insertIntoBackChild(insertPoint, inst);
             currentBlock->insertBackToChild(inst);
+            insertPoint = inst;
             modu.insertIntoPool(rv, inst);
             return rv;
         }
@@ -879,6 +884,7 @@ namespace anuc {
             currentBlock->setTerminated(inst);
             currentBlock->insertBackToChild(inst);
             modu.insertIntoPool(inst);
+            insertPoint = inst;
             return;
         }
 
@@ -890,6 +896,7 @@ namespace anuc {
             currentBlock->setTerminated(inst);
             currentBlock->insertBackToChild(inst);
             modu.insertIntoPool(inst);
+            insertPoint = inst;
             return;
         }
 

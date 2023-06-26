@@ -123,4 +123,31 @@ namespace anuc {
     void MulInst::accept(Visitor *V) { V->visit(this);}
     void DivInst::accept(Visitor *V) { V->visit(this);}
     void RemInst::accept(Visitor *V) { V->visit(this);}
+    void FAddInst::accept(Visitor *V) { V->visit(this);}
+    void FSubInst::accept(Visitor *V) { V->visit(this);}
+    void FMulInst::accept(Visitor *V) { V->visit(this);}
+    void FDivInst::accept(Visitor *V) { V->visit(this);}
+    void ICmpEQ::accept(Visitor *V) { V->visit(this);}
+    void ICmpNE::accept(Visitor *V) { V->visit(this);}
+    void ICmpLT::accept(Visitor *V) { V->visit(this);}
+    void ICmpLE::accept(Visitor *V) { V->visit(this);}
+    void ICmpGT::accept(Visitor *V) { V->visit(this);}
+    void ICmpGE::accept(Visitor *V) { V->visit(this);}
+    void FCmpEQ::accept(Visitor *V) { V->visit(this);}
+    void FCmpNE::accept(Visitor *V) { V->visit(this);}
+    void FCmpLT::accept(Visitor *V) { V->visit(this);}
+    void FCmpLE::accept(Visitor *V) { V->visit(this);}
+    void FCmpGT::accept(Visitor *V) { V->visit(this);}
+    void FCmpGE::accept(Visitor *V) { V->visit(this);}
+
+    void CondBranchInst::accept(Visitor *V) { V->visit(this);}
+    void BranchInst::accept(Visitor *V) { V->visit(this);}
+    void IToFInst::accept(Visitor *V) { V->visit(this);}
+    void FToIInst::accept(Visitor *V) { V->visit(this);}
+    void XorInst::accept(Visitor *V) { V->visit(this);}
+    void FNegInst::accept(Visitor *V) { V->visit(this);}
+    void ZExtInst::accept(Visitor *V) { V->visit(this);}
+
+
+
 }

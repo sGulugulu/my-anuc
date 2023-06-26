@@ -71,16 +71,24 @@ namespace anuc {
             VK_LowLoad,
             VK_LowStore,
             VK_GlobalLoad,
+            VK_FloatLoad,
             VK_RVlw,
             VK_RVsw,
             VK_RVli,
-            VK_RVadd,
             VK_RVaddi,
-            VK_RVsub,
             VK_RVsubi,
-            VK_RVmul,
-            VK_RVdiv,
-            VK_RVrem,
+            VK_RVfmvsx,
+
+            VK_RVasmd,
+            VK_RVfasmd,
+            VK_RVCondBranch,
+            VK_RVBranch,
+            VK_RVfcmp,
+            VK_RVicmp,
+            VK_RVzicmp,
+            VK_RVZeroCondBranch,
+            VK_RVFToI,
+            VK_RVIToF,
             VK_LastLowInst,
             VK_LastInstruction,
             VK_UserLast,
@@ -114,6 +122,8 @@ namespace anuc {
 
         bool usesEmpty() { return uses.empty(); }
 
+        int getUsesLength() {return uses.getLength(); }
+
         alist<Use>::iterator getUsesBegin() { return uses.begin(); }
 
         alist<Use>::iterator getUsesEnd() { return uses.end(); }
@@ -132,13 +142,16 @@ namespace anuc {
         virtual void print() {}
 
         virtual Instruction *getDef() { return nullptr; }
+        virtual void setInst(Instruction *inst) {}
 
     };
 
     struct Use : public alist_node<Use> {
         Value *value{nullptr};
         User *user{nullptr};
+        void eraseFromParent() {
 
+        }
         Use() = default;
 
         Use(Value *v, User *u) : value(v), user(u) {}

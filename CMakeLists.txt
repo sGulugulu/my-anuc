@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 project(anuc)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE "Debug")
+set(CMAKE_CXX_COMPILER "g++")
 
 file(GLOB_RECURSE LIB_SRC "lib/*.cpp")
 file(GLOB_RECURSE GERATED "generated/*.cpp")
@@ -9,7 +10,7 @@ file(GLOB_RECURSE GERATED "generated/*.cpp")
 include_directories(lib/IR lib/ADT lib/Analysis lib/BackEnd lib/PassDriver lib/TransFormer third_party/antlr4-runtime)
 link_directories(third_party/lib)
 
-add_executable(a main.cpp ${LIB_SRC} ${GERATED} lib/Backend/rvValue.cpp lib/Backend/rvValue.h)
+add_executable(a main.cpp ${LIB_SRC} ${GERATED})
 target_link_libraries(a libantlr4-runtime.a)
 
 #google test
