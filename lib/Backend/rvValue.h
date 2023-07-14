@@ -13,16 +13,21 @@ using namespace std;
 namespace anuc {
 
     class RvRegister : public BaseReg {
+        //分配权重，权重越大越先使用
+        int weight = 0;
     public:
         enum RgKind {
-            sp, zero, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11,
+            sp, zero, ra,
+            s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11,
             a0, a1, a2, a3, a4, a5, a6, a7,
-            t0, t1, t2, t3, t4, t5, t6
+            t0, t1, t2, t3, t4, t5, t6,
+            fa0, fa1, fa2, fa3, fa4, fa5, fa6, fa7
         };
     private:
         RgKind rgKind;
     public:
-        explicit RvRegister(RgKind rgKind) : BaseReg(VK_RvRegister, nullptr), rgKind(rgKind) {
+        explicit RvRegister(RgKind rgKind, int weight) : BaseReg(VK_RvRegister, nullptr),
+        rgKind(rgKind), weight(weight) {
 
         }
 
@@ -32,6 +37,8 @@ namespace anuc {
 #define REG_TOSTRING_CASE(KIND) case RgKind::KIND: s = #KIND; break;
                 REG_TOSTRING_CASE(sp)
                 REG_TOSTRING_CASE(zero)
+                REG_TOSTRING_CASE(ra)
+
                 REG_TOSTRING_CASE(s0)
                 REG_TOSTRING_CASE(s1)
                 REG_TOSTRING_CASE(s2)
@@ -59,31 +66,28 @@ namespace anuc {
                 REG_TOSTRING_CASE(t4)
                 REG_TOSTRING_CASE(t5)
                 REG_TOSTRING_CASE(t6)
+                REG_TOSTRING_CASE(fa0)
+                REG_TOSTRING_CASE(fa1)
+                REG_TOSTRING_CASE(fa2)
+                REG_TOSTRING_CASE(fa3)
+                REG_TOSTRING_CASE(fa4)
+                REG_TOSTRING_CASE(fa5)
+                REG_TOSTRING_CASE(fa6)
+                REG_TOSTRING_CASE(fa7)
+
             }
             return ' ' + s;
         }
+        int getWeight() { return weight;}
     };
 
-    class Frame : public Value {
-        Value *base;
-        int offset;
-        string name;
-    public:
-        Frame(Type *type, string name) : Value(VK_StackFrame, type), name(name) {}
-
-        Frame(Type *type, string name, Value *base, int offset) : Value(VK_StackFrame, type), name(name),
-                                                                  base(base), offset(offset) {}
-
-        string toString() { return " frame " + name; }
-
-        bool static classof(Value *v) { return v->getKind() == VK_StackFrame; }
-
-
-    };
 
     class RegTable {
+        vector<RvRegister*> integerRegs{};
         unique_ptr<RvRegister> sp;
         unique_ptr<RvRegister> zero;
+        unique_ptr<RvRegister> ra;
+
         unique_ptr<RvRegister> s0;
         unique_ptr<RvRegister> s1;
         unique_ptr<RvRegister> s2;
@@ -111,76 +115,58 @@ namespace anuc {
         unique_ptr<RvRegister> t4;
         unique_ptr<RvRegister> t5;
         unique_ptr<RvRegister> t6;
+        unique_ptr<RvRegister> fa0;
+        unique_ptr<RvRegister> fa1;
+        unique_ptr<RvRegister> fa2;
+        unique_ptr<RvRegister> fa3;
+        unique_ptr<RvRegister> fa4;
+        unique_ptr<RvRegister> fa5;
+        unique_ptr<RvRegister> fa6;
+        unique_ptr<RvRegister> fa7;
 
         map<Value *, RvRegister *> valueToReg;
     public:
         RegTable() {
-            sp = make_unique<RvRegister>(RvRegister::sp);
-            zero = make_unique<RvRegister>(RvRegister::zero);
-            s0 = make_unique<RvRegister>(RvRegister::s0);
-            s1 = make_unique<RvRegister>(RvRegister::s1);
-            s2 = make_unique<RvRegister>(RvRegister::s2);
-            s3 = make_unique<RvRegister>(RvRegister::s3);
-            s4 = make_unique<RvRegister>(RvRegister::s4);
-            s5 = make_unique<RvRegister>(RvRegister::s5);
-            s6 = make_unique<RvRegister>(RvRegister::s6);
-            s7 = make_unique<RvRegister>(RvRegister::s7);
-            s8 = make_unique<RvRegister>(RvRegister::s8);
-            s9 = make_unique<RvRegister>(RvRegister::s9);
-            s10 = make_unique<RvRegister>(RvRegister::s10);
-            s11 = make_unique<RvRegister>(RvRegister::s11);
-            a0 = make_unique<RvRegister>(RvRegister::a0);
-            a1 = make_unique<RvRegister>(RvRegister::a1);
-            a2 = make_unique<RvRegister>(RvRegister::a2);
-            a3 = make_unique<RvRegister>(RvRegister::a3);
-            a4 = make_unique<RvRegister>(RvRegister::a4);
-            a5 = make_unique<RvRegister>(RvRegister::a5);
-            a6 = make_unique<RvRegister>(RvRegister::a6);
-            a7 = make_unique<RvRegister>(RvRegister::a7);
-            t0 = make_unique<RvRegister>(RvRegister::t0);
-            t1 = make_unique<RvRegister>(RvRegister::t1);
-            t2 = make_unique<RvRegister>(RvRegister::t2);
-            t3 = make_unique<RvRegister>(RvRegister::t3);
-            t4 = make_unique<RvRegister>(RvRegister::t4);
-            t5 = make_unique<RvRegister>(RvRegister::t5);
-            t6 = make_unique<RvRegister>(RvRegister::t6);
-        }
+            sp = make_unique<RvRegister>(RvRegister::sp, 0);
+            zero = make_unique<RvRegister>(RvRegister::zero, 0);
+            ra = make_unique<RvRegister>(RvRegister::ra, 0);
+            s0 = make_unique<RvRegister>(RvRegister::s0, 0);
+            s1 = make_unique<RvRegister>(RvRegister::s1, 0);
 
-        bool insertToMap(Value *v, RvRegister::RgKind kind) {
-            RvRegister *reg;
-            switch (kind) {
-#define REG_INSERT_CASE(KIND) case RvRegister::KIND : reg = KIND.get();break;
-                REG_INSERT_CASE(sp)
-                REG_INSERT_CASE(zero)
-                REG_INSERT_CASE(s0)
-                REG_INSERT_CASE(s1)
-                REG_INSERT_CASE(s2)
-                REG_INSERT_CASE(s3)
-                REG_INSERT_CASE(s4)
-                REG_INSERT_CASE(s5)
-                REG_INSERT_CASE(s6)
-                REG_INSERT_CASE(s7)
-                REG_INSERT_CASE(s8)
-                REG_INSERT_CASE(s9)
-                REG_INSERT_CASE(s10)
-                REG_INSERT_CASE(s11)
-                REG_INSERT_CASE(a0)
-                REG_INSERT_CASE(a1)
-                REG_INSERT_CASE(a2)
-                REG_INSERT_CASE(a3)
-                REG_INSERT_CASE(a4)
-                REG_INSERT_CASE(a5)
-                REG_INSERT_CASE(a6)
-                REG_INSERT_CASE(a7)
-                REG_INSERT_CASE(t0)
-                REG_INSERT_CASE(t1)
-                REG_INSERT_CASE(t2)
-                REG_INSERT_CASE(t3)
-                REG_INSERT_CASE(t4)
-                REG_INSERT_CASE(t5)
-                REG_INSERT_CASE(t6)
-            }
-            return valueToReg.insert({v, reg}).second;
+            s2 = make_unique<RvRegister>(RvRegister::s2, 1);
+            s3 = make_unique<RvRegister>(RvRegister::s3, 1);
+            s4 = make_unique<RvRegister>(RvRegister::s4, 1);
+            s5 = make_unique<RvRegister>(RvRegister::s5, 1);
+            s6 = make_unique<RvRegister>(RvRegister::s6, 1);
+            s7 = make_unique<RvRegister>(RvRegister::s7, 1);
+            s8 = make_unique<RvRegister>(RvRegister::s8, 1);
+            s9 = make_unique<RvRegister>(RvRegister::s9, 1);
+            s10 = make_unique<RvRegister>(RvRegister::s10, 1);
+            s11 = make_unique<RvRegister>(RvRegister::s11, 1);
+            a0 = make_unique<RvRegister>(RvRegister::a0, 2);
+            a1 = make_unique<RvRegister>(RvRegister::a1, 2);
+            a2 = make_unique<RvRegister>(RvRegister::a2, 2);
+            a3 = make_unique<RvRegister>(RvRegister::a3, 2);
+            a4 = make_unique<RvRegister>(RvRegister::a4, 2);
+            a5 = make_unique<RvRegister>(RvRegister::a5, 2);
+            a6 = make_unique<RvRegister>(RvRegister::a6, 2);
+            a7 = make_unique<RvRegister>(RvRegister::a7, 2);
+            t0 = make_unique<RvRegister>(RvRegister::t0, 3);
+            t1 = make_unique<RvRegister>(RvRegister::t1, 3);
+            t2 = make_unique<RvRegister>(RvRegister::t2, 3);
+            t3 = make_unique<RvRegister>(RvRegister::t3, 3);
+            t4 = make_unique<RvRegister>(RvRegister::t4, 3);
+            t5 = make_unique<RvRegister>(RvRegister::t5, 3);
+            t6 = make_unique<RvRegister>(RvRegister::t6, 3);
+            fa0 = make_unique<RvRegister>(RvRegister::fa0, 2);
+            fa1 = make_unique<RvRegister>(RvRegister::fa1, 2);
+            fa2 = make_unique<RvRegister>(RvRegister::fa2, 2);
+            fa3 = make_unique<RvRegister>(RvRegister::fa3, 2);
+            fa4 = make_unique<RvRegister>(RvRegister::fa4, 2);
+            fa5 = make_unique<RvRegister>(RvRegister::fa5, 2);
+            fa6 = make_unique<RvRegister>(RvRegister::fa6, 2);
+            fa7 = make_unique<RvRegister>(RvRegister::fa7, 2);
+
         }
 
         RvRegister *find(Value *v) {
@@ -194,6 +180,8 @@ namespace anuc {
 #define REG_GET_CASE(KIND) case RvRegister::KIND : return KIND.get();
                 REG_GET_CASE(sp)
                 REG_GET_CASE(zero)
+                REG_GET_CASE(ra)
+
                 REG_GET_CASE(s0)
                 REG_GET_CASE(s1)
                 REG_GET_CASE(s2)
@@ -221,7 +209,47 @@ namespace anuc {
                 REG_GET_CASE(t4)
                 REG_GET_CASE(t5)
                 REG_GET_CASE(t6)
+                REG_GET_CASE(fa0)
+                REG_GET_CASE(fa1)
+                REG_GET_CASE(fa2)
+                REG_GET_CASE(fa3)
+                REG_GET_CASE(fa4)
+                REG_GET_CASE(fa5)
+                REG_GET_CASE(fa6)
+                REG_GET_CASE(fa7)
             }
+        }
+        //返回所有整型变量
+        vector<RvRegister *>& getAllIntegerRegs() {
+            if(integerRegs.empty()) {
+                integerRegs.push_back(this->getReg(RvRegister::a0));
+                integerRegs.push_back(this->getReg(RvRegister::a1));
+                integerRegs.push_back(this->getReg(RvRegister::a2));
+                integerRegs.push_back(this->getReg(RvRegister::a3));
+                integerRegs.push_back(this->getReg(RvRegister::a4));
+                integerRegs.push_back(this->getReg(RvRegister::a5));
+                integerRegs.push_back(this->getReg(RvRegister::a6));
+                integerRegs.push_back(this->getReg(RvRegister::a7));
+                integerRegs.push_back(this->getReg(RvRegister::s0));
+                integerRegs.push_back(this->getReg(RvRegister::s1));
+                integerRegs.push_back(this->getReg(RvRegister::s2));
+                integerRegs.push_back(this->getReg(RvRegister::s3));
+                integerRegs.push_back(this->getReg(RvRegister::s4));
+                integerRegs.push_back(this->getReg(RvRegister::s5));
+                integerRegs.push_back(this->getReg(RvRegister::s6));
+                integerRegs.push_back(this->getReg(RvRegister::s7));
+                integerRegs.push_back(this->getReg(RvRegister::s8));
+                integerRegs.push_back(this->getReg(RvRegister::s9));
+                integerRegs.push_back(this->getReg(RvRegister::s10));
+                integerRegs.push_back(this->getReg(RvRegister::t0));
+                integerRegs.push_back(this->getReg(RvRegister::t1));
+                integerRegs.push_back(this->getReg(RvRegister::t2));
+                integerRegs.push_back(this->getReg(RvRegister::t3));
+                integerRegs.push_back(this->getReg(RvRegister::t4));
+                integerRegs.push_back(this->getReg(RvRegister::t5));
+                integerRegs.push_back(this->getReg(RvRegister::t6));
+            }
+            return integerRegs;
         }
     };
 

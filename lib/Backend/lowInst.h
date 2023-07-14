@@ -28,7 +28,7 @@ namespace anuc {
 
         LowInst(const LowInst &) = delete;
         virtual void accept(Visitor *V) {}
-
+        virtual Value* getResult() {return nullptr;}
     };
 
     class LowLoad : public LowInst {
@@ -235,10 +235,11 @@ namespace anuc {
 
         void print() {
             string s = "  sw" + operands[1]->value->toString() + "," + to_string(offset)
-                       + "(" + operands[0]->value->toString() + ")";
+                       + " (" + operands[0]->value->toString() + " )";
             cout << s << endl;
         }
         Value *getPtr() { return operands[1]->value;}
+        Value *getResult() {return nullptr;}
     };
 
     class RVli : public LowInst {

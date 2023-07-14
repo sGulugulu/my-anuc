@@ -6,7 +6,10 @@
 
 using namespace anuc;
 
-void Value::insertBackToUses(Use *u) { uses.insert_back(u); }
+void Value::insertBackToUses(Use *u) {
+    u->parent = this;
+    uses.insert_back(u);
+}
 
 void Value::printAllUsers() {
     for (auto i = uses.begin(); i != uses.end(); ++i) {
@@ -25,4 +28,14 @@ void Value::replaceAllUseWith(Value *v) {
 }
 void Value::eraseFromList(Use *node) {
     uses.erase_from_list(static_cast<base_node*>(node));
+}
+
+void Use::replaceValueWith(anuc::Value *v) {
+    value = v;
+    eraseFromParent();
+    v->insertBackToUses(this);
+}
+
+void Use::eraseFromParent() {
+    parent->eraseFromList(this);
 }

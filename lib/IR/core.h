@@ -96,9 +96,6 @@ namespace anuc {
     class Function : public alist_node<Function> {
         friend class ASTVisitor;
 
-    public:
-
-
     private:
         //记录函数栈上变量+大小
         map<Value*, int> frame;

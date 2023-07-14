@@ -15,6 +15,7 @@
 #include "rvValue.h"
 #include "sbRegSpill.h"
 #include "sbRegAlloc.h"
+#include "ssaLivenessAnalysis.h"
 
 using namespace std;
 namespace anuc {
@@ -86,6 +87,7 @@ namespace anuc {
                     }
                 }
             }
+            delete visitor1;
             M->memoryClean();
         }
 
@@ -101,14 +103,16 @@ namespace anuc {
                     }
                 }
             }
+            delete visitor2;
             M->memoryClean();
         }
 
         void runRaSpillPass() {
             for (auto fn = M->getBegin(); fn != M->getEnd(); ++fn) {
-                SBRegSpill *sbs = new SBRegSpill(&*fn, Builder.get(), regTable.get());
-                sbs->run();
-
+                SSALivenessAnalysis ssaa(&*fn, regTable.get());
+                auto &liveInfo = ssaa.computeLiveness();
+                SBRegSpill sbs(&*fn, Builder.get(), regTable.get(), liveInfo);
+                sbs.run();
             }
         }
 
@@ -127,13 +131,12 @@ namespace anuc {
         }
 
         void runRaAllocaPass() {
-            cout << "-------------------------" << endl;
             for (auto fn = M->getBegin(); fn != M->getEnd(); ++fn) {
-                SBRegSpill *sbs = new SBRegSpill(&*fn, Builder.get(), regTable.get());
-                auto liveOutInfo = sbs->computeLiveness();
-                sbs->printLiveOut();
-                SBRegAlloc *sba = new SBRegAlloc(&*fn, Builder.get(),regTable.get());
-                sba->run();
+                SSALivenessAnalysis ssaa(&*fn, regTable.get());
+                auto &liveInfo = ssaa.computeLiveness();
+                //ssaa.printLiveOut();
+                SBRegAlloc sba (&*fn, regTable.get(), liveInfo);
+                sba.run();
             }
             M->memoryClean();
         }

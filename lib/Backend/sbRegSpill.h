@@ -16,7 +16,7 @@
 #include <vector>
 #include <queue>
 #include <algorithm>
-
+#include "livenessInfo.h"
 using namespace std;
 namespace anuc {
 
@@ -24,150 +24,10 @@ namespace anuc {
         Function *function;
         IRBuilder *builder;
         RegTable *regTable;
-        //干涉图
-        map<Value *, set<Value *>> integerInterference;
-        map<Value *, set<Value *>> floatInterference;
         //溢出的变量
         set<Value *> spillValue;
-
-        struct LiveOut {
-            set<RegisterVar *> integerReg;
-            set<RegisterVar *> floatReg;
-        };
         //程序某一点的活跃信息
-        map<Instruction *, LiveOut> liveInfo;
-
-        struct WorkInfo {
-            vector<Instruction *> pres;
-            Instruction *s;
-        };
-
-        //从干涉图中求解liveOut
-        //判断x、y是否同时活跃：y定义时，是否x、y干涉（且Dx支配Dy）
-        //phi要特别处理
-        //s的livOut为pre的liveOut 并 def(s)干涉图里相连接的点
-        void computeLiveOut(WorkInfo workInfo) {
-            Instruction *s = workInfo.s;
-            vector<Instruction *> pres = workInfo.pres;
-
-            set<RegisterVar *> floatVars;
-            set<RegisterVar *> integerVars;
-            //&& !isa<RvRegister>(s->getResult())
-            if (s->getResult() ) {
-                RegisterVar *ds = cast<RegisterVar>(s->getResult());
-                if (isa<FloatType>(ds->getType())) {
-                    //计算浮点数
-                    for (auto pre: pres) {
-                        set_intersection(liveInfo[pre].floatReg.begin(), liveInfo[pre].floatReg.end(),
-                                         floatInterference[ds].begin(), floatInterference[ds].end(),
-                                         inserter(floatVars, floatVars.begin()));
-                    }
-                    floatVars.insert(ds);
-
-                } else if (isa<Int32Type>(ds->getType())) {
-                    //计算整数寄存器
-                    for (auto pre: pres) {
-                        set_intersection(liveInfo[pre].integerReg.begin(), liveInfo[pre].integerReg.end(),
-                                         integerInterference[ds].begin(), integerInterference[ds].end(),
-                                         inserter(integerVars, integerVars.begin()));
-                    }
-                    integerVars.insert(ds);
-                }
-            } else {
-                for (auto pre: pres) {
-                    integerVars = liveInfo[pre].integerReg;
-                    floatVars = liveInfo[pre].floatReg;
-                }
-
-            }
-            LiveOut lo;
-            lo.floatReg = floatVars;
-            lo.integerReg = integerVars;
-            liveInfo.insert({s, lo});
-            return;
-        }
-
-
-        void scanBlock(BasicBlock *bb, RegisterVar *regVar, set<BasicBlock *> &scannedBlocks) {
-            if (!scannedBlocks.insert(bb).second) return;
-            Instruction *s = &*bb->getBack();
-            scanLiveOut(s, regVar, scannedBlocks);
-        }
-
-        void scanLiveIn(Instruction *inst, RegisterVar *x, set<BasicBlock *> &scannedBlocks) {
-            BasicBlock *parent = inst->getParent();
-            if (inst == &*parent->getBegin()) {
-                for (auto pre = parent->predBegin(); pre != parent->predEnd(); ++pre) {
-                    scanBlock(*pre, x, scannedBlocks);
-                }
-            } else {
-                scanLiveOut(inst->getPrev(), x, scannedBlocks);
-            }
-        }
-
-        void scanLiveOut(Instruction *inst, RegisterVar *x, set<BasicBlock *> &scannedBlocks) {
-            // && isa<RvRegister>(inst->getResult())
-            if (!inst->getResult()) {
-                scanLiveIn(inst, x, scannedBlocks);
-                return;
-            }
-            RegisterVar *def = cast<RegisterVar>(inst->getResult());
-            //构造干涉图
-            if (x != def) {
-                if (isa<Int32Type>(x->getType())) {
-                    integerInterference[def].insert(x);
-                    integerInterference[x].insert(def);
-                } else if (isa<FloatType>(x->getType())) {
-                    floatInterference[def].insert(x);
-                    floatInterference[x].insert(def);
-                }
-                scanLiveIn(inst, x, scannedBlocks);
-
-            }
-        }
-
-        //先计算活跃变量
-        void ssaLiveness(set<RegisterVar *> &regVars, set<BasicBlock *> &scannedBlocks) {
-            //遍历所有虚拟寄存器的所有user
-            for (auto it = regVars.begin(); it != regVars.end(); ++it) {
-                RegisterVar *regVar = cast<RegisterVar>(*it);
-                for (auto u = regVar->getUsesBegin(); u != regVar->getUsesEnd(); ++u) {
-                    Instruction *user = cast<Instruction>((&*u)->user);
-                    //如果该虚拟寄存器被phi使用，找到对应的bb
-                    if (PhiInst *phi = dyn_cast<PhiInst>(user)) {
-                        BasicBlock *pre;
-                        for (int i = 0; i < phi->getOperands()->size(); i = i + 2) {
-                            if (phi->getOperands(i)->value != regVar) continue;
-                            pre = cast<BasicBlock>(phi->getOperands(i + 1)->value);
-                            scanBlock(pre, regVar, scannedBlocks);
-                            break;
-                        }
-                    } else scanLiveIn(user, regVar, scannedBlocks);
-                }
-            }
-        }
-
-        //打印干涉图
-        void printInterference() {
-            for (auto it = integerInterference.begin(); it != integerInterference.end(); ++it) {
-                cout << "变量： " << it->first->toString() << endl;
-                set<Value *> &vars = it->second;
-                string s;
-                for (auto v: vars) {
-                    s += v->toString() + ' ';
-                }
-                cout << "干涉变量" << s << "\n\n";
-            }
-            for (auto it = floatInterference.begin(); it != floatInterference.end(); ++it) {
-                cout << "变量： " << it->first->toString() << endl;
-                set<Value *> &vars = it->second;
-                string s;
-                for (auto v: vars) {
-                    s += v->toString() + ' ';
-                }
-                cout << "干涉变量" << s << "\n\n";
-            }
-        }
+        map<Instruction *, LiveOut> &liveInfo;
 
         //扫描所有指令，溢出寄存器数量超过的指令
         //保留s0 s1用于溢出
@@ -180,7 +40,7 @@ namespace anuc {
                 }
             };
             int floatRegNum = 3;
-            int integerRegNum = 0;
+            int integerRegNum = 5;
             for (auto bit = function->getBegin(); bit != function->getEnd(); ++bit) {
                 BasicBlock *b = &*bit;
                 for (auto iit = b->getBegin(); iit != b->getEnd(); ++iit) {
@@ -275,7 +135,6 @@ namespace anuc {
                                 else
                                     inst = new FloatLoad(bb, reg, cast<ConstantFloat>(c));
                                 bb->insertIntoChild(inst, insertPoint);
-                                phi->getOperands(i)->value = reg;
                                 op = reg;
                             }
                         }
@@ -380,9 +239,8 @@ namespace anuc {
                     //溢出到s0
                     if (!flag) s = s = regTable->getReg(RvRegister::s0);
                     Instruction *ll = new LowLoad(parent, s, builder->GetConstantInt32(0), ptr);
-                    cu->value = s;
+                    cu->replaceValueWith(s);
                     parent->insertIntoChild(ll, inst);
-                    cu->eraseFromParent();
                     builder->InsertIntoPool(ll);
                 }
             }
@@ -401,90 +259,12 @@ namespace anuc {
         }
 
     public:
-        SBRegSpill(Function *function, IRBuilder *builder, RegTable *regTable) :
-                function(function), builder(builder), regTable(regTable) {}
-        //计算liveOut信息
-        map<Instruction *, LiveOut>& computeLiveness() {
-            set<RegisterVar *> regVars;
-            for (auto bit = function->getBegin(); bit != function->getEnd(); ++bit) {
-                BasicBlock *b = &*bit;
-                for (auto iit = b->getBegin(); iit != b->getEnd(); ++iit) {
-                    Instruction *i = &*iit;
-                    if (i->getResult()) {
-                        RegisterVar *x = dyn_cast<RegisterVar>(i->getResult());
-                        //避开rv寄存器变量
-                        if(!x) continue;
-                        bool j = regVars.insert(x).second;
-                        if (!j) cerr << "在ssa中有一个变量被定义了两次!" << endl;
-                        if (isa<Int32Type>(x->getType())) integerInterference.insert({x, {}});
-                        else if (isa<FloatType>(x->getType())) floatInterference.insert({x, {}});
-                        else {
-                            cerr << "干涉图构造发现其他类型变量" << endl;
-                            cout << x->toString() << endl;
-                        }
-                    }
-                }
-            }
-
-            //计算干涉图
-            set<BasicBlock *> scannedBlocks;
-            ssaLiveness(regVars, scannedBlocks);
-            //printInterference();
-            //利用干涉图计算liveOut信息
-            //广度优先遍历bb
-            set<BasicBlock *> computedBlocks;
-            queue<BasicBlock *> workQueue;
-            BasicBlock *entry = function->getEnrty();
-            workQueue.push(entry);
-            while (!workQueue.empty()) {
-                BasicBlock *bb = workQueue.front();
-                workQueue.pop();
-                for (auto inst = bb->getBegin(); inst != bb->getEnd(); ++inst) {
-                    WorkInfo workInfo;
-                    workInfo.s = &*inst;
-                    if (inst == bb->getBegin()) {
-                        vector<Instruction *> pres;
-                        for (auto prebb = bb->predBegin(); prebb != bb->predEnd(); ++prebb) {
-                            Instruction *pre = &*(*prebb)->getBack();
-                            pres.push_back(pre);
-                        }
-                        workInfo.pres = pres;
-                    } else {
-                        workInfo.pres = {(&*inst)->getPrev()};
-                    }
-                    computeLiveOut(workInfo);
-                }
-                for (auto succ = bb->succBegin(); succ != bb->succEnd(); ++succ) {
-                    if (computedBlocks.insert(*succ).second) workQueue.push(*succ);
-                }
-            }
-
-            return liveInfo;
-
-        }
-
-
-        //打赢liveOut信息
-        void printLiveOut() {
-            for (auto b = function->getBegin(); b != function->getEnd(); ++b) {
-                auto block = &*b;
-                for (auto i = block->getBegin(); i != block->getEnd(); ++i) {
-                    cout << "--------------------" << endl;
-                    auto inst = &*i;
-                    inst->print();
-                    auto info = liveInfo[inst];
-                    cout << "  integer live out :";
-                    for (auto v: info.integerReg) cout << v->toString() << "  ";
-                    cout << "\n  float live out :";
-                    for (auto v: info.floatReg) cout << v->toString() << "  ";
-                    cout << "\n" << endl;
-                }
-            }
-        }
+        SBRegSpill(Function *function, IRBuilder *builder,
+                   RegTable *regTable,  map<Instruction *, LiveOut> &liveInfo) :
+                function(function), builder(builder), regTable(regTable), liveInfo(liveInfo) {}
 
         void run() {
             //把所有虚拟寄存器都找出来
-            computeLiveness();
             //printLiveOut();
             //找出溢出变量
             spill();

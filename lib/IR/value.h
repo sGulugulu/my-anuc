@@ -152,11 +152,11 @@ namespace anuc {
     struct Use : public alist_node<Use> {
         Value *value{nullptr};
         User *user{nullptr};
-        void eraseFromParent() {
-
-        }
+        Value *parent{nullptr};
         Use() = default;
-
+        //更换value，将use从原value上的use链条中移除
+        void replaceValueWith(Value* v);
+        void eraseFromParent();
         Use(Value *v, User *u) : value(v), user(u) {}
     };
 
