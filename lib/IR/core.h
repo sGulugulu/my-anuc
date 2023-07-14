@@ -1366,6 +1366,12 @@ namespace anuc {
             else
                 cout << "  ret " << "void" << endl;
         }
+        virtual void accept(Visitor *V);
+        Value *getRet() {
+            if(!ret) return nullptr;
+            return operands[0]->value;
+        }
+
     };
 
     class CallInst : public Instruction {
@@ -1467,6 +1473,8 @@ namespace anuc {
         virtual bool visit(FNegInst *inst) { return false; }
 
         virtual bool visit(ZExtInst *inst) { return false; }
+        virtual bool visit(RetInst *inst) { return false; }
+
 
 
     };

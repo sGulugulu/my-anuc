@@ -18,8 +18,11 @@ using namespace std;
 //类型系统
 namespace anuc {
     class Instruction;
+
     class AllocateInst;
+
     class InitList;
+
     class Type {
     public:
         enum TypeKind {
@@ -37,55 +40,78 @@ namespace anuc {
         const TypeKind kind;
     public:
         Type(TypeKind kind) : kind(kind) {}
+
         TypeKind getKind() { return kind; }
+
         virtual bool isArrayType() { return false; }
+
         virtual string toString() { return ""; }
+
         bool static classof(Type *v) { return v->getKind() >= Type::TK_Int1 && v->getKind() <= Type::TK_Last; }
-        virtual int getByteSize() {return 0;}
+
+        virtual int getByteSize() { return 0; }
 
     };
 
-    class BlockType: public Type {
+    class BlockType : public Type {
     public:
         BlockType() : Type(Type::TK_Block) {}
+
         bool static classof(Type *v) { return v->getKind() == Type::TK_Block; }
+
         bool isArrayType() { return false; }
+
         string toString() { return "block"; }
     };
 
     class Int32Type : public Type {
     public:
         Int32Type() : Type(Type::TK_Int32) {}
+
         bool static classof(Type *v) { return v->getKind() == Type::TK_Int32; }
+
         bool isArrayType() { return false; }
+
         string toString() { return "i32"; }
-        int getByteSize() {return 4;}
+
+        int getByteSize() { return 4; }
 
     };
 
     class Int1Type : public Type {
     public:
         Int1Type() : Type(Type::TK_Int1) {}
+
         bool static classof(Type *v) { return v->getKind() == Type::TK_Int1; }
+
         bool isArrayType() { return false; }
+
         string toString() { return "i1"; }
-        int getByteSize() {return 1;}
+
+        int getByteSize() { return 1; }
     };
 
     class FloatType : public Type {
     public:
         FloatType() : Type(Type::TK_Float) {}
+
         bool static classof(Type *v) { return v->getKind() == Type::TK_Float; }
+
         bool isArrayType() { return false; }
+
         string toString() { return "float"; }
-        int getByteSize() {return 4;}
+
+        int getByteSize() { return 4; }
     };
 
     class VoidType : public Type {
     public:
         VoidType() : Type(Type::TK_Void) {}
+
         bool static classof(Type *v) { return v->getKind() == Type::TK_Void; }
+
         bool isArrayType() { return false; }
+
         string toString() { return "void"; }
     };
 
@@ -94,18 +120,25 @@ namespace anuc {
         unsigned size{0};
     public:
         ArrayType(Type *type, unsigned size) : Type(Type::TK_Array), type(type), size(size) {}
+
         bool static classof(Type *v) { return v->getKind() == Type::TK_Array; }
+
         Type *getArrayType() { return type; }
+
         int getSize() { return size; }
+
         bool isArrayType() { return true; }
+
         string toString() {
             return '[' + to_string(size) + " x " + type->toString() + ']';
         }
-        int getElementSize() {return type->getByteSize();}
+
+        int getElementSize() { return type->getByteSize(); }
+
         int getByteSize() {
             Type *ty = type;
-            int byteSize =  size;
-            while(isa<ArrayType>(ty)) {
+            int byteSize = size;
+            while (isa<ArrayType>(ty)) {
                 ArrayType *aty = cast<ArrayType>(ty);
                 byteSize = aty->getSize() * size;
                 ty = aty->getArrayType();
@@ -120,9 +153,13 @@ namespace anuc {
         Type *type;
     public:
         PointerType(Type *type) : Type(Type::TK_Ptr), type(type) {}
+
         bool static classof(Type *v) { return v->getKind() == Type::TK_Ptr; }
+
         Type *getElementType() { return type; }
+
         string toString() { return "ptr"; }
+
         int getSize() { return 8; }
 
     };
@@ -212,24 +249,42 @@ namespace anuc {
         using indexInfo = pair<vector<int>, Value *>;
         vector<indexInfo> initInfos;
     };
+
     /*--------------------------------------------*/
+    class BaseReg : public Value {
+    protected:
+        Instruction *def{nullptr};
+    public:
+        BaseReg(Value::ValueKind kind, Type *type) : Value(kind, type) {}
+
+        bool static classof(Value *v) {
+            return v->getKind() >= Value::VK_BaseReg
+                   && v->getKind() < Value::VK_LastBaseReg;
+        }
+
+        virtual void setInst(Instruction *a) { def = a; }
+
+        virtual Instruction *getDef() { return def; }
+
+        virtual string toString() {
+            return "base_reg";
+        }
+    };
     //寄存器变量 RegisterVar
 
-    class RegisterVar : public Value {
+    class RegisterVar : public BaseReg {
         std::string name;
-        Instruction *def{nullptr};
 
     public:
-        RegisterVar(Type *type, string name) : Value(VK_RegisterVar, type), name(name) {}
+        RegisterVar(Type *type, string name) : BaseReg(VK_RegisterVar, type), name(name) {}
 
         bool static classof(Value *v) { return v->getKind() == VK_RegisterVar; }
 
-        void setInst(Instruction *a) { def = a; }
-
-        Instruction *getDef() { return def; }
+//        void setInst(Instruction *a) { def = a; }
+//
+//        Instruction *getDef() { return def; }
 
         string getName() { return name; }
-
 
         string toString() {
             return " %" + name;
@@ -295,7 +350,6 @@ namespace anuc {
             }
         }
     };
-
 
 
 }

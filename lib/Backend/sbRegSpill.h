@@ -6,6 +6,7 @@
 #define ANUC_SBREGSPILL_H
 //ssa-based寄存器分配，简称sb分配
 //策略为保留两个寄存器，先溢出后接合
+//这里是负责溢出的
 //思考一下能不能优化移动指令
 #include "irBuilder.h"
 #include "rvValue.h"
@@ -19,7 +20,7 @@
 using namespace std;
 namespace anuc {
 
-    class SBRegAlloca {
+    class SBRegSpill {
         Function *function;
         IRBuilder *builder;
         RegTable *regTable;
@@ -51,7 +52,8 @@ namespace anuc {
 
             set<RegisterVar *> floatVars;
             set<RegisterVar *> integerVars;
-            if (s->getResult()) {
+            //&& !isa<RvRegister>(s->getResult())
+            if (s->getResult() ) {
                 RegisterVar *ds = cast<RegisterVar>(s->getResult());
                 if (isa<FloatType>(ds->getType())) {
                     //计算浮点数
@@ -104,6 +106,7 @@ namespace anuc {
         }
 
         void scanLiveOut(Instruction *inst, RegisterVar *x, set<BasicBlock *> &scannedBlocks) {
+            // && isa<RvRegister>(inst->getResult())
             if (!inst->getResult()) {
                 scanLiveIn(inst, x, scannedBlocks);
                 return;
@@ -166,24 +169,6 @@ namespace anuc {
             }
         }
 
-        //打赢liveOut信息
-        void printLiveOut() {
-            for (auto b = function->getBegin(); b != function->getEnd(); ++b) {
-                auto block = &*b;
-                for (auto i = block->getBegin(); i != block->getEnd(); ++i) {
-                    cout << "--------------------" << endl;
-                    auto inst = &*i;
-                    inst->print();
-                    auto info = liveInfo[inst];
-                    cout << "  integer live out :";
-                    for (auto v: info.integerReg) cout << v->toString() << "  ";
-                    cout << "\n  float live out :";
-                    for (auto v: info.floatReg) cout << v->toString() << "  ";
-                    cout << "\n" << endl;
-                }
-            }
-        }
-
         //扫描所有指令，溢出寄存器数量超过的指令
         //保留s0 s1用于溢出
         void spill() {
@@ -194,8 +179,8 @@ namespace anuc {
                     return x->getUsesLength() > y->getUsesLength();
                 }
             };
-            int floatRegNum = 2;
-            int integerRegNum = 2;
+            int floatRegNum = 3;
+            int integerRegNum = 0;
             for (auto bit = function->getBegin(); bit != function->getEnd(); ++bit) {
                 BasicBlock *b = &*bit;
                 for (auto iit = b->getBegin(); iit != b->getEnd(); ++iit) {
@@ -230,17 +215,17 @@ namespace anuc {
                         //计算实际的寄存器数量（可能有的已经溢出）
                         for (auto v = liveOut.floatReg.begin(); v != liveOut.floatReg.end(); ++v)
                             if (spillValue.count(*v)) --regPress;
-                        if(regPress > floatRegNum) {
+                        if (regPress > floatRegNum) {
                             //把里面的寄存器丢入优先队列
                             priority_queue<RegisterVar *, vector<RegisterVar *>, cmp> liveVars;
-                            for(auto v = liveOut.floatReg.begin(); v != liveOut.floatReg.end(); ++v) {
-                                if(!spillValue.count(*v)) {
+                            for (auto v = liveOut.floatReg.begin(); v != liveOut.floatReg.end(); ++v) {
+                                if (!spillValue.count(*v)) {
                                     liveVars.push(*v);
                                 }
                             }
                             //溢出需要溢出的寄存器
                             int spillNum = regPress - floatRegNum;
-                            while(spillNum > 0) {
+                            while (spillNum > 0) {
                                 Value *spillVar = liveVars.top();
                                 liveVars.pop();
                                 spillValue.insert(spillVar);
@@ -254,78 +239,181 @@ namespace anuc {
 
         //将溢出的变量放到栈上
         void frameAlloca() {
+            map<Value *, Value *> valueToPtr;
             map<Value *, int> &frame = function->getFrame();
-            //遍历所有spillvar
+            //把所有溢出关联的phi指令都找出来
+            //构造变量关联图
+            set<PhiInst *> phiList;
             for (auto v = spillValue.begin(); v != spillValue.end(); ++v) {
                 Value *var = *v;
-                //创建一个指针用来保留溢出变量的地址
-                Type *ptrTy = builder->GetPointerType(var->getType());
+                if (PhiInst *phi = dyn_cast<PhiInst>(var->getDef())) phiList.insert(phi);
+                for (auto u = var->getUsesBegin(); u != var->getUsesEnd(); ++u) {
+                    Instruction *inst = cast<Instruction>((&*u)->user);
+                    PhiInst *phi = dyn_cast<PhiInst>(inst);
+                    if (!phi) continue;
+                    phiList.insert(phi);
+                }
+            }
+            if (!phiList.empty()) {
+                //处理phi指令里的所用变量，放入list
+                map<Value *, set<Value *>> phiVarGraph;
+                for (auto sit = phiList.begin(); sit != phiList.end(); ++sit) {
+                    PhiInst *phi = *sit;
+                    phiVarGraph.insert({phi->getResult(), set<Value *>()});
+                    for (int i = 0; i < phi->getOperands()->size(); i += 2) {
+                        Value *op = phi->getOperands(i)->value;
+                        //处理常数和函数参数的问题
+                        if (!op->getDef()) {
+                            BasicBlock *bb = cast<BasicBlock>(phi->getOperands(i + 1)->value);
+                            Instruction *insertPoint = &*bb->getBegin();
+                            if (Constant *c = dyn_cast<Constant>(op)) {
+                                RegisterVar *reg = new RegisterVar(op->getType(), builder->GetNewVarName());
+                                Type *ty = c->getType();
+                                LowInst *inst;
+                                if (isa<Int32Type>(ty))
+                                    inst = new RVli(bb, cast<ConstantInt>(c), reg);
+                                else
+                                    inst = new FloatLoad(bb, reg, cast<ConstantFloat>(c));
+                                bb->insertIntoChild(inst, insertPoint);
+                                phi->getOperands(i)->value = reg;
+                                op = reg;
+                            }
+                        }
+                        phiVarGraph.insert({op, set<Value *>()});
+                    }
+                }
+                //遍历list里所有变量，构造关联图
+                for (auto it = phiVarGraph.begin(); it != phiVarGraph.end(); ++it) {
+                    Value *v = it->first;
+                    spillValue.insert(v);
+                    if (PhiInst *phi = dyn_cast<PhiInst>(v->getDef())) {
+                        for (int i = 0; i < phi->getOperands()->size(); i += 2) {
+                            Value *op = phi->getOperands(i)->value;
+                            it->second.insert(op);
+                            phiVarGraph[op].insert(v);
+                        }
+                    }
+                    for (auto u = v->getUsesBegin(); u != v->getUsesEnd(); ++u) {
+                        Instruction *inst = cast<Instruction>((&*u)->user);
+                        PhiInst *phi = dyn_cast<PhiInst>(inst);
+                        if (!phi) continue;
+                        Value *result = phi->getResult();
+                        for (int i = 0; i < phi->getOperands()->size(); i += 2) {
+                            Value *op = phi->getOperands(i)->value;
+                            phiVarGraph[result].insert(op);
+                            phiVarGraph[op].insert(result);
+                        }
+                    }
+                }
+                //对图进行广度优先搜索
+                set<Value *> visited;
+                queue<Value *> workQueue;
+                for (auto it = phiVarGraph.begin(); it != phiVarGraph.end(); ++it) {
+                    Value *v = it->first;
+                    if (!visited.insert(v).second) continue;
+                    workQueue.push(v);
+                    //创建一个指针用来保留溢出变量的地址，并保存至函数栈中
+                    Type *ptrTy = builder->GetPointerType(v->getType());
+                    Value *ptr = new RegisterVar(ptrTy, builder->GetNewVarName());
+                    builder->InsertIntoPool(ptr);
+                    int size = v->getType()->getByteSize();
+                    frame.insert({ptr, size});
+                    while (!workQueue.empty()) {
+                        Value *front = workQueue.front();
+                        //溢出到同一地址
+                        valueToPtr.insert({front, ptr});
+                        workQueue.pop();
+                        for (auto vv: phiVarGraph[front]) {
+                            if (!visited.insert(vv).second) continue;
+                            workQueue.push(vv);
+                        }
+                    }
+                }
+                //删掉所有phi
+                for (auto phi: phiList) {
+                    phi->getResult()->setInst(nullptr);
+                    phi->eraseFromParent();
+                }
+
+            }
+
+            for (auto v: spillValue) {
+                if (valueToPtr.find(v) != valueToPtr.end()) continue;
+                //创建一个指针用来保留溢出变量的地址，并保存至函数栈中
+                Type *ptrTy = builder->GetPointerType(v->getType());
                 Value *ptr = new RegisterVar(ptrTy, builder->GetNewVarName());
                 builder->InsertIntoPool(ptr);
-                int size = var->getType()->getByteSize();
+                int size = v->getType()->getByteSize();
                 frame.insert({ptr, size});
+                valueToPtr.insert({v, ptr});
+            }
+
+            for (auto it = valueToPtr.begin(); it != valueToPtr.end(); ++it) {
+                Value *var = it->first;
+                Value *ptr = it->second;
                 //在变量的定义和使用处插入store
                 Instruction *def = var->getDef();
-                BasicBlock *parent = def->getParent();
-                Instruction *ls = new LowStore(parent, builder->GetConstantInt32(0), def->getResult(), ptr);
-                parent->insertIntoBackChild(def, ls);
+                if (def) {
+                    BasicBlock *parent = def->getParent();
+                    Instruction *ls = new LowStore(parent, builder->GetConstantInt32(0), def->getResult(), ptr);
+                    parent->insertIntoBackChild(def, ls);
+                }
                 //变量使用处插入load
                 for (auto u = var->getUsesBegin(); u != var->getUsesEnd();) {
                     Use *cu = &*u;
                     ++u;
                     Instruction *inst = cast<Instruction>((&*cu)->user);
-                    if (isa<LowStore>(inst))continue;
-                    //phi做特殊处理
-                    if (PhiInst *phi = dyn_cast<PhiInst>(inst)) {
-                        //如果是phi，则将该变量、phi的所有使用变量、phi结果全部溢出到同一个地址后删除phi
-                        for(int i = 0; i < phi->getOperands()->size(); i = i + 2) {
-                            cout << i << endl;
+                    //跳过lowstore
+                    if (isa<LowStore>(inst)) continue;
+                    BasicBlock *parent = inst->getParent();
+                    //s0、s1用于变量溢出，查看被使用的变量是否已经被溢出占用s0/s1
+                    bool flag = false;
+                    RvRegister *s;
+                    for (int i = 0; i < inst->getOperands()->size(); ++i) {
+                        Use *op = inst->getOperands(i);
+                        if (op->value != var && spillValue.count(op->value)) {
+                            //说明一个操作数已经被溢出占用了s0，将该操作数溢出到s1
+                            s = regTable->getReg(RvRegister::s1);
+                            flag = true;
                         }
-                    } else {
-                        //s0、s1用于变量溢出，查看被使用的变量是否已经被溢出占用s0/s1
-                        bool flag = false;
-                        RvRegister *s;
-                        for (int i = 0; i < inst->getOperands()->size(); ++i) {
-                            Use *op = inst->getOperands(i);
-                            if (op->value != var && spillValue.count(op->value)) {
-                                //说明一个操作数已经被溢出占用了s0，将该操作数溢出到s1
-                                s = regTable->getReg(RvRegister::s1);
-                                flag = true;
-                            }
-                        }
-                        //溢出到s0
-                        if (!flag) s = s = regTable->getReg(RvRegister::s0);
-                        Instruction *ll = new LowLoad(parent, s, builder->GetConstantInt32(0), ptr);
-                        cu->value = s;
-                        parent->insertIntoChild(ll, inst);
-                        cu->eraseFromParent();
-                        builder->InsertIntoPool(ll);
                     }
-                }
-            }
-            int offset = 0;
-            //遍历函数内所有栈上的变量
-            for (auto it = frame.begin(); it != frame.end(); ++it) {
-                Value *v = it->first;
-                for (auto u = v->getUsesBegin(); u != v->getUsesEnd(); ++u) {
-                    //(&*u)->user->print();
+                    //溢出到s0
+                    if (!flag) s = s = regTable->getReg(RvRegister::s0);
+                    Instruction *ll = new LowLoad(parent, s, builder->GetConstantInt32(0), ptr);
+                    cu->value = s;
+                    parent->insertIntoChild(ll, inst);
+                    cu->eraseFromParent();
+                    builder->InsertIntoPool(ll);
                 }
             }
         }
-    public:
-        SBRegAlloca(Function *function, IRBuilder *builder, RegTable *regTable) :
-                function(function), builder(builder), regTable(regTable) {}
 
-        void run() {
-            //把所有虚拟寄存器都找出来
+        void reAlloca() {
+            map<Value *, int> &frame = function->getFrame();
+            int offset = 0;
+            int pre = 0;
+            for (auto it = frame.begin(); it != frame.end(); ++it) {
+                offset += pre;
+                pre = it->second;
+                it->second = offset;
+            }
+
+        }
+
+    public:
+        SBRegSpill(Function *function, IRBuilder *builder, RegTable *regTable) :
+                function(function), builder(builder), regTable(regTable) {}
+        //计算liveOut信息
+        map<Instruction *, LiveOut>& computeLiveness() {
             set<RegisterVar *> regVars;
             for (auto bit = function->getBegin(); bit != function->getEnd(); ++bit) {
                 BasicBlock *b = &*bit;
                 for (auto iit = b->getBegin(); iit != b->getEnd(); ++iit) {
                     Instruction *i = &*iit;
                     if (i->getResult()) {
-                        RegisterVar *x = cast<RegisterVar>(i->getResult());
-                        if (regTable->find(x)) continue;
+                        RegisterVar *x = dyn_cast<RegisterVar>(i->getResult());
+                        //避开rv寄存器变量
+                        if(!x) continue;
                         bool j = regVars.insert(x).second;
                         if (!j) cerr << "在ssa中有一个变量被定义了两次!" << endl;
                         if (isa<Int32Type>(x->getType())) integerInterference.insert({x, {}});
@@ -337,6 +425,7 @@ namespace anuc {
                     }
                 }
             }
+
             //计算干涉图
             set<BasicBlock *> scannedBlocks;
             ssaLiveness(regVars, scannedBlocks);
@@ -369,11 +458,40 @@ namespace anuc {
                     if (computedBlocks.insert(*succ).second) workQueue.push(*succ);
                 }
             }
+
+            return liveInfo;
+
+        }
+
+
+        //打赢liveOut信息
+        void printLiveOut() {
+            for (auto b = function->getBegin(); b != function->getEnd(); ++b) {
+                auto block = &*b;
+                for (auto i = block->getBegin(); i != block->getEnd(); ++i) {
+                    cout << "--------------------" << endl;
+                    auto inst = &*i;
+                    inst->print();
+                    auto info = liveInfo[inst];
+                    cout << "  integer live out :";
+                    for (auto v: info.integerReg) cout << v->toString() << "  ";
+                    cout << "\n  float live out :";
+                    for (auto v: info.floatReg) cout << v->toString() << "  ";
+                    cout << "\n" << endl;
+                }
+            }
+        }
+
+        void run() {
+            //把所有虚拟寄存器都找出来
+            computeLiveness();
             //printLiveOut();
-            //溢出
+            //找出溢出变量
             spill();
-            //分配栈变量
+            //插入load/sotre
             frameAlloca();
+            //在函数栈上进行分配
+            reAlloca();
             return;
         }
     };

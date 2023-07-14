@@ -147,6 +147,8 @@ namespace anuc {
     void XorInst::accept(Visitor *V) { V->visit(this);}
     void FNegInst::accept(Visitor *V) { V->visit(this);}
     void ZExtInst::accept(Visitor *V) { V->visit(this);}
+    void RetInst::accept(Visitor *V) { V->visit(this);}
+
 
 
 

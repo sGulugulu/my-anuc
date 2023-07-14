@@ -94,6 +94,8 @@ namespace anuc {
     public:
         LIRVisitor1(IRBuilder *Builder, RegTable *regTable) : Builder(Builder), regTable(regTable) {}
 
+        bool visit(RetInst *inst);
+
         bool visit(AllocateInst *inst);
 
         bool visit(LoadInst *inst);
@@ -109,6 +111,7 @@ namespace anuc {
         bool visit(FDivInst *inst);
 
         bool visit(CondBranchInst *inst);
+
         bool visit(BranchInst *inst);
 
 
@@ -611,8 +614,7 @@ break;
                         //zero只是一个占位置的，实际已经给他分配了寄存器
                         RegisterVar *zero = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
                         RegisterVar *rs2 = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
-                        regTable->insertToMap(zero, RvRegister::zero);
-                        RVIToF *itf = new RVIToF(bb, rs2, zero);
+                        RVIToF *itf = new RVIToF(bb, rs2, regTable->getReg(RvRegister::zero));
                         RVfcmp *rvInst = new RVfcmp(bb, rs1, rs2, dest, zOpKind);
                         bb->insertIntoBackChild(inst, itf);
                         bb->insertIntoBackChild(itf, rvInst);

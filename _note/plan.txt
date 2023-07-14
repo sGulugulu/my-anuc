@@ -11,3 +11,15 @@ lowload/lowstore -> 计算偏移 + lw/sw 最坏需要两个寄存器 先降级�
 data段构造
 后端发射
 
+int main(int a, int b) {
+  int b = a + 2;
+  int c = a + 5;
+  float d;
+  if(a == 0) {
+      d = 2.23;
+  } else {
+     d  = 3.12;
+  }
+  return d + a + b + c;
+
+}

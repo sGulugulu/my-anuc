@@ -70,6 +70,7 @@ namespace anuc {
             VK_LowInst,
             VK_LowLoad,
             VK_LowStore,
+            VK_LowRet,
             VK_GlobalLoad,
             VK_FloatLoad,
             VK_RVlw,
@@ -97,10 +98,12 @@ namespace anuc {
             VK_ConstantFloat,
             VK_ConstantInt,
             VK_LastConstant,
+            VK_BaseReg,
             VK_RegisterVar,
+            VK_RvRegister,
+            VK_LastBaseReg,
             VK_GlobalVar,
             VK_StackFrame,
-            VK_RvRegister
         };
     private:
         const ValueKind kind;

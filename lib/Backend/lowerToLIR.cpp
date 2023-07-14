@@ -57,8 +57,6 @@ bool LIRVisitor1::visit(anuc::LoadInst *inst) {
             //创建低等级load
             RegisterVar *dest = cast<RegisterVar>(result);
             LowLoad *lowInst = new LowLoad(bb, dest, addRes, ptr);
-            //插入到函数栈中
-
             bb->insertIntoBackChild(insertPoint, lowInst);
             inst->eraseFromParent();
             Builder->InsertIntoPool(lowInst);
@@ -73,6 +71,25 @@ bool LIRVisitor1::visit(anuc::StoreInst *inst) {
     Builder->SetInstInsert(insertPoint);
     Value *ptr = inst->getPtr();
     Value *val = inst->getVal();
+    //如果val为常量，引入一个li
+    if(isa<Constant>(val)) {
+        if(ConstantInt *ci = dyn_cast<ConstantInt>(val)) {
+            RegisterVar *dest = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+            RVli *li = new RVli(bb, ci, dest);
+            bb->insertIntoBackChild(insertPoint, li);
+            Builder->InsertIntoPool(dest, li);
+            insertPoint = li;
+            val = dest;
+        } else {
+            ConstantFloat *fi = cast<ConstantFloat>(val);
+            RegisterVar *dest = new RegisterVar(Builder->GetFloatTy(), Builder->GetNewVarName());
+            FloatLoad *fl = new FloatLoad(bb, dest, fi);
+            bb->insertIntoBackChild(insertPoint, fl);
+            Builder->InsertIntoPool(dest, fl);
+            insertPoint = fl;
+            val = dest;
+        }
+    }
     if (ptr->getDef())
         if (GEPInst *gep = dyn_cast<GEPInst>(ptr->getDef())) {
             vector<Value *> offsets;
@@ -109,6 +126,15 @@ bool LIRVisitor1::visit(anuc::StoreInst *inst) {
             Builder->InsertIntoPool(lowInst);
         }
 
+    return 0;
+}
+
+bool LIRVisitor1::visit(anuc::RetInst *inst) {
+    BasicBlock *bb = inst->getParent();
+    Value *ret = inst->getRet();
+    LowRet *lowInst = new LowRet(bb, ret);
+    bb->insertIntoBackChild(inst, lowInst);
+    inst->eraseFromParent();
     return 0;
 }
 
@@ -245,10 +271,129 @@ bool LIRVisitor2::visit(ZExtInst *inst) {
 //如果偏移量小于2047，可以直接用sp作为基地址进行分配
 //否则需要另外计算地址
 bool LIRVisitor3::visit(anuc::LowLoad *inst) {
-    return false;
+    Instruction *insertPoint = inst;
+    BasicBlock *bb = inst->getParent();
+    //基础地址偏移
+    int imm = bb->getParent()->getFrame()[inst->getPtr()];
+    BaseReg *dest = cast<BaseReg>(inst->getResult());
+    Value *offset = inst->getOffset();
+    BaseReg *rs1, *rs2{nullptr};
+    if(ConstantInt *c = dyn_cast<ConstantInt>(offset)) {
+        imm  += c->getValue();
+        //立即数小于2048，可以直接从sp上计算偏移
+        if(imm < 2048) {
+            rs1 = regTable->getReg(RvRegister::sp);
+            RVlw *rvInst = new RVlw(bb, rs1, dest, imm);
+            bb->insertIntoBackChild(insertPoint, rvInst);
+            Builder->InsertIntoPool(rvInst);
+            inst->eraseFromParent();
+            return true;
+        } else {
+            rs1 = regTable->getReg(RvRegister::sp);
+            rs2 = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+            RegisterVar *x = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+            RVli *li = new RVli(bb, Builder->GetConstantInt32(imm), rs2);
+            RVasmd *add = new RVasmd(bb, rs1, rs2, x, RVasmd::add);
+            RVlw *rvInst = new RVlw(bb, x, dest, 0);
+            bb->insertIntoBackChild(insertPoint, li);
+            bb->insertIntoBackChild(li, add);
+            bb->insertIntoBackChild(add, rvInst);
+            Builder->InsertIntoPool(li, rs2, x, add, rvInst);
+            inst->eraseFromParent();
+            return true;
+        }
+    }
+    //地址为变量，特殊处理
+    else  {
+        //imm比2048小， 可以使用addi
+        BaseReg *result = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+        rs1 = cast<BaseReg>(offset);
+        if(imm < 2048) {
+            RVaddi *add = new RVaddi(bb, rs1, Builder->GetConstantInt32(imm), result);
+            bb->insertIntoBackChild(insertPoint, add);
+            insertPoint = add;
+            Builder->InsertIntoPool(result, add);
+        }
+        //大于2047需要先li一下
+        else {
+            rs2 = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+            RVli *li = new RVli(bb, Builder->GetConstantInt32(imm), rs2);
+            RVasmd *add = new RVasmd(bb, rs1, rs2, result, RVasmd::add);
+            bb->insertIntoBackChild(insertPoint, li);
+            bb->insertIntoBackChild(li, add);
+            insertPoint = add;
+            Builder->InsertIntoPool(result, add, li);
+        }
+        RVlw *rvInst = new RVlw(bb, dest, result, 0);
+        bb->insertIntoBackChild(insertPoint, rvInst);
+        Builder->InsertIntoPool(rvInst);
+        inst->eraseFromParent();
+        return true;
+    }
 }
+
+
 bool LIRVisitor3::visit(anuc::LowStore *inst) {
-    return false;
+    Instruction *insertPoint = inst;
+    BasicBlock *bb = inst->getParent();
+    //基础地址偏移
+    int imm = bb->getParent()->getFrame()[inst->getPtr()];
+    BaseReg *val = cast<BaseReg>(inst->getVal());
+    Value *offset = inst->getOffset();
+    BaseReg *rs1, *rs2{nullptr};
+    if(ConstantInt *c = dyn_cast<ConstantInt>(offset)) {
+        imm  += c->getValue();
+        //立即数小于2048，可以直接从sp上计算偏移
+        if(imm < 2048) {
+            rs1 = regTable->getReg(RvRegister::sp);
+            RVsw *rvInst = new RVsw(bb, rs1, val, imm);
+            bb->insertIntoBackChild(insertPoint, rvInst);
+            Builder->InsertIntoPool(rvInst);
+            inst->eraseFromParent();
+            return true;
+        } else {
+            rs1 = regTable->getReg(RvRegister::sp);
+            rs2 = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+            RegisterVar *x = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+            RVli *li = new RVli(bb, Builder->GetConstantInt32(imm), rs2);
+            RVasmd *add = new RVasmd(bb, rs1, rs2, x, RVasmd::add);
+            RVlw *rvInst = new RVlw(bb, x, val, 0);
+            bb->insertIntoBackChild(insertPoint, li);
+            bb->insertIntoBackChild(li, add);
+            bb->insertIntoBackChild(add, rvInst);
+            Builder->InsertIntoPool(li, rs2, x, add, rvInst);
+            inst->eraseFromParent();
+            return true;
+        }
+    }
+        //地址为变量，特殊处理
+    else  {
+        //imm比2048小， 可以使用addi
+        BaseReg *result = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+        rs1 = cast<BaseReg>(offset);
+        if(imm < 2048) {
+            RVaddi *add = new RVaddi(bb, rs1, Builder->GetConstantInt32(imm), result);
+            bb->insertIntoBackChild(insertPoint, add);
+            insertPoint = add;
+            Builder->InsertIntoPool(result, add);
+        }
+            //大于2047需要先li一下
+        else {
+            rs2 = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+            RVli *li = new RVli(bb, Builder->GetConstantInt32(imm), rs2);
+            RVasmd *add = new RVasmd(bb, rs1, rs2, result, RVasmd::add);
+            bb->insertIntoBackChild(insertPoint, li);
+            bb->insertIntoBackChild(li, add);
+            insertPoint = add;
+            Builder->InsertIntoPool(result, add, li);
+        }
+        RVsw *rvInst = new RVsw(bb, result, val, 0);
+        bb->insertIntoBackChild(insertPoint, rvInst);
+        Builder->InsertIntoPool(rvInst);
+        inst->eraseFromParent();
+        return true;
+    }
+    return true;
 }
 
 
