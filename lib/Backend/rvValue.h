@@ -30,6 +30,8 @@ namespace anuc {
         rgKind(rgKind), weight(weight) {
 
         }
+        bool static classof(Value *v) { return v->getKind() == VK_RvRegister; }
+
 
         string toString() {
             string s;

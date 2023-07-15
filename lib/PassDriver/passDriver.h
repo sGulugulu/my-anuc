@@ -135,7 +135,7 @@ namespace anuc {
                 SSALivenessAnalysis ssaa(&*fn, regTable.get());
                 auto &liveInfo = ssaa.computeLiveness();
                 //ssaa.printLiveOut();
-                SBRegAlloc sba (&*fn, regTable.get(), liveInfo);
+                SBRegAlloc sba (&*fn, Builder.get(), regTable.get(), liveInfo);
                 sba.run();
             }
             M->memoryClean();

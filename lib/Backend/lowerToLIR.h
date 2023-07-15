@@ -479,32 +479,39 @@ break;
                 } else {
                     //解决只有一个立即数的问题
                     int value;
-                    RegisterVar *rs1;
+                    RegisterVar *rs1{nullptr};
+                    RegisterVar *rs2{nullptr};
+                    RegisterVar *addi{nullptr};
                     if (lImm) {
                         value = lImm->getValue();
-                        rs1 = cast<RegisterVar>(r);
+                        rs2 = cast<RegisterVar>(r);
+                        addi = rs2;
                     } else {
                         value = rImm->getValue();
                         rs1 = cast<RegisterVar>(l);
+                        addi = rs1;
                     }
                     RegisterVar *dest = cast<RegisterVar>(result);
                     ConstantInt *imm = Builder->GetConstantInt32(value);
-                    if(value <= 2017) {
-                        //加减能转换为addi/subi
-                        if (opKind == RVasmd::add || opKind == RVasmd::sub) {
-                            Instruction *rvInst;
-                            if (opKind == RVasmd::add) rvInst = new RVaddi(bb, rs1, imm, dest);
-                            else rvInst = new RVsubi(bb, rs1, imm, dest);
-                            bb->insertIntoBackChild(inst, rvInst);
-                            inst->eraseFromParent();
-                            Builder->InsertIntoPool(rvInst);
-                            return;
-                        }
-                    }
+                    if (value <= 2017 && opKind == RVasmd::add) {
+                        //加能转换为addi
+                        Instruction *rvInst;
+                        rvInst = new RVaddi(bb, addi, imm, dest);
+                        bb->insertIntoBackChild(inst, rvInst);
+                        inst->eraseFromParent();
+                        Builder->InsertIntoPool(rvInst);
+                        return;
 
+                    }
                     //乘除模
-                    RegisterVar *rs2 = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
-                    RVli *li = new RVli(bb, imm, rs2);
+                    RVli *li{nullptr};
+                    if (!rs2) {
+                        rs2 = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+                        li = new RVli(bb, imm, rs2);
+                    } else {
+                        rs1 = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+                        li = new RVli(bb, imm, rs1);
+                    }
                     bb->insertIntoBackChild(inst, li);
                     inst->eraseFromParent();
                     Builder->InsertIntoPool(li);
@@ -577,7 +584,8 @@ break;
 
         //fcmp
         //floatload一个0，再用fcmp比较
-        static void transformFCmp(Instruction *inst, IRBuilder *Builder, RegTable *regTable, RVcondbranch::OpKind opKind) {
+        static void
+        transformFCmp(Instruction *inst, IRBuilder *Builder, RegTable *regTable, RVcondbranch::OpKind opKind) {
             //use链为空，直接删除
             if (inst->getResult()->usesEmpty()) {
                 inst->eraseFromParent();
@@ -646,7 +654,9 @@ break;
     public:
         LIRVisitor3(IRBuilder *Builder, RegTable *regTable
         ) : Builder(Builder), regTable(regTable) {}
+
         bool visit(LowLoad *inst);
+
         bool visit(LowStore *inst);
     };
 

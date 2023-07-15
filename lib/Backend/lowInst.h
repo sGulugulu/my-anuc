@@ -59,6 +59,7 @@ namespace anuc {
         Value *getResult() { return dest; }
 
         Value *getPtr() { return operands[1]->value; }
+        void setResult(BaseReg *v) { dest = v; }
 
         void accept(Visitor *V);
 
@@ -99,7 +100,7 @@ namespace anuc {
     };
 
     class GlobalLoad : public LowInst {
-        RegisterVar *dest;
+        BaseReg *dest;
     public:
         GlobalLoad(BasicBlock *parent, RegisterVar *dest, Value *ptr) :
                 LowInst(VK_GlobalLoad, parent), dest(dest) {
@@ -116,6 +117,7 @@ namespace anuc {
                        + operands[0]->value->toString();
             cout << s << endl;
         }
+        void setResult(BaseReg *v) { dest = v; }
 
         Value *getResult() { return dest; }
 
@@ -149,7 +151,7 @@ namespace anuc {
 
     //处理浮点立即数数存储
     class FloatLoad : public LowInst {
-        RegisterVar *dest;
+        BaseReg *dest;
     public:
         FloatLoad(BasicBlock *parent, RegisterVar *dest, ConstantFloat *imm) :
                 LowInst(VK_FloatLoad, parent), dest(dest) {
@@ -168,13 +170,14 @@ namespace anuc {
         }
 
         Value *getResult() { return dest; }
+        void setResult(BaseReg *v) { dest = v; }
 
     };
 
     class RVfmvsx : public LowInst {
-        RegisterVar *dest;
+        BaseReg *dest;
     public:
-        RVfmvsx(BasicBlock *parent, RegisterVar *rs1, RegisterVar *dest) : LowInst(VK_RVfmvsx, parent),
+        RVfmvsx(BasicBlock *parent, RegisterVar *rs1, BaseReg *dest) : LowInst(VK_RVfmvsx, parent),
                                                                            dest(dest) {
             Use *op0 = new Use(rs1, this);
             operands.push_back(op0);
@@ -190,6 +193,7 @@ namespace anuc {
         }
 
         Value *getResult() { return dest; }
+        void setResult(BaseReg *v) { dest = v; }
 
     };
 
@@ -268,6 +272,7 @@ namespace anuc {
         }
 
         Value *getResult() { return dest; }
+        void setResult(BaseReg *v) { dest = v; }
 
     };
 
@@ -295,34 +300,36 @@ namespace anuc {
         }
 
         Value *getResult() { return dest; }
+        void setResult(BaseReg *v) { dest = v; }
 
     };
 
-    class RVsubi : public LowInst {
-        RegisterVar *dest;
-    public:
-        RVsubi(BasicBlock *parent, RegisterVar *rs1, ConstantInt *imm, RegisterVar *dest) :
-                LowInst(VK_RVsubi, parent), dest(dest) {
-            Use *op0 = new Use(rs1, this);
-            Use *op1 = new Use(imm, this);
-            operands.push_back(op0);
-            operands.push_back(op1);
-            rs1->insertBackToUses(op0);
-            imm->insertBackToUses(op1);
-            dest->setInst(this);
-        }
-
-        bool static classof(Value *v) { return v->getKind() == VK_RVsubi; }
-
-        void print() {
-            string s = "  subi" + dest->toString() + "," + operands[0]->value->toString()
-                       + "," + operands[1]->value->toString();
-            cout << s << endl;
-        }
-
-        Value *getResult() { return dest; }
-
-    };
+//    class RVsubi : public LowInst {
+//        BaseReg *dest;
+//    public:
+//        RVsubi(BasicBlock *parent, RegisterVar *rs1, ConstantInt *imm, BaseReg *dest) :
+//                LowInst(VK_RVsubi, parent), dest(dest) {
+//            Use *op0 = new Use(rs1, this);
+//            Use *op1 = new Use(imm, this);
+//            operands.push_back(op0);
+//            operands.push_back(op1);
+//            rs1->insertBackToUses(op0);
+//            imm->insertBackToUses(op1);
+//            dest->setInst(this);
+//        }
+//
+//        bool static classof(Value *v) { return v->getKind() == VK_RVsubi; }
+//
+//        void print() {
+//            string s = "  subi" + dest->toString() + "," + operands[0]->value->toString()
+//                       + "," + operands[1]->value->toString();
+//            cout << s << endl;
+//        }
+//
+//        Value *getResult() { return dest; }
+//        void setResult(BaseReg *v) { dest = v; }
+//
+//    };
 
     class RVasmd : public LowInst {
         BaseReg *dest;
@@ -366,19 +373,20 @@ namespace anuc {
         BaseReg *getDest() { return dest; }
 
         Value *getResult() { return dest; }
+        void setResult(BaseReg *v) { dest = v; }
 
 
     };
 
     //浮点数加减乘除
     class RVfasmd : public LowInst {
-        RegisterVar *dest;
+        BaseReg *dest;
     public:
         enum OpKind {
             fadd, fsub, fmul, fdiv
         } opKind;
 
-        RVfasmd(BasicBlock *parent, RegisterVar *rs1, RegisterVar *rs2, RegisterVar *dest, OpKind opKind)
+        RVfasmd(BasicBlock *parent, RegisterVar *rs1, RegisterVar *rs2, BaseReg *dest, OpKind opKind)
                 : LowInst(VK_RVfasmd, parent), dest(dest), opKind(opKind) {
             Use *op0 = new Use(rs1, this);
             Use *op1 = new Use(rs2, this);
@@ -395,7 +403,7 @@ namespace anuc {
 
         RegisterVar *getRs2() { return cast<RegisterVar>(operands[1]->value); }
 
-        RegisterVar *getDest() { return dest; }
+        BaseReg *getDest() { return dest; }
 
         void print() {
             string opStr;
@@ -412,6 +420,7 @@ namespace anuc {
         }
 
         Value *getResult() { return dest; }
+        void setResult(BaseReg *v) { dest = v; }
 
     };
 
@@ -520,13 +529,13 @@ namespace anuc {
 
     //int与0比较指令
     class RVZeroCmp : public LowInst {
-        RegisterVar *dest;
+        BaseReg *dest;
     public:
         enum OpKind {
             sltz, snez, seqz, sgtz
         } opKind;
 
-        RVZeroCmp(BasicBlock *parent, RegisterVar *rs1, RegisterVar *dest, OpKind opKind)
+        RVZeroCmp(BasicBlock *parent, RegisterVar *rs1, BaseReg *dest, OpKind opKind)
                 : LowInst(VK_RVzicmp, parent), dest(dest), opKind(opKind) {
             Use *op0 = new Use(rs1, this);
             operands.push_back(op0);
@@ -538,7 +547,7 @@ namespace anuc {
 
         RegisterVar *getRs1() { return cast<RegisterVar>(operands[0]->value); }
 
-        RegisterVar *getDest() { return dest; }
+        BaseReg *getDest() { return dest; }
 
         void print() {
             string opStr;
@@ -554,18 +563,19 @@ namespace anuc {
         }
 
         Value *getResult() { return dest; }
+        void setResult(BaseReg *v) { dest = v; }
 
     };
 
     //int比较指令
     class RVicmp : public LowInst {
-        RegisterVar *dest;
+        BaseReg *dest;
     public:
         enum OpKind {
             feq, flt, fle, fgt, fge
         } opKind;
 
-        RVicmp(BasicBlock *parent, RegisterVar *rs1, RegisterVar *rs2, RegisterVar *dest, OpKind opKind)
+        RVicmp(BasicBlock *parent, RegisterVar *rs1, RegisterVar *rs2, BaseReg *dest, OpKind opKind)
                 : LowInst(VK_RVfcmp, parent), dest(dest), opKind(opKind) {
             Use *op0 = new Use(rs1, this);
             Use *op1 = new Use(rs2, this);
@@ -579,19 +589,20 @@ namespace anuc {
         bool static classof(Value *v) { return v->getKind() == VK_RVicmp; }
 
         Value *getResult() { return dest; }
+        void setResult(BaseReg *v) { dest = v; }
 
     };
 
     //float条件指令
     class RVfcmp : public LowInst {
-        RegisterVar *dest;
+        BaseReg *dest;
 
     public:
         enum OpKind {
             feq, flt, fle, fgt, fge
         } opKind;
 
-        RVfcmp(BasicBlock *parent, RegisterVar *rs1, RegisterVar *rs2, RegisterVar *dest, OpKind opKind)
+        RVfcmp(BasicBlock *parent, RegisterVar *rs1, RegisterVar *rs2, BaseReg *dest, OpKind opKind)
                 : LowInst(VK_RVfcmp, parent), dest(dest), opKind(opKind) {
             Use *op0 = new Use(rs1, this);
             Use *op1 = new Use(rs2, this);
@@ -608,7 +619,7 @@ namespace anuc {
 
         RegisterVar *getRs2() { return cast<RegisterVar>(operands[1]->value); }
 
-        RegisterVar *getDest() { return dest; }
+        BaseReg *getDest() { return dest; }
 
         void print() {
             string opStr;
@@ -626,14 +637,15 @@ namespace anuc {
         }
 
         Value *getResult() { return dest; }
+        void setResult(BaseReg *v) { dest = v; }
 
     };
 
     //fcvt
     class RVFToI : public LowInst {
-        RegisterVar *dest;
+        BaseReg *dest;
     public:
-        RVFToI(BasicBlock *parent, RegisterVar *dest, RegisterVar *rs1)
+        RVFToI(BasicBlock *parent, BaseReg *dest, RegisterVar *rs1)
                 : LowInst(VK_RVFToI, parent), dest(dest) {
             Use *op0 = new Use(rs1, this);
             operands.push_back(op0);
@@ -645,7 +657,7 @@ namespace anuc {
 
         RegisterVar *getRs1() { return cast<RegisterVar>(operands[0]->value); }
 
-        RegisterVar *getDest() { return dest; }
+        BaseReg *getDest() { return dest; }
 
         void print() {
             string s = "  fcvt.w.s" + dest->toString() + ","
@@ -654,6 +666,7 @@ namespace anuc {
         }
 
         Value *getResult() { return dest; }
+        void setResult(BaseReg *v) { dest = v; }
 
     };
 
@@ -681,6 +694,7 @@ namespace anuc {
         }
 
         Value *getResult() { return dest; }
+        void setResult(BaseReg *v) { dest = v; }
 
     };
 

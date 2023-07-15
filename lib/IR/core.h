@@ -218,6 +218,13 @@ namespace anuc {
         vector<BasicBlock *>::iterator succEnd() { return succ.end(); }
 
         bool succEmpty() { return succ.empty(); }
+        vector<BasicBlock *> &getSucc() {
+            return  succ;
+        }
+        vector<BasicBlock *> &getPred() {
+            return pred;
+        }
+
 
         string getName() { return name; }
 
@@ -283,6 +290,7 @@ namespace anuc {
         void removeFromParent() { this->erase(); }
 
         virtual Value *getResult() { return nullptr; }
+        virtual void setResult(BaseReg *v) { return; }
     };
 
     //get element ptr
@@ -422,11 +430,11 @@ namespace anuc {
     //phi指令
     class PhiInst : public Instruction {
         Type *ty;
-        RegisterVar *result;
+        BaseReg *result;
         using phiValue = pair<Value *, BasicBlock *>;
         unsigned valueNum;
     public:
-        PhiInst(BasicBlock *parent, Type *ty, RegisterVar *result) : Instruction(VK_PhiInst, parent), ty(ty),
+        PhiInst(BasicBlock *parent, Type *ty, BaseReg *result) : Instruction(VK_PhiInst, parent), ty(ty),
                                                                      result(result) {}
 
         bool static classof(Value *v) { return v->getKind() == VK_PhiInst; }
@@ -448,8 +456,9 @@ namespace anuc {
                 printString += " ]";
                 if (i != operands.size() - 2) printString += ",";
             }
-
+            if(result->getType())
             cout << " " << result->toString() << " = phi " << result->getType()->toString() << printString << endl;
+            else   cout << " " << result->toString() << " = phi "  << printString << endl;
         }
 
         void addIncoming(phiValue value) {
@@ -469,6 +478,9 @@ namespace anuc {
 
         Value *getResult() {
             return result;
+        }
+        void setResult(BaseReg *v) {
+            result = v;
         }
     };
 

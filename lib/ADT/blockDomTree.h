@@ -86,6 +86,19 @@ namespace anuc {
             return true;
         }
 
+        //获取支配树（形式为直接支配节点）
+        map<BasicBlock *, set<BasicBlock*>> getDominatesTreeWithIChild() {
+            map<BasicBlock *, set<BasicBlock*>> m;
+            for(auto b :blocks) m.insert({b, set<BasicBlock*>()});
+            for(int i = 0; i < doms.size(); ++i) {
+                if(i == doms[i]) continue;
+                BasicBlock *parent = blocks[doms[i]];
+                BasicBlock *child = blocks[i];
+                m[parent].insert(child);
+            }
+            return m;
+        }
+
         int getLevel(BasicBlock *bb) {
             int id = bbToId[bb];
             return levels[id];
@@ -152,6 +165,8 @@ namespace anuc {
             }
             idf = idfBlocks;
         }
+
+
     };
 }
 #endif //ANUC_BLOCKDOMTREE_H
