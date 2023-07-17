@@ -66,6 +66,7 @@ namespace anuc {
         cout << "; ModuleID = 'nyb'" << endl;
         for (auto i = globalVarList.begin(); i != globalVarList.end(); ++i) (*i).print();
         for (auto i = childlist.begin(); i != childlist.end(); ++i) (*i).print();
+        fclose(stdout);
     }
 
 

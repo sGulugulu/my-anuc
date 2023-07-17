@@ -6,7 +6,8 @@
 #define ANUC_RTTI_H
 
 #include <assert.h>
-
+#include <iostream>
+using namespace std;
 template<class To, class From>
 inline bool isa(From *from) {
     return To::classof(from);

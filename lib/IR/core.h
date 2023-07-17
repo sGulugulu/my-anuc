@@ -1443,6 +1443,8 @@ namespace anuc {
         }
         virtual void accept(Visitor *V);
         Function *getFunc() {return fn;}
+        Value *getResult() { return ret; }
+
 
 
     };

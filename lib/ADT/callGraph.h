@@ -5,6 +5,7 @@
 #ifndef ANUC_CALLGRAPH_H
 #define ANUC_CALLGRAPH_H
 #include "core.h"
+#include "rvValue.h"
 #include <map>
 #include <set>
 namespace anuc {
@@ -12,7 +13,10 @@ namespace anuc {
         int depth{0};
         Function *func;
         //保存
-        set<Value *> tempRegs;
+        set<RvRegister *> tempRegs;
+    };
+    struct CallInfo {
+        set<Value *> saveRegs;
     };
 }
 

@@ -35,44 +35,65 @@ namespace anuc {
 
         //收集函数信息
         FuncInfo &funcInfo;
+
         struct cmp {
             bool operator()(RvRegister *a, RvRegister *b) {
                 return a->getWeight() < b->getWeight();
             }
         };
 
+        //收集调用信息
+        map<CallInst *, set<RvRegister *>> &callInfo;
+
         priority_queue<RvRegister *, vector<RvRegister *>, cmp> integerRegs;
         map<Instruction *, LiveOut> &liveInfo;
-        void handleCallInst() {
+        map<RegisterVar *, int> saveFrame;
 
+        //参数传递寄存器
+        vector<RvRegister *> integerArgReg;
+        vector<RvRegister *> floatArgReg;
+
+        void handleCallInst(CallInst *s) {
+            set<RvRegister *> saves;
+            //查看liveOut，是否需要保存a0～a7，fa0～fa7
+            auto &liveOut = liveInfo[s];
+
+            //如过在liveOut中，需要保存，不在的话就回收
+            for (int i = 0; i < s->getOperands()->size(); ++i) {
+                RegisterVar *x = dyn_cast<RegisterVar>(s->getOperands(i)->value);
+                if (!x)continue;
+                RvRegister *r = tempMap[x];
+                if (liveOut.integerReg.count(x)) {
+                    if (RvRegister::isAReg(r) || RvRegister::isTReg(r))
+                        saves.insert(r);
+                } else {
+                    inUse.erase(r);
+                    integerRegs.push(r);
+                }
+            }
+
+            //给定义的变量分配寄存器
+            if (s->getResult()) {
+                auto def = s->getResult();
+                auto reg = getIntReg();
+                tempMap[def] = reg;
+                if (RvRegister::isTReg(reg)) funcInfo.tempRegs.insert(reg);
+            }
+            callInfo.insert({s, saves});
         }
 
         void handleArgs() {
-            //处理函数参数，分配到a0~a7里
+            //处理函数参数，在a0~a7里
             vector<Value *> &args = function->getArgVals();
-            vector<RvRegister *> integerArgReg;
-            vector<RvRegister *> floatArgReg;
-
-#define ARG_REG_GEN(X) integerArgReg.push_back(regTable->getReg(RvRegister::a##X)); \
-floatArgReg.push_back(regTable->getReg(RvRegister::fa##X));
-            ARG_REG_GEN(0)
-            ARG_REG_GEN(1)
-            ARG_REG_GEN(2)
-            ARG_REG_GEN(3)
-            ARG_REG_GEN(4)
-            ARG_REG_GEN(5)
-            ARG_REG_GEN(6)
-            ARG_REG_GEN(7)
-            int i = 0;
-            int f = 0;
             for (auto v: args) {
                 if (isa<Int32Type>(v->getType())) {
-                    inUse.insert(integerArgReg[i]);
-                    tempMap.insert({v, integerArgReg[i++]});
+                    if (v->usesEmpty()) continue;
+                    RvRegister *reg = getIntReg();
+                    inUse.insert(reg);
+                    tempMap.insert({v, reg});
                 }
                 if (isa<FloatType>(v->getType())) {
-                    inUse.insert(floatArgReg[f]);
-                    tempMap.insert({v, integerArgReg[f++]});
+                    if (v->usesEmpty()) continue;
                 }
             }
         }
@@ -92,7 +113,6 @@ floatArgReg.push_back(regTable->getReg(RvRegister::fa##X));
 
         //前序遍历基本块
         void preOrder(BasicBlock *b) {
-
             //把bb的前驱的liveOut所占用的寄存器加入inUse
             for (auto pred = b->predBegin(); pred != b->predEnd(); ++pred) {
                 Instruction *i = (&*(*pred)->getBack());
@@ -108,6 +128,10 @@ floatArgReg.push_back(regTable->getReg(RvRegister::fa##X));
 
             for (auto i = b->getBegin(); i != b->getEnd(); ++i) {
                 Instruction *s = &*i;
+                if (CallInst *call = dyn_cast<CallInst>(s)) {
+                    handleCallInst(call);
+                    continue;
+                }
                 if (PhiInst *phi = dyn_cast<PhiInst>(s)) phis.insert(phi);
                 vector<Use *> *ops = s->getOperands();
                 for (auto op = ops->begin(); op != ops->end(); ++op) {
@@ -126,9 +150,12 @@ floatArgReg.push_back(regTable->getReg(RvRegister::fa##X));
                 //给定义的变量分配寄存器
                 Value *def = s->getResult();
                 if (def && isa<RegisterVar>(def)) {
-                    auto reg =  getIntReg();
+                    auto reg = getIntReg();
                     tempMap[def] = reg;
-                    if(RvRegister::isTReg(reg)) funcInfo.tempRegs.insert(reg);
+                    //若分配了t和a，要通知上级函数保存
+                    if (RvRegister::isTReg(reg)
+                        || RvRegister::isAReg(reg))
+                        funcInfo.tempRegs.insert(reg);
                 }
 
             }
@@ -208,13 +235,43 @@ floatArgReg.push_back(regTable->getReg(RvRegister::fa##X));
                 if (list.size() == 1) list.back()->eraseFromParent();
             }
         }
+        void handleArgs2() {
+#define ARG_REG_GEN(X) integerArgReg.push_back(regTable->getReg(RvRegister::a##X)); \
+floatArgReg.push_back(regTable->getReg(RvRegister::fa##X));
+            ARG_REG_GEN(0)
+            ARG_REG_GEN(1)
+            ARG_REG_GEN(2)
+            ARG_REG_GEN(3)
+            ARG_REG_GEN(4)
+            ARG_REG_GEN(5)
+            ARG_REG_GEN(6)
+            ARG_REG_GEN(7)
+
+            LIBuilder liBuilder(builder);
+            Instruction *insertPoint = &*function->getEnrty()->getFront();
+            liBuilder.SetInsertPoint(insertPoint);
+            vector<Value *> &args = function->getArgVals();
+            int i = 0;
+            int f = 0;
+            for (auto v: args) {
+                if (isa<Int32Type>(v->getType())) {
+                    if (v->usesEmpty()) continue;
+                    liBuilder.CreateASMD(tempMap[v], integerArgReg[i++],
+                                         regTable->getReg(RvRegister::zero), RVasmd::add);
+                }
+                if (isa<FloatType>(v->getType())) {
+                    if (v->usesEmpty()) continue;
+                }
+            }
+        }
 
     public:
         SBRegAlloc(Function *function, IRBuilder *builder,
-                   RegTable *regTable, map<Instruction *, LiveOut> &liveInfo, FuncInfo &funcInfo) :
+                   RegTable *regTable, map<Instruction *, LiveOut> &liveInfo,
+                   FuncInfo &funcInfo, map<CallInst *, set<RvRegister *>> &callInfo) :
                 function(function), builder(builder),
                 regTable(regTable), liveInfo(liveInfo),
-                funcInfo(funcInfo){
+                funcInfo(funcInfo), callInfo(callInfo) {
             builder->SetCurrentFunc(function);
         }
 
@@ -227,8 +284,8 @@ floatArgReg.push_back(regTable->getReg(RvRegister::fa##X));
             dt.blockDomTreeCalulator(postOrder);
             domTree = dt.getDominatesTreeWithIChild();
             //处理函数参数，初始化待分配的寄存器
-            handleArgs();
             initRegs();
+            handleArgs();
             //遍历支配书
             preOrder(function->getEnrty());
             //将操作数更换为寄存器
@@ -239,7 +296,16 @@ floatArgReg.push_back(regTable->getReg(RvRegister::fa##X));
             }
             //处理phi
             phiResolution();
+            //返回函数，若不为空，则需要使用a0保存返回值
+            if (isa<Int32Type>(function->getFuncType()->getRetType()))
+                funcInfo.tempRegs.insert(regTable->getReg(RvRegister::a0));
+
+            //在函数开头插入变量移动
+            handleArgs2();
         }
+
+        map<CallInst *, set<RvRegister *>> &getCallInfo() { return callInfo; }
+
     };
 
 }

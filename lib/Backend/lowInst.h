@@ -613,7 +613,7 @@ namespace anuc {
             }
             string s = "  " + opStr + operands[0]->value->toString()
                        + ", " + operands[1]->value->toString() + ", " +
-                    cast<BasicBlock>(operands[2]->value)->getName();
+                       cast<BasicBlock>(operands[2]->value)->getName();
             cout << s << endl;
         }
 
@@ -848,6 +848,55 @@ namespace anuc {
 
         void setResult(BaseReg *v) { dest = v; }
 
+    };
+
+    class LIBuilder {
+        Instruction *insertPoint;
+        BasicBlock *insertBlock;
+        IRBuilder *Builder;
+    public:
+        LIBuilder(IRBuilder *Builder) : Builder(Builder) {}
+
+        void SetInsertPoint(Instruction *s) {
+            insertPoint = s;
+            insertBlock = s->getParent();
+        }
+
+        void CreateASMD(BaseReg *dest, BaseReg *rs1, BaseReg *rs2, RVasmd::OpKind opKind) {
+            RVasmd *inst = new RVasmd(insertBlock, rs1, rs2, dest, opKind);
+            insertBlock->insertIntoBackChild(insertPoint, inst);
+            Builder->InsertIntoPool(inst);
+            insertPoint = inst;
+
+        }
+
+        void CreateLi(BaseReg *dest, ConstantInt *imm) {
+            RVli *inst = new RVli(insertBlock, imm, dest);
+            insertBlock->insertIntoBackChild(insertPoint, inst);
+            Builder->InsertIntoPool(inst);
+            insertPoint = inst;
+        }
+
+        void CreateSW(BaseReg *rs2, BaseReg *rs1, int offset) {
+            RVsw *inst = new RVsw(insertBlock, rs1, rs2, offset);
+            insertBlock->insertIntoBackChild(insertPoint, inst);
+            Builder->InsertIntoPool(inst);
+            insertPoint = inst;
+        }
+
+        void CreateLW(BaseReg *dest, BaseReg *rs1, int offset) {
+            RVlw *inst = new RVlw(insertBlock, rs1, dest, offset);
+            insertBlock->insertIntoBackChild(insertPoint, inst);
+            Builder->InsertIntoPool(inst);
+            insertPoint = inst;
+        }
+
+        void CreateAddi(BaseReg *dest, BaseReg *rs1, int imm) {
+            RVaddi *inst = new RVaddi(insertBlock, rs1, Builder->GetConstantInt32(imm), dest);
+            insertBlock->insertIntoBackChild(insertPoint, inst);
+            Builder->InsertIntoPool(inst);
+            insertPoint = inst;
+        }
     };
 
 }

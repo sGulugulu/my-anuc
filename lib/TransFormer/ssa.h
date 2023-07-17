@@ -313,7 +313,6 @@ namespace anuc {
                                     li->eraseFromParent();
                                     func->getParent()->eraseFromValuePool(li);
                                 }
-
                                     //如果为store，则修改incoming的值为store的值
                                 else if (StoreInst *si = dyn_cast<StoreInst>(inst)) {
                                     RegisterVar *ptr = cast<RegisterVar>(si->getPtr());

@@ -48,9 +48,10 @@ namespace anuc {
             if (j || passSwitch[4] == 5) runRaSpillPass();
             if (j || passSwitch[5] == 6) runLowerPass3();
             if (j || passSwitch[6] == 7) runHandleFuncCallPass();
-            if (j || passSwitch[6] == 8) runRaAllocaPass();
-            if (j || passSwitch[7] == 9) instEmitPass();
-            //if (j || passSwitch[8]) M->print("../l.ll");
+            if (j || passSwitch[7] == 8) runRaAllocaPass();
+            if(j || passSwitch[8] == 9) runHandleFuncCallPass2();
+            if (j || passSwitch[9] == 1) instEmitPass();
+            if (j || passSwitch[10] == 2) M->print("../l.ll");
         }
 
 
@@ -132,10 +133,11 @@ namespace anuc {
         }
 
         map<Function *, FuncInfo> funcToInfo;
-
+        map<CallInst*, set<RvRegister*>> callInfo;
         void runHandleFuncCallPass() {
-            HandleFunctionCall hfc(M.get());
-            funcToInfo = hfc.computeCallGraph();
+            HandleFunctionCall hfc(M.get(), Builder.get(), regTable.get(),
+                                   funcToInfo,callInfo);
+            hfc.computeCallGraph();
         }
 
 
@@ -145,10 +147,15 @@ namespace anuc {
                 auto &liveInfo = ssaa.computeLiveness();
                 //ssaa.printLiveOut();
                 SBRegAlloc sba(&*fn, Builder.get(), regTable.get(),
-                               liveInfo, funcToInfo[&*fn]);
+                               liveInfo, funcToInfo[&*fn], callInfo);
                 sba.run();
             }
             M->memoryClean();
+        }
+        void runHandleFuncCallPass2() {
+            HandleFunctionCall hfc(M.get(), Builder.get(), regTable.get(),
+                                   funcToInfo, callInfo);
+            hfc.transformCallInst();
         }
 
         void instEmitPass() {

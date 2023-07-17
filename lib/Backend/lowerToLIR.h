@@ -496,9 +496,11 @@ break;
                     }
                     RegisterVar *dest = cast<RegisterVar>(result);
                     ConstantInt *imm = Builder->GetConstantInt32(value);
-                    if (value <= 2017 && opKind == RVasmd::add) {
+                    if (value <= 2017 && (opKind == RVasmd::add ||
+                            (opKind == RVasmd::sub && rs1))) {
                         //加能转换为addi
                         Instruction *rvInst;
+                        if(opKind == RVasmd::sub) imm = Builder->GetConstantInt32(-value);
                         rvInst = new RVaddi(bb, addi, imm, dest);
                         bb->insertIntoBackChild(inst, rvInst);
                         inst->eraseFromParent();

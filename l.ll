@@ -1,48 +1,22 @@
 ; ModuleID = 'nyb'
-define i32 @deepWhileBr(i32 %argva, i32 %argvb) {
+@n = global i32 0, align 4
+define i32 @insertsort(ptr %argva) {
 entry:
-  add t1, t0, zero
-  add t0, a0, a1
-  j %loopCondition
-loopCondition:
-  li t2, 75
-  blt t1, t2, %loop
-  j %exit
-loop:
-  li t3, 100
-  blt t1, t3, %if_then
-  j %phi_block
-exit:
-  lowret t1
+  %i = alloca i32, align 4
+  store i32 1, ptr %i, align 4
+  %x0 = load i32, ptr @n, align 4
+  store i32 %x0, ptr %i, align 4
+  %x1 = load i32, ptr %i, align 4
+  %x2 = load i32, ptr @n, align 4
+  %x3 = icmp slt i32 %x1, %x2
+  br i1 %x3, label %if_then, label %if_end
 if_then:
-  addi t4, t1, 42
-  li t5, 99
-  bge t4, t5, %if_then1
-  j %phi_block1
+  %x4 = load i32, ptr %i, align 4
+  %x5 = add i32 %x4, 1
+  store i32 %x5, ptr %i, align 4
+  br label %if_end
 if_end:
-  add t1, t6, zero
-  j %loopCondition
-if_then1:
-  li t6, 84
-  j %if_then2
-if_end1:
-  add t6, t5, zero
-  j %if_end
-if_then2:
-  add t3, t2, zero
-  li t0, 2
-  mul t2, t6, t0
-  j %if_end2
-if_end2:
-  add t5, t3, zero
-  j %if_end1
-phi_block:
-  add t6, t1, zero
-  j %if_end
-phi_block1:
-  add t5, t4, zero
-  j %if_end1
-phi_block2:
-  add t3, t4, zero
-  j %if_end2
+  %i0 = phi i32 [ ] 
+  %x6 = load i32, ptr %i, align 4
+  ret i32 %x6
 }
