@@ -18,8 +18,3 @@ int deepWhileBr(int a, int b) {
   return (c);
 }
 
-int main() {
-  int p;
-  p = 2;
-  return deepWhileBr(p, p);
-}

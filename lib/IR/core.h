@@ -9,6 +9,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <stdio.h>
 #include "alist.h"
 #include "rtti.h"
 #include "type.h"
@@ -80,7 +81,7 @@ namespace anuc {
         int memoryClean();
 
         //打印整个模块
-        void print();
+        void print(string fileName);
 
         alist<Function>::iterator getBegin() { return childlist.begin(); }
 
@@ -172,6 +173,31 @@ namespace anuc {
         BasicBlock(const BasicBlock &) = delete;
 
         BasicBlock(string name, Type *ty) : Value(Value::VK_BasicBlock, ty), name(name), type(ty) {}
+
+        static void insertBasicBlock(BasicBlock *p, BasicBlock *b, BasicBlock *s) {
+            int index = 0;
+            for(auto i = p->succBegin(); i != p->succEnd(); ++i) {
+                if(*i != s) continue;
+                vector<BasicBlock*> list = p->getSucc();
+                list[index] = list.back();
+                list.pop_back();
+                ++index;
+                break;
+            }
+            index = 0;
+            for(auto i = s->predBegin(); i != s->predEnd(); ++i) {
+                if(*i != p) continue;
+                vector<BasicBlock*> list = s->getPred();
+                list[index] = list.back();
+                list.pop_back();
+                ++index;
+                break;
+            }
+            b->pushBackToPred(p);
+            b->pushBackToSucc(s);
+            s->pushBackToPred(b);
+            p->pushBackToSucc(b);
+        }
 
         bool static classof(Value *v) { return v->getKind() == VK_BasicBlock; }
 
@@ -482,6 +508,8 @@ namespace anuc {
         void setResult(BaseReg *v) {
             result = v;
         }
+        void accept(Visitor *V);
+
     };
 
     //binary op
@@ -1413,12 +1441,17 @@ namespace anuc {
             }
             cout << ")" << endl;
         }
+        virtual void accept(Visitor *V);
+        Function *getFunc() {return fn;}
+
 
     };
 
 
     class Visitor {
     public:
+        virtual bool visit(PhiInst *inst) { return false; }
+
         virtual bool visit(AllocateInst *inst) { return false; }
 
         virtual bool visit(LoadInst *inst) { return false; }
@@ -1483,6 +1516,7 @@ namespace anuc {
 
         virtual bool visit(ZExtInst *inst) { return false; }
         virtual bool visit(RetInst *inst) { return false; }
+        virtual bool visit(CallInst *inst) { return false; }
 
 
 

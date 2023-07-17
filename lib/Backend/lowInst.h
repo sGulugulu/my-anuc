@@ -27,8 +27,10 @@ namespace anuc {
         LowInst &operator=(const Instruction &) = delete;
 
         LowInst(const LowInst &) = delete;
+
         virtual void accept(Visitor *V) {}
-        virtual Value* getResult() {return nullptr;}
+
+        virtual Value *getResult() { return nullptr; }
     };
 
     class LowLoad : public LowInst {
@@ -54,11 +56,18 @@ namespace anuc {
             cout << s << endl;
         }
 
+        string toString() {
+            return "lowload" + dest->toString() + "," +
+                   operands[1]->value->toString()
+                   + ", offset:" + operands[0]->value->toString();
+        }
+
         Value *getOffset() { return operands[0]->value; }
 
         Value *getResult() { return dest; }
 
         Value *getPtr() { return operands[1]->value; }
+
         void setResult(BaseReg *v) { dest = v; }
 
         void accept(Visitor *V);
@@ -89,6 +98,12 @@ namespace anuc {
             cout << s << endl;
         }
 
+        string toString() {
+            return "lowstore" + operands[2]->value->toString()
+                   + "," + operands[1]->value->toString()
+                   + ", offset:" + operands[0]->value->toString();
+        }
+
         Value *getOffset() { return operands[0]->value; }
 
         Value *getPtr() { return operands[1]->value; }
@@ -117,6 +132,12 @@ namespace anuc {
                        + operands[0]->value->toString();
             cout << s << endl;
         }
+
+        string toString() {
+            return "globalload" + dest->toString() + ","
+                   + operands[0]->value->toString();
+        }
+
         void setResult(BaseReg *v) { dest = v; }
 
         Value *getResult() { return dest; }
@@ -144,6 +165,14 @@ namespace anuc {
             cout << s << endl;
         }
 
+        string toString() {
+            string s;
+            if (ret)
+                s = "lowret" + operands[0]->value->toString();
+            else s = "lowret";
+            return s;
+        }
+
         Value *getResult() { return nullptr; }
 
         Value *getRet() { return ret; }
@@ -169,7 +198,13 @@ namespace anuc {
             cout << s << endl;
         }
 
+        string toString() {
+            return "floatload" + dest->toString() + ","
+                   + cast<ConstantFloat>(operands[0]->value)->toStringInDecimal();
+        }
+
         Value *getResult() { return dest; }
+
         void setResult(BaseReg *v) { dest = v; }
 
     };
@@ -178,7 +213,7 @@ namespace anuc {
         BaseReg *dest;
     public:
         RVfmvsx(BasicBlock *parent, RegisterVar *rs1, BaseReg *dest) : LowInst(VK_RVfmvsx, parent),
-                                                                           dest(dest) {
+                                                                       dest(dest) {
             Use *op0 = new Use(rs1, this);
             operands.push_back(op0);
             rs1->insertBackToUses(op0);
@@ -192,7 +227,12 @@ namespace anuc {
             cout << s << endl;
         }
 
+        string toString() {
+            return "fmv.s.x" + dest->toString() + "," + operands[0]->value->toString();
+        }
+
         Value *getResult() { return dest; }
+
         void setResult(BaseReg *v) { dest = v; }
 
     };
@@ -215,6 +255,11 @@ namespace anuc {
             string s = "  lw" + dest->toString() + ", " + to_string(offset)
                        + " (" + operands[0]->value->toString() + " )";
             cout << s << endl;
+        }
+
+        string toString() {
+            return "lw" + dest->toString() + ", " + to_string(offset)
+                   + " (" + operands[0]->value->toString() + " )";
         }
 
         Value *getResult() { return dest; }
@@ -242,8 +287,15 @@ namespace anuc {
                        + " (" + operands[0]->value->toString() + " )";
             cout << s << endl;
         }
-        Value *getPtr() { return operands[1]->value;}
-        Value *getResult() {return nullptr;}
+
+        string toString() {
+            return "sw" + operands[1]->value->toString() + "," + to_string(offset)
+                   + " (" + operands[0]->value->toString() + " )";
+        }
+
+        Value *getPtr() { return operands[1]->value; }
+
+        Value *getResult() { return nullptr; }
     };
 
     class RVli : public LowInst {
@@ -271,7 +323,13 @@ namespace anuc {
             cout << s << endl;
         }
 
+        string toString() {
+            return "li" + dest->toString()
+                   + "," + operands[0]->value->toString();
+        }
+
         Value *getResult() { return dest; }
+
         void setResult(BaseReg *v) { dest = v; }
 
     };
@@ -299,37 +357,17 @@ namespace anuc {
             cout << s << endl;
         }
 
+        string toString() {
+            return "addi" + dest->toString() + "," + operands[0]->value->toString()
+                   + "," + operands[1]->value->toString();
+        }
+
         Value *getResult() { return dest; }
+
         void setResult(BaseReg *v) { dest = v; }
 
     };
 
-//    class RVsubi : public LowInst {
-//        BaseReg *dest;
-//    public:
-//        RVsubi(BasicBlock *parent, RegisterVar *rs1, ConstantInt *imm, BaseReg *dest) :
-//                LowInst(VK_RVsubi, parent), dest(dest) {
-//            Use *op0 = new Use(rs1, this);
-//            Use *op1 = new Use(imm, this);
-//            operands.push_back(op0);
-//            operands.push_back(op1);
-//            rs1->insertBackToUses(op0);
-//            imm->insertBackToUses(op1);
-//            dest->setInst(this);
-//        }
-//
-//        bool static classof(Value *v) { return v->getKind() == VK_RVsubi; }
-//
-//        void print() {
-//            string s = "  subi" + dest->toString() + "," + operands[0]->value->toString()
-//                       + "," + operands[1]->value->toString();
-//            cout << s << endl;
-//        }
-//
-//        Value *getResult() { return dest; }
-//        void setResult(BaseReg *v) { dest = v; }
-//
-//    };
 
     class RVasmd : public LowInst {
         BaseReg *dest;
@@ -338,7 +376,7 @@ namespace anuc {
             add, sub, mul, div, rem
         } opKind;
 
-         RVasmd(BasicBlock *parent, BaseReg *rs1, BaseReg *rs2, BaseReg *dest, OpKind opKind)
+        RVasmd(BasicBlock *parent, BaseReg *rs1, BaseReg *rs2, BaseReg *dest, OpKind opKind)
                 : LowInst(VK_RVasmd, parent), dest(dest), opKind(opKind) {
             Use *op0 = new Use(rs1, this);
             Use *op1 = new Use(rs2, this);
@@ -366,6 +404,21 @@ namespace anuc {
             cout << s << endl;
         }
 
+        string toString() {
+            string opStr;
+            switch (opKind) {
+#define ASMD_PRINT_CASE(X) case X: opStr = #X; break;
+                ASMD_PRINT_CASE(add)
+                ASMD_PRINT_CASE(sub)
+                ASMD_PRINT_CASE(mul)
+                ASMD_PRINT_CASE(div)
+                ASMD_PRINT_CASE(rem)
+            }
+            string s = opStr + dest->toString() + "," + operands[0]->value->toString()
+                       + "," + operands[1]->value->toString();
+            return s;
+        }
+
         RegisterVar *getRs1() { return cast<RegisterVar>(operands[0]->value); }
 
         RegisterVar *getRs2() { return cast<RegisterVar>(operands[1]->value); }
@@ -373,6 +426,7 @@ namespace anuc {
         BaseReg *getDest() { return dest; }
 
         Value *getResult() { return dest; }
+
         void setResult(BaseReg *v) { dest = v; }
 
 
@@ -419,7 +473,22 @@ namespace anuc {
             cout << s << endl;
         }
 
+        string toString() {
+            string opStr;
+            switch (opKind) {
+#define FASMD_PRINT_CASE(X) case X: opStr = #X; break;
+                FASMD_PRINT_CASE(fadd)
+                FASMD_PRINT_CASE(fsub)
+                FASMD_PRINT_CASE(fmul)
+                FASMD_PRINT_CASE(fdiv)
+            }
+            string s = opStr + ".s" + dest->toString() + "," + operands[0]->value->toString()
+                       + "," + operands[1]->value->toString();
+            return s;
+        }
+
         Value *getResult() { return dest; }
+
         void setResult(BaseReg *v) { dest = v; }
 
     };
@@ -437,7 +506,11 @@ namespace anuc {
         BasicBlock *getDest() { return cast<BasicBlock>(operands[0]->value); }
 
         void print() {
-            cout << "  ja " << operands[0]->value->toString() << endl;
+            cout << "  j " << operands[0]->value->toString() << endl;
+        }
+
+        string toString() {
+            return "j " + cast<BasicBlock>(operands[0]->value)->getName();
         }
     };
 
@@ -485,6 +558,23 @@ namespace anuc {
             cout << s << endl;
         }
 
+        string toString() {
+            string opStr;
+            switch (opKind) {
+#define CONDBRASNCH_PRINT_CASE(X) case X: opStr = #X; break;
+                FASMD_PRINT_CASE(beq)
+                FASMD_PRINT_CASE(bne)
+                FASMD_PRINT_CASE(blt)
+                FASMD_PRINT_CASE(bgt)
+                FASMD_PRINT_CASE(ble)
+                FASMD_PRINT_CASE(bge)
+            }
+            string s = opStr + operands[0]->value->toString()
+                       + "," + operands[1]->value->toString() + ", " +
+                       cast<BasicBlock>(operands[2]->value)->getName();
+            return s;
+        }
+
     };
 
     //与0比较的跳转指令
@@ -522,8 +612,26 @@ namespace anuc {
                 FASMD_PRINT_CASE(bgez)
             }
             string s = "  " + opStr + operands[0]->value->toString()
-                       + ", " + operands[1]->value->toString();
+                       + ", " + operands[1]->value->toString() + ", " +
+                    cast<BasicBlock>(operands[2]->value)->getName();
             cout << s << endl;
+        }
+
+        string toString() {
+            string opStr;
+            switch (opKind) {
+#define ZEROCONDBRASNCH_PRINT_CASE(X) case X: opStr = #X; break;
+                FASMD_PRINT_CASE(beqz)
+                FASMD_PRINT_CASE(bnez)
+                FASMD_PRINT_CASE(bltz)
+                FASMD_PRINT_CASE(bgtz)
+                FASMD_PRINT_CASE(blez)
+                FASMD_PRINT_CASE(bgez)
+            }
+            string s = opStr + operands[0]->value->toString()
+                       + ", " + operands[1]->value->toString();
+            return s;
+
         }
     };
 
@@ -562,7 +670,21 @@ namespace anuc {
             cout << s << endl;
         }
 
+        string toString() {
+            string opStr;
+            switch (opKind) {
+#define ZICMP_PRINT_CASE(X) case X: opStr = #X; break;
+                ZICMP_PRINT_CASE(sltz)
+                ZICMP_PRINT_CASE(snez)
+                ZICMP_PRINT_CASE(seqz)
+                ZICMP_PRINT_CASE(sgtz)
+            }
+            string s = opStr + dest->toString() + ", " + cast<BasicBlock>(operands[0]->value)->getName();;
+            return s;
+        }
+
         Value *getResult() { return dest; }
+
         void setResult(BaseReg *v) { dest = v; }
 
     };
@@ -589,6 +711,7 @@ namespace anuc {
         bool static classof(Value *v) { return v->getKind() == VK_RVicmp; }
 
         Value *getResult() { return dest; }
+
         void setResult(BaseReg *v) { dest = v; }
 
     };
@@ -636,7 +759,23 @@ namespace anuc {
             cout << s << endl;
         }
 
+        string toString() {
+            string opStr;
+            switch (opKind) {
+#define FCMP_PRINT_CASE(X) case X: opStr = #X; break;
+                FCMP_PRINT_CASE(feq)
+                FCMP_PRINT_CASE(flt)
+                FCMP_PRINT_CASE(fle)
+                FCMP_PRINT_CASE(fgt)
+                FCMP_PRINT_CASE(fge)
+            }
+            string s = opStr + ".s" + dest->toString() + "," + operands[0]->value->toString()
+                       + "," + operands[1]->value->toString();
+            return s;
+        }
+
         Value *getResult() { return dest; }
+
         void setResult(BaseReg *v) { dest = v; }
 
     };
@@ -665,7 +804,13 @@ namespace anuc {
             cout << s << endl;
         }
 
+        string toString() {
+            return "fcvt.w.s" + dest->toString() + ","
+                   + operands[0]->value->toString();
+        }
+
         Value *getResult() { return dest; }
+
         void setResult(BaseReg *v) { dest = v; }
 
     };
@@ -693,7 +838,14 @@ namespace anuc {
             cout << s << endl;
         }
 
+        string toString() {
+            return "fcvt.s.w" + dest->toString() + ","
+                   + operands[0]->value->toString();
+        }
+
+
         Value *getResult() { return dest; }
+
         void setResult(BaseReg *v) { dest = v; }
 
     };

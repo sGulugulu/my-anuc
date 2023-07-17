@@ -61,7 +61,8 @@ namespace anuc {
         return num;
     }
 
-    void Module::print() {
+    void Module::print(string fileName) {
+        freopen(fileName.c_str(), "w", stdout);
         cout << "; ModuleID = 'nyb'" << endl;
         for (auto i = globalVarList.begin(); i != globalVarList.end(); ++i) (*i).print();
         for (auto i = childlist.begin(); i != childlist.end(); ++i) (*i).print();
@@ -114,6 +115,7 @@ namespace anuc {
         for (auto i = childlist.begin(); i != childlist.end(); ++i) (*i).print();
     }
 
+    void PhiInst::accept(Visitor *V) { V->visit(this);}
     void GEPInst::accept(Visitor *V) { V->visit(this);}
     void AllocateInst::accept(Visitor *V) { V->visit(this);}
     void LoadInst::accept(Visitor *V) { V->visit(this);}
@@ -148,7 +150,7 @@ namespace anuc {
     void FNegInst::accept(Visitor *V) { V->visit(this);}
     void ZExtInst::accept(Visitor *V) { V->visit(this);}
     void RetInst::accept(Visitor *V) { V->visit(this);}
-
+    void CallInst::accept(Visitor *V) { V->visit(this);}
 
 
 

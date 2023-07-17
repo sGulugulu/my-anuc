@@ -16,19 +16,21 @@
 #include "sbRegSpill.h"
 #include "sbRegAlloc.h"
 #include "ssaLivenessAnalysis.h"
+#include "instEmit.h"
+#include "handleFunctionCall.h"
 
 using namespace std;
 namespace anuc {
     class PassDriver {
         unique_ptr<Module> M;
         unique_ptr<IRBuilder> Builder;
-        vector<bool> passSwitch;
+        vector<int> passSwitch;
         unique_ptr<RegTable> regTable;
     public:
         PassDriver(unique_ptr<Module> M, unique_ptr<IRBuilder> Builder, unique_ptr<RegTable> regTable) :
                 M(std::move(M)), Builder(std::move(Builder)) {}
 
-        PassDriver(unique_ptr<Module> M, unique_ptr<IRBuilder> Builder, vector<bool> passSwitch) :
+        PassDriver(unique_ptr<Module> M, unique_ptr<IRBuilder> Builder, vector<int> passSwitch) :
                 M(std::move(M)), Builder(std::move(Builder)), passSwitch(passSwitch) {
             regTable = make_unique<RegTable>();
         }
@@ -37,19 +39,18 @@ namespace anuc {
             bool j{false};
             if (passSwitch.empty()) j = true;
             //SSA
-            if (j || passSwitch[0]) runSSAPass();
+            if (j || passSwitch[0] == 1) runSSAPass();
             //调度器
-            if (j || passSwitch[1]) runScheduleBRPass();
+            if (j || passSwitch[1] == 2) runScheduleBRPass();
             //降级
-            if (j || passSwitch[2]) runLowerPass1();
-            if (j || passSwitch[3]) runLowerPass2();
-            if (j || passSwitch[4]) runRaSpillPass();
-            if (j || passSwitch[5]) runLowerPass3();
-            if (j || passSwitch[6]) runRaAllocaPass();
-
-            freopen("../l.ll", "w", stdout);
-            M->print();
-
+            if (j || passSwitch[2] == 3) runLowerPass1();
+            if (j || passSwitch[3] == 4) runLowerPass2();
+            if (j || passSwitch[4] == 5) runRaSpillPass();
+            if (j || passSwitch[5] == 6) runLowerPass3();
+            if (j || passSwitch[6] == 7) runHandleFuncCallPass();
+            if (j || passSwitch[6] == 8) runRaAllocaPass();
+            if (j || passSwitch[7] == 9) instEmitPass();
+            //if (j || passSwitch[8]) M->print("../l.ll");
         }
 
 
@@ -130,15 +131,29 @@ namespace anuc {
             M->memoryClean();
         }
 
+        map<Function *, FuncInfo> funcToInfo;
+
+        void runHandleFuncCallPass() {
+            HandleFunctionCall hfc(M.get());
+            funcToInfo = hfc.computeCallGraph();
+        }
+
+
         void runRaAllocaPass() {
             for (auto fn = M->getBegin(); fn != M->getEnd(); ++fn) {
                 SSALivenessAnalysis ssaa(&*fn, regTable.get());
                 auto &liveInfo = ssaa.computeLiveness();
                 //ssaa.printLiveOut();
-                SBRegAlloc sba (&*fn, Builder.get(), regTable.get(), liveInfo);
+                SBRegAlloc sba(&*fn, Builder.get(), regTable.get(),
+                               liveInfo, funcToInfo[&*fn]);
                 sba.run();
             }
             M->memoryClean();
+        }
+
+        void instEmitPass() {
+            InstEmit ie(M.get(), "../test.asm");
+            ie.run();
         }
     };
 }

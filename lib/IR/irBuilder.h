@@ -53,6 +53,10 @@ namespace anuc {
         Instruction *getCurrentInst() { return insertPoint; }
 
 
+        void SetCurrentFunc(Function *func) {
+            currentFunc = func;
+            return;
+        }
         //创建type的API
         Type *GetVoidTy() {
             auto i = typeLookUp.find(Type::TK_Void);

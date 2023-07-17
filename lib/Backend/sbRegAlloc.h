@@ -11,12 +11,15 @@
 #include "livenessInfo.h"
 #include "blockDFSCalculator.h"
 #include "blockDomTree.h"
+#include "callGraph.h"
 #include <set>
 #include <map>
 #include <vector>
 #include <queue>
 #include <algorithm>
-
+//进行寄存器分配
+//尚未解决phi并行赋值问题
+//浮点数先不管了
 namespace anuc {
     class SBRegAlloc {
         Function *function;
@@ -30,6 +33,8 @@ namespace anuc {
         map<BasicBlock *, set<BasicBlock *>> domTree;
         set<PhiInst *> phis;
 
+        //收集函数信息
+        FuncInfo &funcInfo;
         struct cmp {
             bool operator()(RvRegister *a, RvRegister *b) {
                 return a->getWeight() < b->getWeight();
@@ -38,6 +43,9 @@ namespace anuc {
 
         priority_queue<RvRegister *, vector<RvRegister *>, cmp> integerRegs;
         map<Instruction *, LiveOut> &liveInfo;
+        void handleCallInst() {
+
+        }
 
         void handleArgs() {
             //处理函数参数，分配到a0~a7里
@@ -84,6 +92,7 @@ floatArgReg.push_back(regTable->getReg(RvRegister::fa##X));
 
         //前序遍历基本块
         void preOrder(BasicBlock *b) {
+
             //把bb的前驱的liveOut所占用的寄存器加入inUse
             for (auto pred = b->predBegin(); pred != b->predEnd(); ++pred) {
                 Instruction *i = (&*(*pred)->getBack());
@@ -97,7 +106,7 @@ floatArgReg.push_back(regTable->getReg(RvRegister::fa##X));
                 }
             }
 
-            for (auto i = b->getBegin(); i != b->getBack(); ++i) {
+            for (auto i = b->getBegin(); i != b->getEnd(); ++i) {
                 Instruction *s = &*i;
                 if (PhiInst *phi = dyn_cast<PhiInst>(s)) phis.insert(phi);
                 vector<Use *> *ops = s->getOperands();
@@ -105,71 +114,72 @@ floatArgReg.push_back(regTable->getReg(RvRegister::fa##X));
                     RegisterVar *x = dyn_cast<RegisterVar>((*op)->value);
                     if (!x) continue;
                     if (isa<Int32Type>(x->getType())) {
+                        if (liveInfo[s].integerReg.count(x)) continue;
                         //不在liveOut中，回收寄存器
-                        if (!liveInfo[s].integerReg.count(x)) {
-                            if (auto r = tempMap[x]) {
-                                inUse.erase(r);
-                                integerRegs.push(r);
-                            }
+                        if (auto r = tempMap[x]) {
+                            inUse.erase(r);
+                            integerRegs.push(r);
                         }
+
                     }
                 }
                 //给定义的变量分配寄存器
                 Value *def = s->getResult();
                 if (def && isa<RegisterVar>(def)) {
-                    tempMap[def] = getIntReg();
+                    auto reg =  getIntReg();
+                    tempMap[def] = reg;
+                    if(RvRegister::isTReg(reg)) funcInfo.tempRegs.insert(reg);
                 }
 
-                //继续遍历支配树节点
-                for (auto child: domTree[b]) preOrder(child);
-
             }
+            //继续遍历支配树节点
+            for (auto child: domTree[b])
+                preOrder(child);
         }
 
-        void handleMoveInsert(Value *result, Value *x, BasicBlock *b) {
+        void handleMoveInsert(BasicBlock *currentBlock, Value *result, Value *x, BasicBlock *b) {
             //如果b中只有一个后续，可以直接插入移动（add 0）
-            if(b->getSucc().size() == 1) {
-                Instruction *s = &*b->getBack();
+            if (b->getSucc().size() == 1) {
+                Instruction *s;
+                for (auto j = (&*b)->getBack(); j != (&*b)->getFront(); --j) {
+                    s = (&*j);
+                    if (!isa<RVzerocondbranch>(s) && !isa<RVcondbranch>(s) &&
+                        !isa<RVbranch>(s))
+                        break;
+                }
                 RVasmd *add = new RVasmd(b, cast<BaseReg>(x),
-                        regTable->getReg(RvRegister::zero),
-                        cast<BaseReg>(result), RVasmd::add);
-                b->insertIntoChild(add, s);
+                                         regTable->getReg(RvRegister::zero),
+                                         cast<BaseReg>(result), RVasmd::add);
+                b->insertIntoBackChild(s, add);
             }
-            //否则插入关键边
+                //否则插入关键边
             else {
-                cout << "wori" << endl;
-                vector<BasicBlock*> &succ = b->getSucc();
-                for(int i = 0; i <succ.size(); ++i) {
-                    BasicBlock *rb = result->getDef()->getParent();
-                    if(succ[i] != rb) continue;
+                vector<BasicBlock *> &succ = b->getSucc();
+                for (int i = 0; i < succ.size(); ++i) {
+                    if (succ[i] != currentBlock) continue;
                     //插入新创建的基本块并插入
                     BasicBlock *nb = builder->GetBasicBlock("phi_block");
-                    rb->getParent()->insertBackToChild(nb);
-                    //从succ中删除
-                    succ[i] = succ.back();
-                    succ.pop_back();
-                    --i;
-                    b->pushBackToSucc(nb);
-                    nb->pushBackToPred(b);
-                    vector<BasicBlock*> &pred = rb->getPred();
-                    for(int j = 0; j < pred.size(); ++j) {
-                        if(pred[j] != b) continue;
-                        pred[j] = succ.back();
-                        pred.pop_back();
-                        --j;
-                        nb->pushBackToSucc(rb);
-                        rb->pushBackToPred(nb);
+                    BasicBlock::insertBasicBlock(b, nb, currentBlock);
+                    //修改尾部跳转指令
+                    Instruction *j = &*b->getBack();
+                    while (isa<RVzerocondbranch>(j) || isa<RVcondbranch>(j) ||
+                           isa<RVbranch>(j)) {
+                        for (auto op: *j->getOperands())
+                            if (op->value == currentBlock)
+                                op->replaceValueWith(nb);
+                        j = j->getPrev();
                     }
+
                     //在新创建的基本块中插入移动指令和跳转指令
                     Instruction *s = &*b->getBack();
                     RVasmd *add = new RVasmd(nb, cast<BaseReg>(x),
                                              regTable->getReg(RvRegister::zero),
                                              cast<BaseReg>(result), RVasmd::add);
-                    RVbranch *ja = new RVbranch(nb, rb);
+                    RVbranch *ja = new RVbranch(nb, currentBlock);
                     nb->insertBackToChild(add);
                     nb->insertBackToChild(ja);
                     builder->InsertIntoPool(add, ja);
-                    break;
+                    return;
                 }
             }
         }
@@ -181,30 +191,32 @@ floatArgReg.push_back(regTable->getReg(RvRegister::fa##X));
                     Value *x = phi->getOperands(j)->value;
                     //进行处理：插入移动指令，处理拷贝丢失
                     if (x != result)
-                        handleMoveInsert(result,
+                        handleMoveInsert(phi->getParent(), result,
                                          x, cast<BasicBlock>(phi->getOperands(j + 1)->value));
-
                 }
             }
             //处理交换问题
-            set<BasicBlock*> phiBB;
-            for(auto phi: phis) phiBB.insert(phi->getParent());
-            for(auto b: phiBB) {
-                vector<PhiInst*> list;
-                for(auto i = b->getBegin(); i != b->getEnd(); ++i) {
+            set<BasicBlock *> phiBB;
+            for (auto phi: phis) phiBB.insert(phi->getParent());
+            for (auto b: phiBB) {
+                vector<PhiInst *> list;
+                for (auto i = b->getBegin(); i != b->getEnd(); ++i) {
                     PhiInst *phi = dyn_cast<PhiInst>(&*i);
-                    if(!phi) break;
+                    if (!phi) break;
                     list.push_back(phi);
                 }
-                if(list.size() == 1) list.back()->eraseFromParent();
+                if (list.size() == 1) list.back()->eraseFromParent();
             }
         }
 
     public:
         SBRegAlloc(Function *function, IRBuilder *builder,
-                   RegTable *regTable, map<Instruction *, LiveOut> &liveInfo) :
+                   RegTable *regTable, map<Instruction *, LiveOut> &liveInfo, FuncInfo &funcInfo) :
                 function(function), builder(builder),
-                regTable(regTable), liveInfo(liveInfo) {}
+                regTable(regTable), liveInfo(liveInfo),
+                funcInfo(funcInfo){
+            builder->SetCurrentFunc(function);
+        }
 
         void run() {
             // 先计算支配树
@@ -217,6 +229,7 @@ floatArgReg.push_back(regTable->getReg(RvRegister::fa##X));
             //处理函数参数，初始化待分配的寄存器
             handleArgs();
             initRegs();
+            //遍历支配书
             preOrder(function->getEnrty());
             //将操作数更换为寄存器
             for (auto &it: tempMap) {

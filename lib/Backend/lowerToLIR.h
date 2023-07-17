@@ -94,6 +94,8 @@ namespace anuc {
     public:
         LIRVisitor1(IRBuilder *Builder, RegTable *regTable) : Builder(Builder), regTable(regTable) {}
 
+        bool visit(PhiInst *inst);
+
         bool visit(RetInst *inst);
 
         bool visit(AllocateInst *inst);
@@ -118,6 +120,7 @@ namespace anuc {
         bool visit(FToIInst *inst);
 
         bool visit(IToFInst *inst);
+
 
         static void transformFASMD(Instruction *inst, IRBuilder *Builder, RVfasmd::OpKind opKind) {
             BasicBlock *bb = inst->getParent();

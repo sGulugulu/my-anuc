@@ -6,6 +6,31 @@
 
 using namespace anuc;
 
+bool LIRVisitor1::visit(anuc::PhiInst *inst) {
+    for(int i = 0; i < inst->getOperands()->size(); i+=2) {
+        auto op = inst->getOperands(i);
+        Value *x = op->value;
+        Constant *c = dyn_cast<Constant>(x);
+        if(!c) continue;
+        BasicBlock *b = cast<BasicBlock>(inst->getOperands(i+1)->value);
+        auto back = &*b->getBack();
+        LowInst *l{nullptr};
+        RegisterVar *dest{nullptr};
+        if(ConstantInt *ci = dyn_cast<ConstantInt>(c)) {
+            dest = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+            l = new RVli(b, ci, dest);
+        } else {
+            ConstantFloat *fi = cast<ConstantFloat>(c);
+            dest = new RegisterVar(Builder->GetFloatTy(), Builder->GetNewVarName());
+            l = new FloatLoad(b, dest, fi);
+        }
+        b->insertIntoChild(l, back);
+        Builder->InsertIntoPool(dest, l);
+        op->replaceValueWith(dest);
+    }
+    return 0;
+}
+
 //获得栈上变量的大小
 bool LIRVisitor1::visit(anuc::AllocateInst *inst) {
     RegisterVar *ptr = cast<RegisterVar>(inst->getResult());

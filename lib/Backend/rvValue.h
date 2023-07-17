@@ -81,6 +81,12 @@ namespace anuc {
             return ' ' + s;
         }
         int getWeight() { return weight;}
+        static bool isTReg(RvRegister *reg) {
+            return reg->rgKind >= t0 && reg->rgKind <= t6;
+        }
+        static bool isSReg(RegisterVar *reg) {
+
+        }
     };
 
 

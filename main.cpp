@@ -16,15 +16,14 @@ using namespace std;
 using namespace antlr4;
 
 int main(int argc , char* argv[]) {
-    vector<bool> passSwitch;
+    vector<int> passSwitch;
     if (argc == 2){
         string arg(argv[1]);
         for(auto s: arg) {
-            if(s == '1') passSwitch.push_back(true);
-            else if (s == '0') passSwitch.push_back(false);
-            else cerr << "args false";
+            passSwitch.push_back(int(s - '0'));
         }
     }
+
     std::ifstream in;
     in.open("../test.sysy");
     ANTLRInputStream input(in);
