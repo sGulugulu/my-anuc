@@ -110,6 +110,13 @@ namespace anuc {
     void BasicBlock::insertIntoBackChild(Instruction *insertPoint, Instruction *inst) {
         childlist.insert_into_back(insertPoint, inst);
     }
+    void BasicBlock::insertIntoBackChild(anuc::Instruction *insertPoint, vector<anuc::Instruction *> inst) {
+        Instruction *p = insertPoint;
+        for(auto &s: inst) {
+            childlist.insert_into_back(p, s);
+            p = s;
+        }
+    }
 
     void BasicBlock::print() {
         cout << name << ":" << endl;

@@ -32,7 +32,7 @@ namespace anuc {
         map<string, unsigned> pointerVarName;
         //中间变量名称
         unsigned registerVarNameNum{0};
-        map<pair<Function *, string>, unsigned> bbName;
+        map<string, unsigned> bbName;
 
         //指向当前函数
         Function *currentFunc{nullptr};
@@ -230,9 +230,8 @@ namespace anuc {
         //获取BasicBlock
         BasicBlock *GetBasicBlock(string name) {
             if(!blockType)blockType = new BlockType();
-
-            if (!bbName.insert({{currentFunc, name}, 0}).second) {
-                name = name + to_string(++bbName[{currentFunc, name}]);
+            if (!bbName.insert({ name, 0}).second) {
+                name = name + to_string(++bbName[name]);
             }
             if (!currentFunc) {
                 cerr << "must have create func";

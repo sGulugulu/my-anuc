@@ -49,7 +49,7 @@ bool LIRVisitor1::visit(anuc::LoadInst *inst) {
     Value *ptr = inst->getPtr();
     Value *result = inst->getResult();
     //处理gep，全局变量没有定义处所以为空
-    if (ptr->getDef())
+    if (ptr->getDef()) {
         if (GEPInst *gep = dyn_cast<GEPInst>(ptr->getDef())) {
             vector<Value *> offsets;
             while (ptr->getDef() && isa<GEPInst>(ptr->getDef())) {
@@ -86,7 +86,14 @@ bool LIRVisitor1::visit(anuc::LoadInst *inst) {
             inst->eraseFromParent();
             Builder->InsertIntoPool(lowInst);
         }
-
+    }
+    //说明是全局变量
+    else {
+        GlobalLoad *s = new GlobalLoad(bb, cast<RegisterVar>(result), ptr);
+        bb->insertIntoBackChild(insertPoint, s);
+        inst->eraseFromParent();
+        Builder->InsertIntoPool(s);
+    }
     return 0;
 }
 
@@ -298,144 +305,176 @@ bool LIRVisitor2::visit(ZExtInst *inst) {
 bool LIRVisitor3::visit(anuc::LowLoad *inst) {
     Instruction *insertPoint = inst;
     BasicBlock *bb = inst->getParent();
-    //基础地址偏移
-    auto &frame =  bb->getParent()->getFrame();
-    int frameOffset{0};
+    Value * offset = inst->getOffset();
     BaseReg *dest = cast<BaseReg>(inst->getResult());
-    Value *offset = inst->getOffset();
-    BaseReg *base, *rs2{nullptr};
-
-    auto it = frame.find(inst->getPtr());
-    if(it != frame.end()) {
+    BaseReg *ptr = cast<BaseReg>(inst->getPtr());
+    int frameOffset;
+    auto &frame =  bb->getParent()->getFrame();
+    auto it = frame.find(ptr);
+    //基地址
+    BaseReg *basePtr;
+    if (it != frame.end()) {
         frameOffset = it->second;
-        base = regTable->getReg(RvRegister::sp);
+        basePtr = regTable->getReg(RvRegister::sp);
     } else {
-        base = cast<BaseReg>(inst->getPtr());
+        frameOffset = 0;
+        basePtr = cast<BaseReg>(ptr);
     }
-    if(ConstantInt *c = dyn_cast<ConstantInt>(offset)) {
-        frameOffset  += c->getValue();
-        //立即数小于2048，可以直接从基地址上计算偏移
-        if(0 < frameOffset < 2048) {
-            RVlw *rvInst = new RVlw(bb, base, dest, frameOffset);
-            bb->insertIntoBackChild(insertPoint, rvInst);
-            Builder->InsertIntoPool(rvInst);
+    //offset为常数
+    if(ConstantInt *ci = dyn_cast<ConstantInt>(offset)) {
+        int imm = ci->getValue() + frameOffset;
+        //小于2048直接lw，否则相加一下
+        if(imm < 2048) {
+            RVlw *s = new RVlw(bb, basePtr, dest, imm);
+            bb->insertIntoBackChild(inst, s);
             inst->eraseFromParent();
-            return true;
-        } else {
-            rs2 = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
-            RegisterVar *x = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
-            RVli *li = new RVli(bb, Builder->GetConstantInt32(frameOffset), rs2);
-            RVasmd *add = new RVasmd(bb, base, rs2, x, RVasmd::add);
-            RVlw *rvInst = new RVlw(bb, x, dest, 0);
-            bb->insertIntoBackChild(insertPoint, li);
-            bb->insertIntoBackChild(li, add);
-            bb->insertIntoBackChild(add, rvInst);
-            Builder->InsertIntoPool(li, rs2, x, add, rvInst);
-            inst->eraseFromParent();
+            Builder->InsertIntoPool(s);
             return true;
         }
-    }
-    //地址为变量，特殊处理
-    else  {
-        cout << "我日" << endl;
-        BaseReg *temp = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
-        BaseReg *result = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
-        BaseReg *x = cast<BaseReg>(offset);
-        if( 0 < frameOffset < 2048) {
-            RVaddi *add = new RVaddi(bb, x, Builder->GetConstantInt32(frameOffset), temp);
-            bb->insertIntoBackChild(insertPoint, add);
-            insertPoint = add;
-            Builder->InsertIntoPool(result, add);
-        }
-        //大于2047需要先li一下
         else {
-            rs2 = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
-            RVli *li = new RVli(bb, Builder->GetConstantInt32(frameOffset), rs2);
-            RVasmd *add = new RVasmd(bb, base, rs2, temp, RVasmd::add);
-            bb->insertIntoBackChild(insertPoint, li);
-            bb->insertIntoBackChild(li, add);
-            insertPoint = add;
-            Builder->InsertIntoPool(result, add, li);
+            RegisterVar *x1 = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+            RegisterVar *x2 = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+
+            RVli *s1 = new RVli(bb, Builder->GetConstantInt32(imm), x1);
+            RVasmd *s2 = new RVasmd(bb, basePtr, x1, x2, RVasmd::add);
+            RVlw *s3 = new RVlw(bb, x2, dest, 0);
+
+            bb->insertIntoBackChild(inst, {s1, s2, s3});
+            inst->eraseFromParent();
+            Builder->InsertIntoPool(x1, x2, s1, s2, s3);
+            return true;
         }
-        RVasmd *add2 = new RVasmd(bb, base, temp, result, RVasmd::add);
-        bb->insertIntoBackChild(insertPoint, add2);
-        RVlw *rvInst = new RVlw(bb, result, dest, 0);
-        bb->insertIntoBackChild(add2, rvInst);
-        Builder->InsertIntoPool(rvInst, add2);
-        inst->eraseFromParent();
-        return true;
     }
+    else {
+        BaseReg *o = cast<BaseReg>(offset);
+        //用addi add相加
+        if(frameOffset == 0) {
+            RegisterVar *x1 = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+            RVasmd *s1 = new RVasmd(bb, basePtr, o, x1, RVasmd::add);
+            RVlw *s2 = new RVlw(bb, x1, dest, 0);
+
+            bb->insertIntoBackChild(inst, {s1, s2});
+            inst->eraseFromParent();
+            Builder->InsertIntoPool(x1, s1, s2);
+            return true;
+        }
+        else if(0 < frameOffset &&  frameOffset < 2048) {
+            RegisterVar *x1 = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+            RegisterVar *x2 = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+            RVaddi *s1 = new RVaddi(bb, o, Builder->GetConstantInt32(frameOffset), x1);
+            RVasmd *s2 = new RVasmd(bb, x1, o, x2, RVasmd::add);
+            RVlw *s3 = new RVlw(bb, x2, dest, 0);
+
+            bb->insertIntoBackChild(inst, {s1, s2, s3});
+            inst->eraseFromParent();
+            Builder->InsertIntoPool(x1, x2, s1, s2, s3);
+            return true;
+        }
+        //需要li一下
+        else {
+            RegisterVar *x1 = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+            RegisterVar *x2 = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+            RegisterVar *x3 =  new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+            RVli *s1 = new RVli(bb, Builder->GetConstantInt32(frameOffset), x1);
+            RVasmd *s2 = new RVasmd(bb, x1, o, x2, RVasmd::add);
+            RVasmd *s3 = new RVasmd(bb, basePtr, x2, x3, RVasmd::add);
+            RVlw *s4 = new RVlw(bb, x3, dest, 0);
+
+            bb->insertIntoBackChild(inst, {s1, s2, s3, s4});
+            inst->eraseFromParent();
+            Builder->InsertIntoPool(x1, x2, x3, s1, s2, s3, s4);
+            return true;
+        }
+    }
+
+
 }
 
 
 bool LIRVisitor3::visit(anuc::LowStore *inst) {
-//    Instruction *insertPoint = inst;
-//    BasicBlock *bb = inst->getParent();
-//    //基础地址偏移
-//    auto &frame =  bb->getParent()->getFrame();
-//    int frameOffset{0};
-//    BaseReg *dest = cast<BaseReg>(inst->getResult());
-//    Value *offset = inst->getOffset();
-//    BaseReg *base, *rs2{nullptr};
-//    Value *val = inst->getVal();
-//    auto it = frame.find(inst->getPtr());
-//    if(it != frame.end()) {
-//        frameOffset = it->second;
-//        base = regTable->getReg(RvRegister::sp);
-//    } else {
-//        base = cast<BaseReg>(inst->getPtr());
-//    }
-//    if(ConstantInt *c = dyn_cast<ConstantInt>(offset)) {
-//        frameOffset  += c->getValue();
-//        //立即数小于2048，可以直接从sp上计算偏移
-//        if(frameOffset < 2048) {
-//            RVsw *rvInst = new RVsw(bb, base, val, frameOffset);
-//            bb->insertIntoBackChild(insertPoint, rvInst);
-//            Builder->InsertIntoPool(rvInst);
-//            inst->eraseFromParent();
-//            return true;
-//        } else {
-//            rs2 = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
-//            RegisterVar *x = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
-//            RVli *li = new RVli(bb, Builder->GetConstantInt32(frameOffset), rs2);
-//            RVasmd *add = new RVasmd(bb, base, rs2, x, RVasmd::add);
-//            RVlw *rvInst = new RVlw(bb, x, val, 0);
-//            bb->insertIntoBackChild(insertPoint, li);
-//            bb->insertIntoBackChild(li, add);
-//            bb->insertIntoBackChild(add, rvInst);
-//            Builder->InsertIntoPool(li, rs2, x, add, rvInst);
-//            inst->eraseFromParent();
-//            return true;
-//        }
-//    }
-//        //地址为变量，特殊处理
-//    else  {
-//        //imm比2048小， 可以使用addi
-//        BaseReg *result = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
-//        BaseReg *x = cast<BaseReg>(offset);
-//        if(frameOffset < 2048) {
-//            RVaddi *add = new RVaddi(bb, x, Builder->GetConstantInt32(frameOffset), result);
-//            bb->insertIntoBackChild(insertPoint, add);
-//            insertPoint = add;
-//            Builder->InsertIntoPool(result, add);
-//        }
-//            //大于2047需要先li一下
-//        else {
-//            rs2 = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
-//            RVli *li = new RVli(bb, Builder->GetConstantInt32(frameOffset), rs2);
-//            RVasmd *add = new RVasmd(bb, x, rs2, result, RVasmd::add);
-//            bb->insertIntoBackChild(insertPoint, li);
-//            bb->insertIntoBackChild(li, add);
-//            insertPoint = add;
-//            Builder->InsertIntoPool(result, add, li);
-//        }
-//        RVsw *rvInst = new RVsw(bb, result, val, 0);
-//        bb->insertIntoBackChild(insertPoint, rvInst);
-//        Builder->InsertIntoPool(rvInst);
-//        inst->eraseFromParent();
-//        return true;
-//    }
-    return true;
+    Instruction *insertPoint = inst;
+    BasicBlock *bb = inst->getParent();
+    Value * offset = inst->getOffset();
+    BaseReg *val = cast<BaseReg>(inst->getVal());
+    BaseReg *ptr = cast<BaseReg>(inst->getPtr());
+    int frameOffset;
+    auto &frame =  bb->getParent()->getFrame();
+    auto it = frame.find(ptr);
+    //基地址
+    BaseReg *basePtr;
+    if (it != frame.end()) {
+        frameOffset = it->second;
+        basePtr = regTable->getReg(RvRegister::sp);
+    } else {
+        frameOffset = 0;
+        basePtr = cast<BaseReg>(ptr);
+    }
+    //offset为常数
+    if(ConstantInt *ci = dyn_cast<ConstantInt>(offset)) {
+        int imm = ci->getValue() + frameOffset;
+        //小于2048直接lw，否则相加一下
+        if(imm < 2048) {
+            RVsw *s = new RVsw(bb, basePtr, val, imm);
+            bb->insertIntoBackChild(inst, s);
+            inst->eraseFromParent();
+            Builder->InsertIntoPool(s);
+            return true;
+        }
+        else {
+            RegisterVar *x1 = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+            RegisterVar *x2 = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+
+            RVli *s1 = new RVli(bb, Builder->GetConstantInt32(imm), x1);
+            RVasmd *s2 = new RVasmd(bb, basePtr, x1, x2, RVasmd::add);
+            RVsw *s3 = new RVsw(bb, x2, val, 0);
+
+            bb->insertIntoBackChild(inst, {s1, s2, s3});
+            inst->eraseFromParent();
+            Builder->InsertIntoPool(x1, x2, s1, s2, s3);
+            return true;
+        }
+    }
+    else {
+        BaseReg *o = cast<BaseReg>(offset);
+        //用addi add相加
+        if(frameOffset == 0) {
+            RegisterVar *x1 = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+            RVasmd *s1 = new RVasmd(bb, basePtr, o, x1, RVasmd::add);
+            RVsw *s2 = new RVsw(bb, x1, val, 0);
+
+            bb->insertIntoBackChild(inst, {s1, s2});
+            inst->eraseFromParent();
+            Builder->InsertIntoPool(x1, s1, s2);
+            return true;
+        }
+        else if(0 < frameOffset &&  frameOffset < 2048) {
+            RegisterVar *x1 = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+            RegisterVar *x2 = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+            RVaddi *s1 = new RVaddi(bb, o, Builder->GetConstantInt32(frameOffset), x1);
+            RVasmd *s2 = new RVasmd(bb, x1, o, x2, RVasmd::add);
+            RVsw *s3 = new RVsw(bb, x2, val, 0);
+
+            bb->insertIntoBackChild(inst, {s1, s2, s3});
+            inst->eraseFromParent();
+            Builder->InsertIntoPool(x1, x2, s1, s2, s3);
+            return true;
+        }
+            //需要li一下
+        else {
+            RegisterVar *x1 = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+            RegisterVar *x2 = new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+            RegisterVar *x3 =  new RegisterVar(Builder->GetInt32Ty(), Builder->GetNewVarName());
+            RVli *s1 = new RVli(bb, Builder->GetConstantInt32(frameOffset), x1);
+            RVasmd *s2 = new RVasmd(bb, x1, o, x2, RVasmd::add);
+            RVasmd *s3 = new RVasmd(bb, basePtr, x2, x3, RVasmd::add);
+            RVsw *s4 = new RVsw(bb, x3, val, 0);
+
+            bb->insertIntoBackChild(inst, {s1, s2, s3, s4});
+            inst->eraseFromParent();
+            Builder->InsertIntoPool(x1, x2, x3, s1, s2, s3, s4);
+            return true;
+        }
+    }
 }
 
 

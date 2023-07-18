@@ -57,7 +57,7 @@ namespace anuc {
         }
 
         string toString() {
-            return "lowload" + dest->toString() + "," +
+            return "  lowload" + dest->toString() + "," +
                    operands[1]->value->toString()
                    + ", offset:" + operands[0]->value->toString();
         }
@@ -99,7 +99,7 @@ namespace anuc {
         }
 
         string toString() {
-            return "lowstore" + operands[2]->value->toString()
+            return "  lowstore" + operands[2]->value->toString()
                    + "," + operands[1]->value->toString()
                    + ", offset:" + operands[0]->value->toString();
         }
@@ -117,6 +117,7 @@ namespace anuc {
     class GlobalLoad : public LowInst {
         BaseReg *dest;
     public:
+        static int labelNum;
         GlobalLoad(BasicBlock *parent, RegisterVar *dest, Value *ptr) :
                 LowInst(VK_GlobalLoad, parent), dest(dest) {
             Use *op0 = new Use(ptr, this);
@@ -132,10 +133,14 @@ namespace anuc {
                        + operands[0]->value->toString();
             cout << s << endl;
         }
-
         string toString() {
-            return "globalload" + dest->toString() + ","
-                   + operands[0]->value->toString();
+            string s;
+            string d = dest->toString();
+            string v = operands[0]->value->toString();
+            string label = ".Lpcrel_hi" + to_string(labelNum++);
+            s =  label + ':' + "\n  auipc "+ d +", %pcrel_hi(n)\n  addi" + d + ","+ d
+                    +", %pcrel_lo("+ label +")";
+            return s;
         }
 
         void setResult(BaseReg *v) { dest = v; }
@@ -167,9 +172,11 @@ namespace anuc {
 
         string toString() {
             string s;
-            if (ret)
-                s = "lowret" + operands[0]->value->toString();
-            else s = "lowret";
+            if (ret) {
+                string v = operands[0]->value->toString();
+                s = "  mv a0," +  v + "\n  ret";
+            }
+            else s = "  ret";
             return s;
         }
 
@@ -199,7 +206,7 @@ namespace anuc {
         }
 
         string toString() {
-            return "floatload" + dest->toString() + ","
+            return "  floatload" + dest->toString() + ","
                    + cast<ConstantFloat>(operands[0]->value)->toStringInDecimal();
         }
 
@@ -228,7 +235,7 @@ namespace anuc {
         }
 
         string toString() {
-            return "fmv.s.x" + dest->toString() + "," + operands[0]->value->toString();
+            return "  fmv.s.x" + dest->toString() + "," + operands[0]->value->toString();
         }
 
         Value *getResult() { return dest; }
@@ -258,7 +265,7 @@ namespace anuc {
         }
 
         string toString() {
-            return "lw" + dest->toString() + ", " + to_string(offset)
+            return "  lw" + dest->toString() + ", " + to_string(offset)
                    + " (" + operands[0]->value->toString() + " )";
         }
 
@@ -289,7 +296,7 @@ namespace anuc {
         }
 
         string toString() {
-            return "sw" + operands[1]->value->toString() + "," + to_string(offset)
+            return "  sw" + operands[1]->value->toString() + ", " + to_string(offset)
                    + " (" + operands[0]->value->toString() + " )";
         }
 
@@ -324,7 +331,7 @@ namespace anuc {
         }
 
         string toString() {
-            return "li" + dest->toString()
+            return "  li" + dest->toString()
                    + "," + operands[0]->value->toString();
         }
 
@@ -358,7 +365,7 @@ namespace anuc {
         }
 
         string toString() {
-            return "addi" + dest->toString() + "," + operands[0]->value->toString()
+            return "  addi" + dest->toString() + "," + operands[0]->value->toString()
                    + "," + operands[1]->value->toString();
         }
 
@@ -414,7 +421,7 @@ namespace anuc {
                 ASMD_PRINT_CASE(div)
                 ASMD_PRINT_CASE(rem)
             }
-            string s = opStr + dest->toString() + "," + operands[0]->value->toString()
+            string s = "  " + opStr + dest->toString() + "," + operands[0]->value->toString()
                        + "," + operands[1]->value->toString();
             return s;
         }
@@ -482,7 +489,7 @@ namespace anuc {
                 FASMD_PRINT_CASE(fmul)
                 FASMD_PRINT_CASE(fdiv)
             }
-            string s = opStr + ".s" + dest->toString() + "," + operands[0]->value->toString()
+            string s = "  " + opStr + ".s" + dest->toString() + "," + operands[0]->value->toString()
                        + "," + operands[1]->value->toString();
             return s;
         }
@@ -510,7 +517,7 @@ namespace anuc {
         }
 
         string toString() {
-            return "j " + cast<BasicBlock>(operands[0]->value)->getName();
+            return "  j " + cast<BasicBlock>(operands[0]->value)->getName();
         }
     };
 
@@ -569,7 +576,7 @@ namespace anuc {
                 FASMD_PRINT_CASE(ble)
                 FASMD_PRINT_CASE(bge)
             }
-            string s = opStr + operands[0]->value->toString()
+            string s = "  " + opStr + operands[0]->value->toString()
                        + "," + operands[1]->value->toString() + ", " +
                        cast<BasicBlock>(operands[2]->value)->getName();
             return s;
@@ -628,7 +635,7 @@ namespace anuc {
                 FASMD_PRINT_CASE(blez)
                 FASMD_PRINT_CASE(bgez)
             }
-            string s = opStr + operands[0]->value->toString()
+            string s = "  " + opStr + operands[0]->value->toString()
                        + ", " + operands[1]->value->toString();
             return s;
 
@@ -679,7 +686,7 @@ namespace anuc {
                 ZICMP_PRINT_CASE(seqz)
                 ZICMP_PRINT_CASE(sgtz)
             }
-            string s = opStr + dest->toString() + ", " + cast<BasicBlock>(operands[0]->value)->getName();;
+            string s = "  " + opStr + dest->toString() + ", " + cast<BasicBlock>(operands[0]->value)->getName();;
             return s;
         }
 
@@ -769,7 +776,7 @@ namespace anuc {
                 FCMP_PRINT_CASE(fgt)
                 FCMP_PRINT_CASE(fge)
             }
-            string s = opStr + ".s" + dest->toString() + "," + operands[0]->value->toString()
+            string s = "  " + opStr + ".s" + dest->toString() + "," + operands[0]->value->toString()
                        + "," + operands[1]->value->toString();
             return s;
         }
@@ -805,7 +812,7 @@ namespace anuc {
         }
 
         string toString() {
-            return "fcvt.w.s" + dest->toString() + ","
+            return "  fcvt.w.s" + dest->toString() + ","
                    + operands[0]->value->toString();
         }
 
@@ -839,7 +846,7 @@ namespace anuc {
         }
 
         string toString() {
-            return "fcvt.s.w" + dest->toString() + ","
+            return "  fcvt.s.w" + dest->toString() + ","
                    + operands[0]->value->toString();
         }
 

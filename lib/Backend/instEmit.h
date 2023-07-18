@@ -5,6 +5,7 @@
 #ifndef ANUC_INSTEMIT_H
 #define ANUC_INSTEMIT_H
 #include "core.h"
+#include "lowInst.h"
 #include <stdio.h>
 #include <string>
 #include <queue>
@@ -25,9 +26,13 @@ namespace anuc {
                 printf("无法创建文件 %s\n", name);
                 return;
             }
+            fprintf(file, ".global main\n");
 
+            //构造text段
+            fprintf(file, ".text\n");
             for(auto i = m->getBegin(); i != m->getEnd(); ++i) {
                 Function *func = &*i;
+                fprintf(file, "%s:\n",  func->getName().c_str());
                 BasicBlock *entry = func->getEnrty();
                 //按照bfs顺序打印
                 set<BasicBlock*> visited;
@@ -37,9 +42,9 @@ namespace anuc {
                 while(!workQueue.empty()) {
                     BasicBlock *b = workQueue.front();
                     workQueue.pop();
-                    fprintf(file, "%s: \n", b->getName().c_str());
+                    fprintf(file, "%s: \n",  b->getName().c_str());
                     for(auto i = b->getBegin(); i != b->getEnd(); ++i) {
-                        fprintf(file, "  %s\n",  (&*i)->toString().c_str());
+                        fprintf(file, "%s\n",  (&*i)->toString().c_str());
                     }
                     for(auto succ = b->succBegin(); succ != b->succEnd(); ++succ) {
                         if(!visited.insert(*succ).second) continue;

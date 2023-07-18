@@ -153,7 +153,15 @@ namespace anuc {
         FunctionType *getFuncType() { return type; }
 
         map<Value*, int> &getFrame() { return frame; }
-
+        string toString() {
+            string s = name + "(";
+            for (int i = 0; i < argvs.size(); ++i) {
+                s +=  argvs[i].second->toString() + " " + argvs[i].first;
+                if (i != argvs.size() - 1) s += ", ";
+            }
+            s += "):" ;
+            return s;
+        }
         void print();
 
     };
@@ -220,6 +228,7 @@ namespace anuc {
         void insertIntoChild(Instruction *inst, Instruction *insertPoint);
 
         void insertIntoBackChild(Instruction *insertPoint, Instruction *inst);
+        void insertIntoBackChild(Instruction *insertPoint, vector<Instruction *> inst);
 
         void pushBackToPred(BasicBlock *bb) { pred.push_back(bb); }
 

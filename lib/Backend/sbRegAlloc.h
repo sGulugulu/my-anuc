@@ -86,10 +86,12 @@ namespace anuc {
             //处理函数参数，在a0~a7里
             vector<Value *> &args = function->getArgVals();
             for (auto v: args) {
+                if (v->usesEmpty()) continue;
                 if (isa<FloatType>(v->getType())) {
-                    if (v->usesEmpty()) continue;
+
                 }
-                //if (v->usesEmpty()) continue;
+
+
                 RvRegister *reg = getIntReg();
                 inUse.insert(reg);
                 tempMap.insert({v, reg});
@@ -254,10 +256,10 @@ floatArgReg.push_back(regTable->getReg(RvRegister::fa##X));
             int i = 0;
             int f = 0;
             for (auto v: args) {
+                if (tempMap.find(v) == tempMap.end()) continue;
                 if (isa<FloatType>(v->getType())) {
-                    if (v->usesEmpty()) continue;
+
                 }
-                //if (v->usesEmpty()) continue;
                 liBuilder.CreateASMD(tempMap[v], integerArgReg[i++],
                                      regTable->getReg(RvRegister::zero), RVasmd::add);
 
