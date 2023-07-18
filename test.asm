@@ -1,8 +1,7 @@
 entry: 
-  lw %x2, 8 ( sp )
-  lowret t0
-entry: 
-  li t0, 3
-  sw t0,8 ( sp )
-  lw %x6, 12 ( sp )
-  lowret t1
+  li %x6, 4
+  mul %x5, %x6, %argvi
+  addi %x7, %x5, 0
+  add %x8, %argva, %x7
+  lw %x3, 0 ( %x8 )
+  lowret %x3

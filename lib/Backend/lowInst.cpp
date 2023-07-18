@@ -9,6 +9,7 @@ namespace anuc {
         ((LIRVisitor3*)V)->visit(this);
     }
     void LowLoad::accept(anuc::Visitor *V) {
-        ((LIRVisitor3*)V)->visit(this);}
+        ((LIRVisitor3*)V)->visit(this);
+    }
 
 }

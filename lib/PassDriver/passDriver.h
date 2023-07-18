@@ -115,12 +115,14 @@ namespace anuc {
                 auto &liveInfo = ssaa.computeLiveness();
                 SBRegSpill sbs(&*fn, Builder.get(), regTable.get(), liveInfo);
                 sbs.run();
+
             }
         }
 
         void runLowerPass3() {
             LIRVisitor3 *visitor3 = new LIRVisitor3(Builder.get(), regTable.get());
             for (auto fn = M->getBegin(); fn != M->getEnd(); ++fn) {
+                auto func = &*fn;
                 for (auto bb = (*fn).getBegin(); bb != (*fn).getEnd(); ++bb) {
                     for (auto inst = (*bb).getBegin(); inst != (*bb).getEnd();) {
                         Instruction *i = &*inst;

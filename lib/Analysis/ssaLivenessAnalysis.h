@@ -107,7 +107,11 @@ namespace anuc {
                         //避开rv寄存器变量
                         if (!x) continue;
                         bool j = regVars.insert(x).second;
-                        if (!j) cerr << "在ssa中有一个变量被定义了两次!" << endl;
+                        if (!j) {
+                            cerr << "数据流分析中发现ssa中有一个变量被定义了两次!" << endl;
+                            cout <<x->toString();
+                        }
+
                         if (!isa<Int32Type>(x->getType()) && !isa<FloatType>(x->getType())) {
                             cerr << "干涉图构造发现其他类型变量" << endl;
                             cout << x->toString() << endl;

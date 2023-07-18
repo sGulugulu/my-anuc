@@ -305,7 +305,10 @@ namespace anuc {
                                 ++i;
                                 //如果为load，将load的所有user改为incoming的值
                                 if (LoadInst *li = dyn_cast<LoadInst>(inst)) {
-                                    RegisterVar *ptr = cast<RegisterVar>(li->getPtr());
+                                    RegisterVar *ptr = dyn_cast<RegisterVar>(li->getPtr());
+                                    //说明是全局变量
+                                    if(!ptr) continue;
+
                                     AllocateInst *src = dyn_cast<AllocateInst>(ptr->getDef());
                                     if (!src) continue;
                                     Value *v = incomingVal[src];
@@ -315,7 +318,8 @@ namespace anuc {
                                 }
                                     //如果为store，则修改incoming的值为store的值
                                 else if (StoreInst *si = dyn_cast<StoreInst>(inst)) {
-                                    RegisterVar *ptr = cast<RegisterVar>(si->getPtr());
+                                    RegisterVar *ptr = dyn_cast<RegisterVar>(si->getPtr());
+                                    if(!ptr) continue;
                                     AllocateInst *dest = dyn_cast<AllocateInst>(ptr->getDef());
                                     if (!dest) continue;
                                     incomingVal[dest] = si->getVal();
