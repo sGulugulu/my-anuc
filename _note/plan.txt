@@ -1,23 +1,8 @@
 todo
 lowload/lowstore -> 计算偏移 + lw/sw 最坏需要两个寄存器 先降级吧
 
-用位移优化加法/乘法
-溢出时phi处理
-对余下指令进行降级
-染色分配寄存器
-退出ssa
-data段构造
-后端发射
-
-int main(int a, int b) {
-  int b = a + 2;
-  int c = a + 5;
-  float d;
-  if(a == 0) {
-      d = 2.23;
-  } else {
-     d  = 3.12;
-  }
-  return d + a + b + c;
-
-}
+尚未完成：
+函数进入与退出的寄存器保存
+phi交换
+float处理
+大于8个参数的参数传递

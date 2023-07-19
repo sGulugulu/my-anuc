@@ -68,7 +68,9 @@ namespace anuc {
 
         Value *getPtr() { return operands[1]->value; }
 
-        void setResult(BaseReg *v) { dest = v; }
+        void setResult(BaseReg *v) {
+            dest = v;
+        }
 
         void accept(Visitor *V);
 
@@ -136,9 +138,9 @@ namespace anuc {
         string toString() {
             string s;
             string d = dest->toString();
-            string v = operands[0]->value->toString();
+            string v = cast<GlobalVar>(operands[0]->value)->getName();
             string label = ".Lpcrel_hi" + to_string(labelNum++);
-            s =  label + ':' + "\n  auipc "+ d +", %pcrel_hi(n)\n  addi" + d + ","+ d
+            s =  label + ':' + "\n  auipc "+ d +", %pcrel_hi("+ v +")\n  addi" + d + ","+ d
                     +", %pcrel_lo("+ label +")";
             return s;
         }
@@ -146,8 +148,8 @@ namespace anuc {
         void setResult(BaseReg *v) { dest = v; }
 
         Value *getResult() { return dest; }
-
     };
+
 
     class LowRet : public LowInst {
         Value *ret;
@@ -174,9 +176,11 @@ namespace anuc {
             string s;
             if (ret) {
                 string v = operands[0]->value->toString();
-                s = "  mv a0," +  v + "\n  ret";
+                if(isa<ConstantInt>(operands[0]->value))
+                    s = "  li a0," +  v;
+                else s = "  mv a0," +  v;
             }
-            else s = "  ret";
+            else s = " ";
             return s;
         }
 
@@ -244,22 +248,30 @@ namespace anuc {
 
     };
 
-    class RVlw : public LowInst {
+    class RVLoad : public LowInst {
         BaseReg *dest;
         int offset{0};
     public:
-        RVlw(BasicBlock *parent, BaseReg *rs1, BaseReg *dest, int offset) :
-                offset(offset), LowInst(VK_RVlw, parent), dest(dest) {
+        enum OpKind {
+            lw, ld
+        } opKind;
+        RVLoad(BasicBlock *parent, BaseReg *rs1, BaseReg *dest, int offset, OpKind opKind) :
+                offset(offset), LowInst(VK_RVLoad, parent), dest(dest), opKind(opKind) {
             Use *op = new Use(rs1, this);
             operands.push_back(op);
             rs1->insertBackToUses(op);
             dest->setInst(this);
         }
 
-        bool static classof(Value *v) { return v->getKind() == VK_RVlw; }
+        bool static classof(Value *v) { return v->getKind() == VK_RVLoad; }
 
         void print() {
-            string s = "  lw" + dest->toString() + ", " + to_string(offset)
+            string op;
+            switch (opKind) {
+                case lw: op = "lw";
+                case ld: op = "ld";
+            }
+            string s = "  " + op  + dest->toString() + ", " + to_string(offset)
                        + " (" + operands[0]->value->toString() + " )";
             cout << s << endl;
         }
@@ -270,15 +282,19 @@ namespace anuc {
         }
 
         Value *getResult() { return dest; }
+        void setResult(BaseReg *v) { dest = v; }
 
     };
 
-    class RVsw : public LowInst {
+    class RVStore : public LowInst {
         int offset{0};
     public:
+        enum OpKind {
+            sw, sd
+        } opKind;
         //rs1为地址
-        RVsw(BasicBlock *parent, BaseReg *rs1, BaseReg *rs2, int offset) :
-                LowInst(VK_RVlw, parent), offset(offset) {
+        RVStore(BasicBlock *parent, BaseReg *rs1, BaseReg *rs2, int offset, OpKind opKind) :
+                LowInst(VK_RVStore, parent), offset(offset), opKind(opKind) {
             Use *op1 = new Use(rs1, this);
             operands.push_back(op1);
             rs1->insertBackToUses(op1);
@@ -287,10 +303,15 @@ namespace anuc {
             rs2->insertBackToUses(op2);
         }
 
-        bool static classof(Value *v) { return v->getKind() == VK_RVsw; }
+        bool static classof(Value *v) { return v->getKind() == VK_RVStore; }
 
         void print() {
-            string s = "  sw" + operands[1]->value->toString() + "," + to_string(offset)
+            string op;
+            switch (opKind) {
+                case sw: op = "sw";
+                case sd: op = "sd";
+            }
+            string s = "  " + op + operands[1]->value->toString() + "," + to_string(offset)
                        + " (" + operands[0]->value->toString() + " )";
             cout << s << endl;
         }
@@ -857,6 +878,27 @@ namespace anuc {
 
     };
 
+    class RVCall: public LowInst{
+        Function *fn;
+    public:
+        RVCall(BasicBlock *parent, Function *fn)
+        : LowInst(VK_RVCall, parent), fn(fn) {
+
+        }
+
+        bool static classof(Value *v) { return v->getKind() == VK_RVCall; }
+
+        BaseReg *getRs1() { return cast<BaseReg>(operands[0]->value); }
+
+
+        void print() {
+           cout << "  call " << fn->getName() << endl;
+        }
+
+        string toString() {
+           return "  call " + fn->getName();
+        }
+    };
     class LIBuilder {
         Instruction *insertPoint;
         BasicBlock *insertBlock;
@@ -884,15 +926,15 @@ namespace anuc {
             insertPoint = inst;
         }
 
-        void CreateSW(BaseReg *rs2, BaseReg *rs1, int offset) {
-            RVsw *inst = new RVsw(insertBlock, rs1, rs2, offset);
+        void CreateStore(BaseReg *rs2, BaseReg *rs1, int offset, RVStore::OpKind kind) {
+            RVStore *inst = new RVStore(insertBlock, rs1, rs2, offset, kind);
             insertBlock->insertIntoBackChild(insertPoint, inst);
             Builder->InsertIntoPool(inst);
             insertPoint = inst;
         }
 
-        void CreateLW(BaseReg *dest, BaseReg *rs1, int offset) {
-            RVlw *inst = new RVlw(insertBlock, rs1, dest, offset);
+        void CreateLoad(BaseReg *dest, BaseReg *rs1, int offset, RVLoad::OpKind kind) {
+            RVLoad *inst = new RVLoad(insertBlock, rs1, dest, offset, kind);
             insertBlock->insertIntoBackChild(insertPoint, inst);
             Builder->InsertIntoPool(inst);
             insertPoint = inst;

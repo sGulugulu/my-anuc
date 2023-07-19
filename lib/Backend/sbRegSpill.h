@@ -255,6 +255,7 @@ namespace anuc {
                 pre = it->second;
                 it->second = offset;
             }
+            function->setFrameSize(offset + pre);
 
         }
 

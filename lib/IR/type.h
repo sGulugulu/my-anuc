@@ -349,6 +349,10 @@ namespace anuc {
                 cout << "@" + name + " = global " + valueType->toString() << endl;
             }
         }
+
+        Constant *getInit() {
+            return initValue;
+        }
     };
 
 

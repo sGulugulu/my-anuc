@@ -227,6 +227,14 @@ namespace anuc {
             return func;
         }
 
+        //创建外部函数
+        Function *CreateExternFunc(FunctionType *type, string name, vector<string> argvNames) {
+            Function *func = new Function(nullptr, type, name);
+            func->setArgvName(argvNames);
+            if (!modu.insertFunc(name, func)) cerr << "func create error" << endl;
+            return func;
+        }
+
         //获取BasicBlock
         BasicBlock *GetBasicBlock(string name) {
             if(!blockType)blockType = new BlockType();
@@ -917,6 +925,7 @@ namespace anuc {
             RegisterVar *rv;
             if (isa<VoidType>(fn->getFuncType()->getRetType())) rv = nullptr;
             else rv = new RegisterVar(fn->getFuncType()->getRetType(), name);
+            //cout << fn->getFuncType()->getRetType()->toString() << endl;
             CallInst *inst = new CallInst(currentBlock, fn, args, rv);
             currentBlock->insertIntoBackChild(insertPoint, inst);
             insertPoint = inst;

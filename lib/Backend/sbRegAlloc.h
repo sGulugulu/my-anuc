@@ -78,6 +78,8 @@ namespace anuc {
                 auto reg = getIntReg();
                 tempMap[def] = reg;
                 if (RvRegister::isTReg(reg)) funcInfo.tempRegs.insert(reg);
+                else if(RvRegister::isSReg(reg)) {
+                    funcInfo.saveRegs.insert(reg); }
             }
             callInfo.insert({s, saves});
         }
@@ -90,8 +92,6 @@ namespace anuc {
                 if (isa<FloatType>(v->getType())) {
 
                 }
-
-
                 RvRegister *reg = getIntReg();
                 inUse.insert(reg);
                 tempMap.insert({v, reg});
@@ -145,7 +145,6 @@ namespace anuc {
                             inUse.erase(r);
                             integerRegs.push(r);
                         }
-
                     }
                 }
                 //给定义的变量分配寄存器
@@ -157,6 +156,7 @@ namespace anuc {
                     if (RvRegister::isTReg(reg)
                         || RvRegister::isAReg(reg))
                         funcInfo.tempRegs.insert(reg);
+                    if(RvRegister::isSReg(reg)) funcInfo.saveRegs.insert(reg);
                 }
 
             }
@@ -293,8 +293,9 @@ floatArgReg.push_back(regTable->getReg(RvRegister::fa##X));
             //将操作数更换为寄存器
             for (auto &it: tempMap) {
                 it.first->replaceAllUseWith(it.second);
-                if (it.first->getDef() && it.first->getDef()->getResult())
+                if (it.first->getDef() && it.first->getDef()->getResult()) {
                     it.first->getDef()->setResult(it.second);
+                }
             }
             //处理phi
             phiResolution();

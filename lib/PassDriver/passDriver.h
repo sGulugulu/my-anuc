@@ -43,15 +43,16 @@ namespace anuc {
             //调度器
             if (j || passSwitch[1] == 2) runScheduleBRPass();
             //降级
-            if (j || passSwitch[2] == 3) runLowerPass1();
-            if (j || passSwitch[3] == 4) runLowerPass2();
-            if (j || passSwitch[4] == 5) runRaSpillPass();
-            if (j || passSwitch[5] == 6) runLowerPass3();
-            if (j || passSwitch[6] == 7) runHandleFuncCallPass();
-            if (j || passSwitch[7] == 8) runRaAllocaPass();
-            if(j || passSwitch[8] == 9) runHandleFuncCallPass2();
-            if (j || passSwitch[9] == 1) instEmitPass();
-            if (j || passSwitch[10] == 2) M->print("../l.ll");
+            if (j || passSwitch[2] == 3) backEndPass();
+//            if (j || passSwitch[2] == 3) runLowerPass1();
+//            if (j || passSwitch[3] == 4) runLowerPass2();
+//            if (j || passSwitch[4] == 5) runRaSpillPass();
+//            if (j || passSwitch[5] == 6) runLowerPass3();
+//            if (j || passSwitch[6] == 7) runHandleFuncCallPass();
+//            if (j || passSwitch[7] == 8) runRaAllocaPass();
+//            if(j || passSwitch[8] == 9) runHandleFuncCallPass2();
+            instEmitPass();
+
         }
 
 
@@ -76,6 +77,19 @@ namespace anuc {
                     sra.schedule();
                 }
             }
+        }
+
+        void backEndPass() {
+            //降级
+            runLowerPass1();
+            runLowerPass2();
+            runRaSpillPass();
+            runLowerPass3();
+            runHandleFuncCallPass();
+            runRaAllocaPass();
+            runHandleFuncCallPass2();
+            runLowerPass4();
+            M->print("../l.ll");
         }
 
         void runLowerPass1() {
@@ -159,9 +173,26 @@ namespace anuc {
                                    funcToInfo, callInfo);
             hfc.transformCallInst();
         }
+        void runFixFunc() {
+
+        }
+        void runLowerPass4() {
+            LIRVisitor4 *visitor4 = new LIRVisitor4(Builder.get(), regTable.get());
+            for (auto fn = M->getBegin(); fn != M->getEnd(); ++fn) {
+                auto func = &*fn;
+                for (auto bb = (*fn).getBegin(); bb != (*fn).getEnd(); ++bb) {
+                    for (auto inst = (*bb).getBegin(); inst != (*bb).getEnd();) {
+                        Instruction *i = &*inst;
+                        ++inst;
+                        i->accept(visitor4);
+                    }
+                }
+            }
+            M->memoryClean();
+        }
 
         void instEmitPass() {
-            InstEmit ie(M.get(), "../test.asm");
+            InstEmit ie(M.get(), Builder.get(), "../test.s", funcToInfo);
             ie.run();
         }
     };

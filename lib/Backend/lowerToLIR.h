@@ -665,6 +665,18 @@ break;
         bool visit(LowStore *inst);
     };
 
+    //处理call
+    class LIRVisitor4 : public LIRVisitor {
+        IRBuilder *Builder;
+        RegTable *regTable;
+    public:
+        LIRVisitor4(IRBuilder *Builder, RegTable *regTable
+        ) : Builder(Builder), regTable(regTable) {}
+
+        bool visit(CallInst *inst);
+
+    };
+
 }
 
 

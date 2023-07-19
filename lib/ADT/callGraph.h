@@ -12,8 +12,10 @@ namespace anuc {
     struct FuncInfo {
         int depth{0};
         Function *func;
-        //保存
+        //零时寄存器
         set<RvRegister *> tempRegs;
+        //需要保存的寄存器
+        set<RvRegister *> saveRegs;
     };
     struct CallInfo {
         set<Value *> saveRegs;

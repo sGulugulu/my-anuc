@@ -2,7 +2,7 @@
 
 #include "antlr4-runtime.h"
 #include "SysyVisitor.h"
-#include "../lib/IR/irBuilder.h"
+#include "irBuilder.h"
 #include <map>
 
 using namespace anuc;
@@ -73,6 +73,18 @@ class ASTVisitor : public SysyVisitor {
         return nullptr;
     }
 
+    void addExternFunc() {
+        auto getInt = Builder->GetFunctionType(Int32Ty, {});
+        Builder->CreateExternFunc(getInt, "getint", {});
+        auto getCh = Builder->GetFunctionType(Int32Ty, {});
+        Builder->CreateExternFunc(getCh, "getch", {});
+        auto getFloat = Builder->GetFunctionType(FloatTy, {});
+        Builder->CreateExternFunc(getFloat, "getfloat", {});
+        auto putInt = Builder->GetFunctionType(VoidTy, {Int32Ty});
+        Builder->CreateExternFunc(putInt, "putint", {"n"});
+
+    }
+
 public:
 
     unique_ptr<Module> getModule() {
@@ -90,6 +102,7 @@ public:
         Int1Ty = Builder->GetInt1Ty();
         FloatTy = Builder->GetFloatTy();
         VoidTy = Builder->GetVoidTy();
+        addExternFunc();
     }
 
     //存储函数参数
@@ -301,10 +314,13 @@ public:
             //不是数组
             if (Table.scopes.empty()) {
                 GlobalVar *global;
+                Value *val = any_cast<Value *>(ctx->initVal()->accept(this));
                 if (varType == Int32Ty)
-                    global = Builder->CreateGlobalVar(varType, varName, Builder->GetConstantInt32(0));
+                    global = Builder->CreateGlobalVar(varType, varName,
+                                                      cast<ConstantInt>(val));
                 else if (varType == FloatTy)
-                    global = Builder->CreateGlobalVar(varType, varName, Builder->GetConstantFloat(0));
+                    global = Builder->CreateGlobalVar(varType, varName,
+                                                      cast<ConstantFloat>(val));
                 return nullptr;
             } else {
                 //非全局变量
@@ -317,8 +333,6 @@ public:
             else if (val->getType() == Int32Ty && varType == FloatTy)
                 val = Builder->CreateIToF(val, FloatTy);
             Builder->CreateStore(val, ptr);
-
-
         } else {
             Type *arrayType = varType;
             auto constExps = ctx->constExp();
@@ -443,9 +457,12 @@ public:
             ret = Builder->CreateAllocate(ty, "retval", false);
             funcRet = ret;
         }
+
         ctx->block()->accept(this);
+
         vector<Value *>().swap(params);
         vector<string>().swap(paramNames);
+        fn->setExit(Builder->getCurrentInst()->getParent());
         if (funcRet) {
             Value *retLoad = Builder->CreateLoad(ty, ret);
             Builder->CreateRet(retLoad);

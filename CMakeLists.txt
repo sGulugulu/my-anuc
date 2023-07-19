@@ -7,7 +7,9 @@ set(CMAKE_CXX_COMPILER "g++")
 file(GLOB_RECURSE LIB_SRC "lib/*.cpp")
 file(GLOB_RECURSE GERATED "generated/*.cpp")
 
-include_directories(lib/IR lib/ADT lib/Analysis lib/BackEnd lib/PassDriver lib/TransFormer third_party/antlr4-runtime)
+include_directories(lib/IR lib/ADT lib/Analysis lib/BackEnd
+        lib/PassDriver lib/TransFormer third_party/antlr4-runtime
+        generated)
 link_directories(third_party/lib)
 
 add_executable(a main.cpp ${LIB_SRC} ${GERATED} )

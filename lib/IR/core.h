@@ -100,6 +100,7 @@ namespace anuc {
     private:
         //记录函数栈上变量+大小
         map<Value*, int> frame;
+        int frameSize{0};
         Module *parent;
         alist<BasicBlock> childlist;
         using argv = pair<string, Type *>;
@@ -107,6 +108,7 @@ namespace anuc {
         vector<Value *> argvals;
         FunctionType *type;
         string name;
+        BasicBlock *exit;
 
     public:
         Function &operator=(const Function &) = delete;
@@ -126,7 +128,8 @@ namespace anuc {
                 argvs[i].first = "argv" + names[i];
                 Value *arg = new RegisterVar(argvs[i].second, argvs[i].first);
                 argvals.push_back(arg);
-                parent->insertIntoPool(arg);
+                //可能是外部函数，没有父母
+                if(parent) parent->insertIntoPool(arg);
             }
         }
 
@@ -147,6 +150,9 @@ namespace anuc {
         alist<BasicBlock>::iterator getEnd() { return childlist.end(); }
 
         BasicBlock *getEnrty() { return &*childlist.begin(); }
+        BasicBlock *getExit() { return exit;}
+        void setExit(BasicBlock *bb) { exit = bb;}
+
 
         string getName() { return name; }
 
@@ -163,6 +169,8 @@ namespace anuc {
             return s;
         }
         void print();
+        void setFrameSize(int n) {frameSize = n;}
+        int getFrameSize() {return frameSize;}
 
     };
 
@@ -1422,24 +1430,24 @@ namespace anuc {
 
     class CallInst : public Instruction {
         Function *fn;
-        RegisterVar *ret;
+        BaseReg *ret;
     public:
         CallInst(BasicBlock *parent, Function *fn, vector<Value *> args, RegisterVar *ret) :
                 Instruction(VK_CallInst, parent), fn(fn), ret(ret) {
-            if (isa<VoidType>(fn->getFuncType())) return;
             for (int i = 0; i < args.size(); ++i) {
                 Value *v = args[i];
                 Use *op0 = new Use(v, this);
                 operands.push_back(op0);
                 v->insertBackToUses(op0);
             }
+            if (!ret) return;
             ret->setInst(this);
         }
 
         bool static classof(Value *v) { return v->getKind() == VK_CallInst; }
 
         void print() {
-            if (!isa<VoidType>(fn->getFuncType())) {
+            if (ret) {
                 cout << " " << ret->toString() << " =";
             } else cout << " ";
             cout << " call " << fn->getFuncType()->getRetType()->toString()
@@ -1450,9 +1458,13 @@ namespace anuc {
             }
             cout << ")" << endl;
         }
+
         virtual void accept(Visitor *V);
         Function *getFunc() {return fn;}
         Value *getResult() { return ret; }
+        void setResult(BaseReg *v) {
+            ret = v;
+        }
 
 
 

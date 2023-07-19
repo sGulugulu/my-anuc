@@ -27,6 +27,13 @@ namespace  anuc {
             calledInfo.depth = max(calledInfo.depth, callerInfo.depth + 1);
 
         }
+
+        void lower(Function *func) {
+            auto &info = funcToInfo[func];
+
+        }
+
+
     public:
         HandleFunctionCall(Module *m, IRBuilder *builder, RegTable *regTable,
                            map<Function*, FuncInfo> &funcToInfo,
@@ -66,7 +73,6 @@ namespace  anuc {
                 FuncInfo &calledInfo = funcToInfo[func];
                 auto &info = cit->second;
                 vector<RvRegister*> saved;
-                int offset{0};
                 //保存需要保存的寄存器
                 for(auto x: info) {
                     if(!calledInfo.tempRegs.count(x)) continue;
@@ -104,21 +110,34 @@ floatArgReg.push_back(regTable->getReg(RvRegister::fa##X));
                     liBuilder.CreateASMD(integerArgReg[i], r,
                                          regTable->getReg(RvRegister::zero), RVasmd::add);
                 }
+                int offset{0};
+                int size = saved.size() * 8;
+                if(size ) {
+                    liBuilder.CreateAddi(sp, sp, -size);
+                    //保存寄存器
+                    for(auto &x: saved) {
+                        if(!calledInfo.tempRegs.count(x)) continue;
+                        liBuilder.CreateStore(x, sp, offset, RVStore::sd);
+                        offset+=8;
+                    }
+                    liBuilder.SetInsertPoint(s);
+                    offset = 0;
+                    //恢复寄存器
+                    for(auto &x: saved) {
+                        if(!calledInfo.tempRegs.count(x)) continue;
+                        liBuilder.CreateLoad(x, sp, offset, RVLoad::ld);
+                        offset+=8;
+                    }
+                    liBuilder.CreateAddi(sp, sp, size);
 
-                //恢复寄存器
-                for(auto &x: saved) {
-                    if(!calledInfo.tempRegs.count(x)) continue;
-                    liBuilder.CreateSW(x, sp, offset);
-                    offset+=4;
-                }
-                liBuilder.SetInsertPoint(s);
-                offset = 0;
-                for(auto &x: saved) {
-                    if(!calledInfo.tempRegs.count(x)) continue;
-                    liBuilder.CreateLW(x, sp, offset);
-                    offset+=4;
                 }
 
+
+            }
+        }
+        void lowerFunction() {
+            for(auto f = m->getBegin(); f != m->getEnd(); ++f) {
+                lower(&*f);
             }
         }
     };

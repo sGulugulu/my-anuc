@@ -1,14 +1,11 @@
-#include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
-#include "lib/IR/irBuilder.h"
-#include "lib/TransFormer/ssa.h"
-#include "lib/PassDriver/passDriver.h"
+#include "passDriver.h"
 
-#include "generated/ASTVisitor.h"
-#include "generated/SysyLexer.h"
-#include "generated/SysyParser.h"
+#include "ASTVisitor.h"
+#include "SysyLexer.h"
+#include "SysyParser.h"
 #include "antlr4-runtime.h"
 
 using namespace anuc;
