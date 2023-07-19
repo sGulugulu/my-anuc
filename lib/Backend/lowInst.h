@@ -530,7 +530,7 @@ namespace anuc {
             operands.push_back(op0);
             label->insertBackToUses(operands[0]);
         }
-
+        bool static classof(Value *v) { return v->getKind() == VK_RVBranch; }
         BasicBlock *getDest() { return cast<BasicBlock>(operands[0]->value); }
 
         void print() {

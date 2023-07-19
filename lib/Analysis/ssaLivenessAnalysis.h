@@ -23,16 +23,17 @@ namespace anuc {
         //程序某一点的活跃信息
         map<Instruction *, LiveOut> liveInfo;
 
-        void scanBlock(BasicBlock *bb, RegisterVar *regVar, set<BasicBlock *> &scannedBlocks) {
+        void scanBlock(BasicBlock *bb, RegisterVar *x, set<BasicBlock *> &scannedBlocks) {
             if (!scannedBlocks.insert(bb).second) return;
             Instruction *s = &*bb->getBack();
-            scanLiveOut(s, regVar, scannedBlocks);
+            scanLiveOut(s, x, scannedBlocks);
         }
 
         void scanLiveIn(Instruction *inst, RegisterVar *x, set<BasicBlock *> &scannedBlocks) {
             BasicBlock *parent = inst->getParent();
             if (inst == &*parent->getBegin()) {
                 for (auto pre = parent->predBegin(); pre != parent->predEnd(); ++pre) {
+                    //向前驱bb添加liveOut
                     scanBlock(*pre, x, scannedBlocks);
                 }
             } else {
@@ -44,21 +45,22 @@ namespace anuc {
             if (liveInfo.find(inst) == liveInfo.end())
                 liveInfo.insert({inst, LiveOut()});
             //将liveOut信息加入liveInfo
-            if (isa<Int32Type>(x->getType())) liveInfo[inst].integerReg.insert(x);
-            else if (isa<FloatType>(x->getType())) liveInfo[inst].floatReg.insert(x);
-            //判断该语句是否为x的定义点　
+            if (isa<FloatType>(x->getType())) liveInfo[inst].floatReg.insert(x);
+            else  liveInfo[inst].integerReg.insert(x);
 
+            //判断该语句是否为x的定义点　
             if (!inst->getResult() ||
                 dyn_cast<RegisterVar>(inst->getResult()) != x) {
                 scanLiveIn(inst, x, scannedBlocks);
             }
         }
 
-        void ssaLiveness(set<RegisterVar *> &regVars, set<BasicBlock *> &scannedBlocks) {
+        void ssaLiveness(set<RegisterVar *> &regVars) {
             //遍历所有虚拟寄存器的所有user
             for (auto it = regVars.begin(); it != regVars.end(); ++it) {
                 RegisterVar *regVar = cast<RegisterVar>(*it);
                 for (auto u = regVar->getUsesBegin(); u != regVar->getUsesEnd(); ++u) {
+                    set<BasicBlock *> scannedBlocks;
                     Instruction *user = cast<Instruction>((&*u)->user);
                     //如果该虚拟寄存器被phi使用，找到对应的bb
                     if (PhiInst *phi = dyn_cast<PhiInst>(user)) {
@@ -119,8 +121,7 @@ namespace anuc {
                     }
                 }
             }
-            set<BasicBlock *> scannedBlocks;
-            ssaLiveness(regVars, scannedBlocks);
+            ssaLiveness(regVars);
             return liveInfo;
         }
     };

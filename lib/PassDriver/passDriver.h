@@ -87,9 +87,10 @@ namespace anuc {
             runLowerPass3();
             runHandleFuncCallPass();
             runRaAllocaPass();
+            M->print("../l.ll");
+
             runHandleFuncCallPass2();
             runLowerPass4();
-            M->print("../l.ll");
         }
 
         void runLowerPass1() {

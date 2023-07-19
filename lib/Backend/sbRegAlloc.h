@@ -78,8 +78,9 @@ namespace anuc {
                 auto reg = getIntReg();
                 tempMap[def] = reg;
                 if (RvRegister::isTReg(reg)) funcInfo.tempRegs.insert(reg);
-                else if(RvRegister::isSReg(reg)) {
-                    funcInfo.saveRegs.insert(reg); }
+                else if (RvRegister::isSReg(reg)) {
+                    funcInfo.saveRegs.insert(reg);
+                }
             }
             callInfo.insert({s, saves});
         }
@@ -156,7 +157,7 @@ namespace anuc {
                     if (RvRegister::isTReg(reg)
                         || RvRegister::isAReg(reg))
                         funcInfo.tempRegs.insert(reg);
-                    if(RvRegister::isSReg(reg)) funcInfo.saveRegs.insert(reg);
+                    if (RvRegister::isSReg(reg)) funcInfo.saveRegs.insert(reg);
                 }
 
             }
@@ -165,9 +166,10 @@ namespace anuc {
                 preOrder(child);
         }
 
-        void handleMoveInsert(BasicBlock *currentBlock, Value *result, Value *x, BasicBlock *b) {
+        BasicBlock *handleMoveInsert(BasicBlock *currentBlock, Value *result, Value *x, BasicBlock *b) {
             //如果b中只有一个后续，可以直接插入移动（add 0）
             if (b->getSucc().size() == 1) {
+
                 Instruction *s;
                 for (auto j = (&*b)->getBack(); j != (&*b)->getFront(); --j) {
                     s = (&*j);
@@ -207,9 +209,42 @@ namespace anuc {
                     nb->insertBackToChild(add);
                     nb->insertBackToChild(ja);
                     builder->InsertIntoPool(add, ja);
-                    return;
+                    return nb;
                 }
             }
+            return nullptr;
+        }
+
+
+        //处理phi交换问题
+        void swapResolution(vector<PhiInst *> phis) {
+            LIBuilder liBuilder(builder);
+            RvRegister *s0 = regTable->getReg(RvRegister::s0);
+            RvRegister *zero = regTable->getReg(RvRegister::zero);
+
+            auto phiSwap = [&liBuilder, &s0, &zero](Value *x1, Value *x2, BasicBlock *b) {
+                Instruction *j = &*b->getBack();
+                //找到插入点插入交换 用s0作为临时寄存器
+                while (isa<RVzerocondbranch>(j) || isa<RVcondbranch>(j) ||
+                       isa<RVbranch>(j))
+                    j = j->getPrev();
+                liBuilder.SetInsertPoint(j);
+                liBuilder.CreateASMD(s0, cast<BaseReg>(x1), zero, RVasmd::add);
+                liBuilder.CreateASMD(cast<BaseReg>(x1), cast<BaseReg>(x2), zero, RVasmd::add);
+                liBuilder.CreateASMD(cast<BaseReg>(x2), s0, zero, RVasmd::add);
+            };
+            set<Value *> defs;
+            for (auto phi: phis) defs.insert(phi->getResult());
+            for (auto i = 0; i < phis[0]->getOperands()->size(); i += 2) {
+                for (auto phi: phis) {
+                    Value *x = phi->getOperands(i)->value;
+                    if (defs.count(x)) {
+                        BasicBlock *b = cast<BasicBlock>(phi->getOperands(i + 1)->value);
+                        phiSwap(x, phi->getResult(), b);
+                    }
+                }
+            }
+            for (auto phi: phis) phi->eraseFromParent();
         }
 
         void phiResolution() {
@@ -218,11 +253,16 @@ namespace anuc {
                 for (int j = 0; j < phi->getOperands()->size(); j += 2) {
                     Value *x = phi->getOperands(j)->value;
                     //进行处理：插入移动指令，处理拷贝丢失
-                    if (x != result)
-                        handleMoveInsert(phi->getParent(), result,
-                                         x, cast<BasicBlock>(phi->getOperands(j + 1)->value));
+                    if (x != result) {
+                        auto nb = handleMoveInsert(phi->getParent(), result,
+                                                   x, cast<BasicBlock>(phi->getOperands(j + 1)->value));
+                        if (nb)
+                            phi->getOperands(j + 1)->replaceValueWith(nb);
+                    }
+
                 }
             }
+
             //处理交换问题
             set<BasicBlock *> phiBB;
             for (auto phi: phis) phiBB.insert(phi->getParent());
@@ -234,6 +274,7 @@ namespace anuc {
                     list.push_back(phi);
                 }
                 if (list.size() == 1) list.back()->eraseFromParent();
+                else swapResolution(list);
             }
         }
 

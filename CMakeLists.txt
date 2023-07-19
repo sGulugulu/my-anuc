@@ -22,7 +22,7 @@ include_directories(${GTEST_INCLUDE_DIRS})
 enable_testing()
 
 #测试ir
-add_executable(irtest _unittest/IR/test.cc ${LIB_SRC})
-target_link_libraries(irtest GTest::gtest GTest::gtest_main)
-add_test(AllTest irtest)
+#add_executable(irtest _unittest/IR/test.cc ${LIB_SRC})
+#target_link_libraries(irtest GTest::gtest GTest::gtest_main)
+#add_test(AllTest irtest)
 

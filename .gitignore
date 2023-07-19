@@ -1,6 +1,6 @@
 .idea
 .vscode/*
 build
-cmake-build-debug/*
-_note
-_unittest
+/cmake-build-debug/*
+/_note/*
+/_unittest/*

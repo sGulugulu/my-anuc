@@ -1,61 +1,47 @@
 .global main
 .data
+N:
+  .word -1
 .text
-whileIf:
-  addi sp, sp, -8
-  sd ra, 0 ( sp ) 
-entry: 
-  li t0, 0
-  add t2, t0, zero
-  add t3, t1, zero
-  li t1, 0
-  j loopCondition
-loopCondition: 
-undef
-undef
-  li t4, 100
-  blt t2, t4, loop
-  j exit
-loop: 
-  li t5, 5
-  beq t2, t5, if_then
-  j if_else
-if_then: 
-  li t0, 25
-  add t1, t0, zero
-  j if_end
-if_else: 
-  li t1, 10
-  beq t2, t1, if_then1
-  j if_else1
-if_end: 
-  add t2, t6, zero
-  add t3, t1, zero
-  addi t6, t2, 1
-  j loopCondition
-if_then1: 
-  li t2, 42
-  j if_end1
-if_else1: 
-  li t4, 2
-  add t2, t5, zero
-  mul t5, t2, t4
-  j if_end1
-if_end1: 
-  add t1, t2, zero
-  j if_end
-exit: 
-  mv a0, t3
-  ld ra, 0 ( sp ) 
-  addi sp, sp, 8
-  ret
 main:
   addi sp, sp, -8
   sd ra, 0 ( sp ) 
-entry1: 
-  call whileIf
-  add t0, a0, zero
-  mv a0, t0
+  addi sp, sp, -400
+entry: 
+  li t0, 1
+  sw t0, 0 ( sp )
+  li t1, 2
+  sw t1, 4 ( sp )
+  li t2, 33
+  sw t2, 8 ( sp )
+  li t3, 4
+  sw t3, 12 ( sp )
+  li t0, 5
+  sw t0, 16 ( sp )
+  li t1, 6
+  sw t1, 20 ( sp )
+  li t2, 0
+  li t3, 0
+  add t1, t3, zero
+  add t0, t2, zero
+  j loopCondition
+loopCondition: 
+  li t4, 6
+  blt t0, t4, loop
+  j exit
+loop: 
+  li t5, 4
+  mul t2, t5, t0
+  add t3, sp, t2
+  lw t4, 0 ( t3 )
+  add t5, t1, t4
+  addi t2, t0, 1
+  add t1, t5, zero
+  add t0, t2, zero
+  j loopCondition
+exit: 
+  mv a0, t1
+  addi sp, sp, 400
   ld ra, 0 ( sp ) 
   addi sp, sp, 8
   ret
