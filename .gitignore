@@ -2,5 +2,5 @@
 .vscode/*
 build
 /cmake-build-debug/*
-/_note/*
-/_unittest/*
+/\_note/*
+/\_unittest/*
