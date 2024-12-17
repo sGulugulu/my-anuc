@@ -54,7 +54,7 @@ namespace anuc {
             else return p->second;
         }
 
-        //查找全局变量
+        //查找全局变量111
         GlobalVar *lookUpGlobalVar(string name) {
             auto p = globalLookUp.find(name);
             if (p == globalLookUp.end()) return nullptr;
