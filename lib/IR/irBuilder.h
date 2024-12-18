@@ -221,17 +221,18 @@ namespace anuc {
             return modu.lookUpGlobalVar(name);
         }
 
-        //创建函数
+        //创建函数  (函数定义在当前文件)
         Function *CreateFunction(FunctionType *type, string name, vector<string> argvNames) {
             Function *func = new Function(&modu, type, name);
             func->setArgvName(argvNames);
             modu.insertBackToChild(func);
+            // 如果函数已经存在，则报错
             if (!modu.insertFunc(name, func)) cerr << "func create error" << endl;
             currentFunc = func;
             return func;
         }
 
-        //创建外部函数
+        //创建外部函数 (函数定义在别处)
         Function *CreateExternFunc(FunctionType *type, string name, vector<string> argvNames) {
             Function *func = new Function(nullptr, type, name);
             func->setArgvName(argvNames);
