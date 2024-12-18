@@ -187,7 +187,9 @@ namespace anuc {
         }
 
         //创建全局变量
+        // 当需要为全局变量设置一个明确的常量初始值时使用。
         GlobalVar *CreateGlobalVar(Type *ty, string name, Constant *init) {
+            // 不是数组类型，且初始化值类型不匹配
             if (!isa<ArrayType>(ty) && init->getType() != ty) cerr << "警告：全局变量存在类型不匹配！" << endl;
             auto ptrTy = this->GetPointerType(ty);
             GlobalVar *global = new GlobalVar(ptrTy, name, init);
@@ -195,7 +197,7 @@ namespace anuc {
             if (!modu.insertGlobal(name, global)) cerr << "全局变量创建错误！" << endl;
             return global;
         }
-
+        // 当全局变量无需初始值，或者初始值稍后通过其他方式设置时使用。
         GlobalVar *CreateGlobalVar(Type *ty, string name) {
             auto ptrTy = this->GetPointerType(ty);
             GlobalVar *global = new GlobalVar(ptrTy, name);
@@ -203,7 +205,9 @@ namespace anuc {
             if (!modu.insertGlobal(name, global)) cerr << "全局变量创建错误！" << endl;
             return global;
         }
-
+        // 当全局变量需要初始化为一个列表（例如数组或结构体）时使用。
+        //      直接将初始化列表作为参数传入，没有单值类型检查逻辑。
+        //      与数组类型或结构体类型初始化相关的场景密切相关。
         GlobalVar *CreateGlobalVar(Type *ty, string name, InitList *list) {
             auto ptrTy = this->GetPointerType(ty);
             GlobalVar *global = new GlobalVar(ptrTy, name, list);
